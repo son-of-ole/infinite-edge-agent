@@ -1,0 +1,44 @@
+{
+  "name": "@infinite-edge-agent/browser-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser embed SDK for hosting Infinite Edge Agent on any website.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/infinite-edge-agent/infinite-edge-agent.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "browser-ai",
+    "webgpu",
+    "qwen",
+    "local-first",
+    "agent",
+    "iframe-sdk"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "2.1.9"
+  }
+}

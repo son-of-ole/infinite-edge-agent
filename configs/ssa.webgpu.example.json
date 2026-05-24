@@ -1,0 +1,20 @@
+{
+  "ssa": {
+    "targetProfile": "subq_compatible_public_ssa_path",
+    "mode": "fallback_sparse_planner",
+    "blockSize": 16,
+    "topKBlocks": 16,
+    "localWindowBlocks": 2,
+    "pinnedAnchorBudget": 8,
+    "enableDenseReferenceTests": true,
+    "enableWebGpuKernels": false,
+    "kernelPrecision": "f32",
+    "routeReasonsRequired": true,
+    "anchorDropPolicy": "hard_fail"
+  },
+  "validation": {
+    "needleBlockRecallMin": 0.99,
+    "denseSparseCosineMin": 0.98,
+    "webGpuSparseMaxAbsError": 0.001
+  }
+}

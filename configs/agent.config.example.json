@@ -1,0 +1,18 @@
+{
+  "agentName": "Infinite Edge Agent",
+  "defaultModel": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+  "embeddingModel": "Xenova/all-MiniLM-L6-v2",
+  "memory": {
+    "topK": 8,
+    "maxRetrievedTokens": 1800,
+    "chunkTokens": 220,
+    "chunkOverlapTokens": 40,
+    "pinnedSystemTokens": 900,
+    "recentConversationTokens": 2000
+  },
+  "runtime": {
+    "preferWebGPU": true,
+    "useMemoryServer": false,
+    "memoryServerUrl": "http://127.0.0.1:8787"
+  }
+}

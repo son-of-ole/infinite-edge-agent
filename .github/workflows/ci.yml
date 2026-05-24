@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  open-source-gates:
+    name: Open-source readiness gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: "true"
+      EVAL_ARTIFACT_DIR: .artifacts/evals/ci
+      VITE_DEFAULT_MODEL: Qwen/Qwen3-0.6B
+      VITE_LLM_BACKEND: unlocked-browser-transformer
+      VITE_REQUIRE_UNLOCKED_RUNTIME: "true"
+      VITE_UNLOCKED_ALLOW_FIXTURE: "true"
+      VITE_UNLOCKED_BACKEND_PREFERENCE: cpu
+      VITE_UNLOCKED_RUNTIME_PROFILE: ci
+      VITE_MEMORY_PROVIDER: browser-vector
+      VITE_ALLOW_MEMORY_FALLBACK: "true"
+      VITE_BUNDLE_GEMMA_MODEL: "false"
+      VITE_BUNDLE_UNLOCKED_MODEL: "false"
+      RELEASE_REQUIRE_GEMMA: "false"
+      RELEASE_REQUIRE_UNLOCKED_MODEL: "false"
+      RELEASE_REQUIRE_UNLOCKED_QWEN_MATH: "false"
+      RELEASE_REQUIRE_UNLOCKED_QWEN_PARITY: "false"
+      RELEASE_REQUIRE_UNLOCKED_FULL_PROFILE: "false"
+      RELEASE_REQUIRE_SIDECAR: "false"
+      RELEASE_ALLOW_BUNDLED_GEMMA: "false"
+      RELEASE_ALLOW_BUNDLED_UNLOCKED_MODEL: "false"
+      PRODUCTION_EVAL_SIDECAR_MODE: skip
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Verify unlocked fixture
+        run: pnpm verify:unlocked -- --runtime-profile ci --backend-preference cpu
+
+      - name: Smoke tests
+        run: |
+          pnpm smoke:core
+          pnpm smoke:sdk
+
+      - name: Evals
+        run: |
+          pnpm eval:qwen-parity
+          pnpm eval:production
+          pnpm bench:browser-runtime
+
+      - name: Headless real-browser WebGPU parity
+        env:
+          HEADLESS_WEBGPU_CI_BROWSER_CHANNEL: chrome
+          HEADLESS_WEBGPU_CI_REQUIRED: "false"
+        run: pnpm ci:headless-webgpu
+
+      - name: Build
+        run: pnpm build
+
+      - name: Dist size check
+        run: pnpm check:web-dist
+
+      - name: Upload eval artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-eval-artifacts
+          path: .artifacts/evals/ci
+          if-no-files-found: ignore

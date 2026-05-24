@@ -1,0 +1,121 @@
+{
+  "schema": "edge-model-registry/v1",
+  "models": [
+    {
+      "modelId": "Qwen3-0.6B-q4f16_1-MLC",
+      "label": "Qwen3 0.6B Compiled Browser",
+      "backendId": "compiled-browser-webllm",
+      "productionRole": "production_candidate",
+      "artifactKind": "webllm-compiled",
+      "artifactUrl": "webllm://Qwen3-0.6B-q4f16_1-MLC",
+      "contextLimit": 40960,
+      "expectedMemory": "compiled-artifact-dependent",
+      "qualityClass": "answer",
+      "speedClass": "fast",
+      "privacyClass": "local",
+      "defaultTasks": ["grounded_answer", "final_answer"],
+      "notes": "v12 production candidate: compiled-first browser backend selected by the Backend Broker once the WebLLM/MLC adapter is available.",
+      "estimatedDownload": "compiled model artifacts",
+      "tensorAbi": {
+        "schema": "edge-tensor-protocol/v1",
+        "architecture": "qwen3_decoder",
+        "dtype": "compiled",
+        "residency": "backend_native",
+        "kvCache": {
+          "layout": "backend_native",
+          "persistence": ["backend_native"]
+        },
+        "kernels": {
+          "supportsCompiledGraph": true,
+          "supportsSparseAttentionRouting": false,
+          "supportsKvSwapPersistence": false,
+          "supportsCompactTopK": true,
+          "supportsCommandBatching": true
+        },
+        "proof": {
+          "requireBackendTrace": true,
+          "requireQualityGate": true,
+          "requireSpeedFloor": true,
+          "forbidCpuFallback": true
+        }
+      }
+    },
+    {
+      "modelId": "Qwen/Qwen3-0.6B",
+      "label": "Qwen3 0.6B Custom WebGPU Kernel Lab",
+      "backendId": "unlocked-browser-transformer",
+      "productionRole": "research_kernel_lab",
+      "artifactKind": "custom-sharded-f16",
+      "artifactUrl": "/models/qwen3-0.6b-unlocked/manifest.json",
+      "contextLimit": 40960,
+      "expectedMemory": "manifest/weights",
+      "qualityClass": "research",
+      "speedClass": "experimental",
+      "privacyClass": "local",
+      "defaultTasks": ["kernel_research", "strict_custom_proof"],
+      "notes": "Research Kernel Lab: browser-owned weights, direct Q/K/V handles, KV tensor paging, TSP scheduling, SSA, and fusion experiments.",
+      "estimatedDownload": "manifest/weights",
+      "tensorAbi": {
+        "schema": "edge-tensor-protocol/v1",
+        "architecture": "qwen3_decoder",
+        "dtype": "f16",
+        "residency": "stable_gpu",
+        "kvCache": {
+          "layout": "compact_gqa_rows",
+          "persistence": ["gpu", "opfs", "indexeddb"]
+        },
+        "kernels": {
+          "supportsCompiledGraph": false,
+          "supportsSparseAttentionRouting": true,
+          "supportsKvSwapPersistence": true,
+          "supportsCompactTopK": true,
+          "supportsCommandBatching": true
+        },
+        "proof": {
+          "requireBackendTrace": true,
+          "forbidCpuFallback": true,
+          "forbidHiddenReadback": true,
+          "forbidActivationUpload": true,
+          "forbidFullLogitReadback": true
+        }
+      }
+    },
+    {
+      "modelId": "small-core-control",
+      "label": "Small Core Control Model",
+      "backendId": "wasm-small-core",
+      "productionRole": "fallback",
+      "artifactKind": "wasm-small-core",
+      "artifactUrl": "wasm://small-core-control",
+      "contextLimit": 2048,
+      "expectedMemory": "small",
+      "qualityClass": "control",
+      "speedClass": "medium",
+      "privacyClass": "local",
+      "defaultTasks": ["memory_label", "context_triage"],
+      "notes": "Low-risk control lane for intent, tagging, context triage, and routing decisions.",
+      "estimatedDownload": "small wasm artifact",
+      "tensorAbi": {
+        "schema": "edge-tensor-protocol/v1",
+        "architecture": "small_core_control",
+        "dtype": "quantized",
+        "residency": "wasm_memory",
+        "kvCache": {
+          "layout": "none",
+          "persistence": []
+        },
+        "kernels": {
+          "supportsCompiledGraph": false,
+          "supportsSparseAttentionRouting": false,
+          "supportsKvSwapPersistence": false,
+          "supportsCompactTopK": false,
+          "supportsCommandBatching": false
+        },
+        "proof": {
+          "requireBackendTrace": true,
+          "requireTaskBounds": true
+        }
+      }
+    }
+  ]
+}

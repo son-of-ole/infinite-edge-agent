@@ -1,0 +1,27 @@
+node_modules
+.DS_Store
+.env
+.env.local
+.env.*.local
+dist
+build
+coverage
+.data
+.artifacts
+.cache
+.vite
+*.log
+pnpm-debug.log*
+
+# Licensed local model artifacts. Keep .gitkeep tracked, but do not publish weights.
+apps/web/public/models/*.litertlm
+apps/web/public/models/*.litertlm.sha256
+apps/web/public/models/**/*.bin
+apps/web/public/models/**/*.safetensors
+apps/web/public/models/**/*.onnx
+apps/web/public/models/**/*.npy
+apps/web/public/models/**/*.npz
+apps/web/public/models/**/*.gguf
+apps/web/public/models/**/manifest.json
+apps/web/public/models/**/manifest.json.sha256
+apps/web/public/models/**/unlocked.env.example

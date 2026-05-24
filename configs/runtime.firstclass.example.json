@@ -1,0 +1,69 @@
+{
+  "memory": {
+    "primary": "lancedb",
+    "fallback": "indexeddb",
+    "sidecarUrl": "http://localhost:8787",
+    "embeddingModelId": "Xenova/all-MiniLM-L6-v2",
+    "topK": 12,
+    "minScore": 0.25
+  },
+  "contextRuntime": {
+    "enabled": true,
+    "ledgerEnabled": true,
+    "maxPromptTokens": 8192,
+    "maxRetrievedMemoryTokens": 2500,
+    "maxRecentConversationTokens": 2500,
+    "alwaysPinSystemPrompt": true,
+    "writeRuntimeTraces": true
+  },
+  "ssa": {
+    "enabled": true,
+    "mode": "fallback_sparse_planner",
+    "maxSelectedBlocks": 64,
+    "minAnchorScore": 0.5,
+    "nativeBackendRequiredForProductionClaim": true
+  },
+  "tsp": {
+    "enabled": true,
+    "mode": "fallback_budget_planner",
+    "safetyMarginRatio": 0.2,
+    "defaultVramBudgetBytes": 2147483648,
+    "defaultRamBudgetBytes": 4294967296
+  },
+  "mtp": {
+    "enabled": true,
+    "mode": "target_only",
+    "draftModelId": null,
+    "targetModelId": "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    "numSpeculativeTokens": 2,
+    "minAcceptanceRate": 0.45,
+    "disableWhenLatencyWorse": true,
+    "vocabCompression": {
+      "enabled": false,
+      "topTokenCount": 32000
+    }
+  },
+  "kvswap": {
+    "enabled": true,
+    "mode": "metadata_only",
+    "vramPressureThreshold": 0.82,
+    "ramPressureThreshold": 0.85,
+    "pinSystemPrompt": true,
+    "pinRecentTokens": 1024,
+    "evictionPolicy": "importance_recency_pressure"
+  },
+  "inferenceBackend": {
+    "primary": "webllm",
+    "fallback": "wasm",
+    "customKernelBackendUrl": null,
+    "requireWebGPUForLargeContext": true
+  },
+  "telemetry": {
+    "writeLocalTraces": true,
+    "redactContentInTraces": false
+  },
+  "evals": {
+    "enabled": true,
+    "artifactDir": "artifacts/evals"
+  }
+}

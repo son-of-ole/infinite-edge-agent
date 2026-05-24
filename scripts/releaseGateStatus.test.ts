@@ -1,0 +1,810 @@
+import { describe, expect, it } from "vitest";
+import { classifyReleaseGateProof, computeReleaseGatePassed } from "./releaseGateStatus";
+
+describe("release gate status", () => {
+  it("fails when a required latest artifact is missing or unknown", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [{ name: "qwen-parity-accuracy", passed: null }],
+    })).toBe(false);
+  });
+
+  it("allows only explicitly optional missing artifacts", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [{ name: "optional-report", passed: null }],
+      optionalArtifactNames: ["optional-report"],
+    })).toBe(true);
+  });
+
+  it("fails when any latest artifact reports failure", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [{ name: "production-readiness", passed: false }],
+      optionalArtifactNames: ["production-readiness"],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases when real parity or benchmark mode is still fixture", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        { name: "qwen-parity-accuracy", passed: true, summary: { realModelParityMode: "skipped" } },
+        { name: "browser-runtime-bench", passed: true, summary: { browserBenchMemoryMode: "browser-local-fixture", browserBenchPreviewMode: "skipped" } },
+        { name: "unlocked-verify", passed: true, summary: { profile: "full", runIsCapped: false } },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases when browser memory mode is not configured", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "dev",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchExpectedExactPassed: true,
+            browserBenchExpectedExactCheckCount: 1,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchTechnicalProofOnly: false,
+            browserBenchProductionQualityPassed: true,
+            browserBenchProductionDeployReadyPassed: true,
+            browserBenchGroundedProductionReadyPassed: true,
+            browserBenchDirectModelFactualProofUsed: false,
+            browserBenchMemoryGroundingRequired: true,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 1024,
+            browserBenchMemoryRetrievalAuditRequired: true,
+            browserBenchMemoryRetrievalAuditPassed: true,
+            browserBenchMemoryRetrievalAuditQueryCount: 64,
+            browserBenchMemoryRecallAt1: 1,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 1,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchV11CommandBatchingPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("classifies fixture/unconfigured release passes as non-production proof", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      releaseAllowFixtureGate: true,
+      unlockedAllowFixture: "true",
+      manifestPath: null,
+      manifestSha256: null,
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      strictEnv: {
+        RELEASE_REQUIRE_UNLOCKED_MODEL: false,
+        RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF: false,
+        RELEASE_ALLOW_FIXTURE_GATE: true,
+        VITE_UNLOCKED_ALLOW_FIXTURE: "true",
+        VITE_UNLOCKED_MODEL_MANIFEST_PATH: null,
+        VITE_UNLOCKED_MODEL_MANIFEST_SHA256: null,
+      },
+    });
+  });
+
+  it("classifies strict browser releases without manifest identity as non-production proof", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: true,
+      requireBrowserPreviewProof: true,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: "",
+      manifestSha256: "",
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      strictEnv: {
+        RELEASE_REQUIRE_UNLOCKED_MODEL: true,
+        RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF: true,
+        RELEASE_ALLOW_FIXTURE_GATE: false,
+        VITE_UNLOCKED_ALLOW_FIXTURE: "false",
+        VITE_UNLOCKED_MODEL_MANIFEST_PATH: null,
+        VITE_UNLOCKED_MODEL_MANIFEST_SHA256: null,
+      },
+    });
+  });
+
+  it("classifies strict browser releases as production proof only after the gate passes", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: true,
+      requireBrowserPreviewProof: true,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: "/models/qwen3/manifest.json",
+      manifestSha256: "abc123",
+    })).toMatchObject({
+      proofMode: "production-strict-browser-runtime",
+      productionReleaseProof: true,
+      strictEnv: {
+        RELEASE_REQUIRE_UNLOCKED_MODEL: true,
+        RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF: true,
+        RELEASE_ALLOW_FIXTURE_GATE: false,
+        VITE_UNLOCKED_ALLOW_FIXTURE: "false",
+        VITE_UNLOCKED_MODEL_MANIFEST_PATH: "/models/qwen3/manifest.json",
+        VITE_UNLOCKED_MODEL_MANIFEST_SHA256: "present",
+      },
+    });
+  });
+
+  it("fails strict unlocked model releases when installed parity still uses candidate logits", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "candidate_logit_projection",
+            realModelLogitProjectionSelectedRows: 4096,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        { name: "browser-runtime-bench", passed: true, summary: { browserBenchMemoryMode: "browser-vector", browserBenchMtpMode: "draft_verify" } },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            mtpMode: "draft_verify",
+            mtpVerifierStrategy: "batched_continuation",
+            mtpVerifiedTokenCount: 2,
+            mtpTargetDecodeCalls: 1,
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases while verify still reports f32 reference assets", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "browser-vector",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchExpectedExactPassed: true,
+            browserBenchExpectedExactCheckCount: 1,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 1024,
+            browserBenchMemoryRetrievalAuditRequired: true,
+            browserBenchMemoryRetrievalAuditPassed: true,
+            browserBenchMemoryRetrievalAuditQueryCount: 64,
+            browserBenchMemoryRecallAt1: 1,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 1,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            mtpMode: "draft_verify",
+            mtpVerifierStrategy: "batched_continuation",
+            mtpVerifiedTokenCount: 2,
+            mtpTargetDecodeCalls: 1,
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: false,
+            tensorStorageFormat: "f32-reference",
+            tensorStorageDtype: "f32",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases when packed tensor storage metadata was inferred instead of explicit", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "browser-vector",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchExpectedExactPassed: true,
+            browserBenchExpectedExactCheckCount: 1,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 1024,
+            browserBenchMemoryRetrievalAuditRequired: true,
+            browserBenchMemoryRetrievalAuditPassed: true,
+            browserBenchMemoryRetrievalAuditQueryCount: 64,
+            browserBenchMemoryRecallAt1: 1,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 1,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            mtpMode: "draft_verify",
+            mtpVerifierStrategy: "batched_continuation",
+            mtpVerifiedTokenCount: 2,
+            mtpTargetDecodeCalls: 1,
+            kvDecodeReuse: true,
+            tensorStorageExplicit: false,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases when browser preview proof is skipped", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        { name: "browser-runtime-bench", passed: true, summary: { browserBenchMemoryMode: "browser-vector", browserBenchPreviewMode: "skipped", browserBenchPreviewRequested: false, browserBenchPreviewPassed: false, browserBenchMtpMode: "draft_verify" } },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            mtpMode: "draft_verify",
+            mtpVerifierStrategy: "batched_continuation",
+            mtpVerifiedTokenCount: 2,
+            mtpTargetDecodeCalls: 1,
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails strict unlocked model releases when exact KV reuse was not proven", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "browser-vector",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchExpectedExactPassed: true,
+            browserBenchExpectedExactCheckCount: 1,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 1024,
+            browserBenchMemoryRetrievalAuditRequired: true,
+            browserBenchMemoryRetrievalAuditPassed: true,
+            browserBenchMemoryRetrievalAuditQueryCount: 64,
+            browserBenchMemoryRecallAt1: 1,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 0,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("passes strict unlocked model releases with installed parity, browser-vector benchmark, browser proof, MTP, KV reuse, and uncapped verify", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "browser-vector",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchExpectedExactPassed: true,
+            browserBenchExpectedExactCheckCount: 1,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchTechnicalProofOnly: false,
+            browserBenchProductionQualityPassed: true,
+            browserBenchProductionDeployReadyPassed: true,
+            browserBenchGroundedProductionReadyPassed: true,
+            browserBenchDirectModelFactualProofUsed: false,
+            browserBenchMemoryGroundingRequired: true,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 1024,
+            browserBenchMemoryRetrievalAuditRequired: true,
+            browserBenchMemoryRetrievalAuditPassed: true,
+            browserBenchMemoryRetrievalAuditQueryCount: 64,
+            browserBenchMemoryRecallAt1: 1,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 1,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchV11CommandBatchingPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            mtpMode: "draft_verify",
+            mtpVerifierStrategy: "batched_continuation",
+            mtpVerifiedTokenCount: 2,
+            mtpTargetDecodeCalls: 1,
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(true);
+  });
+
+  it("fails strict unlocked model releases when a fast browser artifact is only technical proof", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: [
+        {
+          name: "qwen-parity-accuracy",
+          passed: true,
+          summary: {
+            realModelParityMode: "installed",
+            realModelId: "Qwen/Qwen3-0.6B",
+            realModelVocabSize: 151936,
+            realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+            realModelLogitProjectionSelectedRows: 8,
+            realModelLogitProjectionFullRows: 151936,
+          },
+        },
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMemoryMode: "browser-vector",
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+            browserBenchStrictWebGpuPassed: true,
+            cpuFallbackUsed: false,
+            browserBenchExpectedSubstringsPassed: true,
+            browserBenchVisibleResponseQualityPassed: true,
+            browserBenchStopQualityPassed: true,
+            browserBenchRunawayRepetitionPassed: true,
+            browserBenchMarkerOnlyResponsePassed: true,
+            browserBenchTechnicalProofOnly: true,
+            browserBenchProductionQualityPassed: false,
+            browserBenchProductionDeployReadyPassed: false,
+            browserBenchMemoryGroundingPassed: true,
+            browserBenchMemoryExpectedHitPassed: true,
+            browserBenchMemoryContextRebuildPassed: true,
+            browserBenchMemoryAnswerOnlyPassed: true,
+            browserBenchMemorySeededCorpusCount: 64,
+            browserBenchRequireKvReuse: true,
+            browserBenchKvReusePassed: true,
+            browserBenchKvExactReuseRunCount: 1,
+            browserBenchRequireKvPredictivePrefetch: true,
+            browserBenchKvPredictivePrefetchPassed: true,
+            browserBenchKvLowRankQuerySource: "persisted_q_rows",
+            browserBenchProductionSpeedFloorPassed: true,
+            browserBenchMtpMode: "target_only",
+          },
+        },
+        {
+          name: "unlocked-verify",
+          passed: true,
+          summary: {
+            profile: "full",
+            runIsCapped: false,
+            logitProjectionPurpose: "full_vocab_topk_logit_projection",
+            kvDecodeReuse: true,
+            tensorStorageExplicit: true,
+            packedProductionReady: true,
+            tensorStorageFormat: "f16-packed",
+            tensorStorageDtype: "f16",
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails browser-preview-required releases when the benchmark skipped the browser proof", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireBrowserPreviewProof: true,
+      latestArtifacts: [
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchPreviewMode: "skipped",
+            browserBenchPreviewRequested: false,
+            browserBenchPreviewPassed: false,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("passes browser-preview-required releases when the benchmark completed the browser proof", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireBrowserPreviewProof: true,
+      latestArtifacts: [
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchPreviewMode: "completed",
+            browserBenchPreviewRequested: true,
+            browserBenchPreviewPassed: true,
+          },
+        },
+      ],
+    })).toBe(true);
+  });
+
+  it("fails strict unlocked model releases when browser proof lacks exact-output and v11 batching gates", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: makeStrictUnlockedArtifacts({
+        browserBenchExpectedExactPassed: false,
+        browserBenchExpectedExactCheckCount: 0,
+        browserBenchV11CommandBatchingPassed: false,
+        browserBenchGroundedProductionReadyPassed: false,
+      }),
+    })).toBe(false);
+  });
+
+  it("passes strict unlocked model releases with grounded exact browser production proof", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      strictUnlockedModel: true,
+      latestArtifacts: makeStrictUnlockedArtifacts(),
+    })).toBe(true);
+  });
+
+  it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireMtpAcceleration: true,
+      latestArtifacts: [
+        {
+          name: "browser-runtime-bench",
+          passed: false,
+          summary: {
+            browserBenchMtpAccelerationMode: "completed",
+            browserBenchMtpAccelerationRequested: true,
+            browserBenchMtpAccelerationPassed: false,
+            browserBenchMtpNetSpeedupRatio: 0.9,
+            browserBenchMtpAcceptanceRate: 0,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("passes MTP-acceleration-required releases when paired benchmark proves speedup and acceptance", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireMtpAcceleration: true,
+      latestArtifacts: [
+        {
+          name: "browser-runtime-bench",
+          passed: true,
+          summary: {
+            browserBenchMtpAccelerationMode: "completed",
+            browserBenchMtpAccelerationRequested: true,
+            browserBenchMtpAccelerationPassed: true,
+            browserBenchMtpNetSpeedupRatio: 1.08,
+            browserBenchMtpAcceptanceRate: 0.5,
+          },
+        },
+      ],
+    })).toBe(true);
+  });
+});
+
+function makeStrictUnlockedArtifacts(
+  browserSummaryOverrides: Record<string, number | string | boolean | null> = {},
+) {
+  return [
+    {
+      name: "qwen-parity-accuracy",
+      passed: true,
+      summary: {
+        realModelParityMode: "installed",
+        realModelId: "Qwen/Qwen3-0.6B",
+        realModelVocabSize: 151936,
+        realModelLogitProjectionPurpose: "full_vocab_topk_logit_projection",
+        realModelLogitProjectionSelectedRows: 8,
+        realModelLogitProjectionFullRows: 151936,
+      },
+    },
+    {
+      name: "browser-runtime-bench",
+      passed: true,
+      summary: {
+        browserBenchMemoryMode: "browser-vector",
+        browserBenchPreviewMode: "completed",
+        browserBenchPreviewRequested: true,
+        browserBenchPreviewPassed: true,
+        browserBenchStrictWebGpuPassed: true,
+        cpuFallbackUsed: false,
+        browserBenchExpectedSubstringsPassed: true,
+        browserBenchExpectedExactPassed: true,
+        browserBenchExpectedExactCheckCount: 1,
+        browserBenchVisibleResponseQualityPassed: true,
+        browserBenchStopQualityPassed: true,
+        browserBenchRunawayRepetitionPassed: true,
+        browserBenchMarkerOnlyResponsePassed: true,
+        browserBenchTechnicalProofOnly: false,
+        browserBenchProductionQualityPassed: true,
+        browserBenchProductionDeployReadyPassed: true,
+        browserBenchGroundedProductionReadyPassed: true,
+        browserBenchMemoryGroundingRequired: true,
+        browserBenchMemoryGroundingPassed: true,
+        browserBenchMemoryExpectedHitPassed: true,
+        browserBenchMemoryContextRebuildPassed: true,
+        browserBenchMemoryAnswerOnlyPassed: true,
+        browserBenchMemorySeededCorpusCount: 1024,
+        browserBenchMemoryRetrievalAuditRequired: true,
+        browserBenchMemoryRetrievalAuditPassed: true,
+        browserBenchMemoryRetrievalAuditQueryCount: 64,
+        browserBenchMemoryRecallAt1: 1,
+        browserBenchRequireKvReuse: true,
+        browserBenchKvReusePassed: true,
+        browserBenchKvExactReuseRunCount: 1,
+        browserBenchRequireKvPredictivePrefetch: true,
+        browserBenchKvPredictivePrefetchPassed: true,
+        browserBenchKvLowRankQuerySource: "persisted_q_rows",
+        browserBenchProductionSpeedFloorPassed: true,
+        browserBenchV11CommandBatchingPassed: true,
+        browserBenchMtpMode: "target_only",
+        ...browserSummaryOverrides,
+      },
+    },
+    {
+      name: "unlocked-verify",
+      passed: true,
+      summary: {
+        profile: "full",
+        runIsCapped: false,
+        logitProjectionPurpose: "full_vocab_topk_logit_projection",
+        kvDecodeReuse: true,
+        tensorStorageExplicit: true,
+        packedProductionReady: true,
+        tensorStorageFormat: "f16-packed",
+        tensorStorageDtype: "f16",
+      },
+    },
+  ];
+}
