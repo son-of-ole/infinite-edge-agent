@@ -2,7 +2,7 @@
   "name": "@infinite-edge-agent/browser-sdk",
   "version": "0.1.0",
   "type": "module",
-  "description": "Browser embed SDK for hosting Infinite Edge Agent on any website.",
+  "description": "Embeddable browser SDK for hosting Infinite Edge Agent on any website.",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "Infinite Edge Agent"
+message: "If you use Infinite Edge Agent in research or a benchmark report, please cite this repository."
+type: software
+authors:
+  - name: "Son of Ole"
+repository-code: "https://github.com/son-of-ole/infinite-edge-agent"
+url: "https://github.com/son-of-ole/infinite-edge-agent"
+version: "0.1.0"
+date-released: "2026-05-25"
+abstract: "Browser-native persistent AI agent runtime with local memory, context reconstruction, backend-specific production readiness, compiled WebGPU inference, and a custom WebGPU Kernel Lab for SSA, KVSwap, TSP, and fusion research."
+keywords:
+  - browser-native AI
+  - WebGPU
+  - local-first agents
+  - persistent memory
+  - retrieval augmented generation
+  - edge inference
+  - WebLLM
+license: MIT

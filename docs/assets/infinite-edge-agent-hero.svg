@@ -1,0 +1,112 @@
+<svg width="1600" height="720" viewBox="0 0 1600 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Infinite Edge Agent</title>
+  <desc id="desc">A browser-native persistent agent runtime with memory, context rebuild, backend broker, compiled WebGPU inference, and custom kernel lab.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1220"/>
+      <stop offset="0.44" stop-color="#102A34"/>
+      <stop offset="1" stop-color="#2A1E13"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="124" y1="98" x2="1476" y2="622" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123542" stop-opacity="0.88"/>
+      <stop offset="1" stop-color="#151B2B" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#56D6B5"/>
+      <stop offset="1" stop-color="#2E9DD3"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F8C66B"/>
+      <stop offset="1" stop-color="#E57D3A"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#000000" flood-opacity="0.32"/>
+    </filter>
+    <style>
+      .title { font: 800 72px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #F8FAFC; letter-spacing: 0; }
+      .subtitle { font: 500 30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #B8D6DD; letter-spacing: 0; }
+      .label { font: 700 23px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #F8FAFC; letter-spacing: 0; }
+      .small { font: 500 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #B7C7CD; letter-spacing: 0; }
+      .tiny { font: 700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #07131A; letter-spacing: 0; }
+      .node { stroke: rgba(255,255,255,0.24); stroke-width: 1.2; }
+      .line { stroke: rgba(137,226,208,0.48); stroke-width: 3; stroke-linecap: round; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="720" fill="url(#bg)"/>
+  <path d="M0 576C234 500 421 650 657 574C923 488 1019 292 1295 309C1413 316 1511 357 1600 397V720H0V576Z" fill="#16313C" opacity="0.62"/>
+  <path d="M0 111C178 173 345 70 532 103C774 146 914 304 1142 259C1303 227 1435 100 1600 139V0H0V111Z" fill="#231A27" opacity="0.55"/>
+
+  <rect x="96" y="70" width="1408" height="580" rx="32" fill="url(#panel)" stroke="rgba(255,255,255,0.16)" filter="url(#softShadow)"/>
+
+  <text x="156" y="171" class="title">Infinite Edge Agent</text>
+  <text x="158" y="224" class="subtitle">Persistent browser intelligence with memory, context rebuild, and backend-specific proof.</text>
+
+  <g transform="translate(158 292)">
+    <rect width="300" height="136" rx="20" fill="#0E1E27" stroke="rgba(255,255,255,0.18)"/>
+    <circle cx="52" cy="48" r="18" fill="url(#teal)"/>
+    <path d="M52 34V62M38 48H66" stroke="#07131A" stroke-width="5" stroke-linecap="round"/>
+    <text x="88" y="54" class="label">Memory OS</text>
+    <text x="34" y="96" class="small">IndexedDB, LanceDB, GAC</text>
+  </g>
+
+  <g transform="translate(500 292)">
+    <rect width="300" height="136" rx="20" fill="#0E1E27" stroke="rgba(255,255,255,0.18)"/>
+    <rect x="35" y="31" width="40" height="34" rx="8" fill="url(#gold)"/>
+    <rect x="45" y="39" width="40" height="34" rx="8" fill="rgba(248,250,252,0.8)"/>
+    <text x="98" y="54" class="label">Context Rebuild</text>
+    <text x="34" y="96" class="small">Working state per turn</text>
+  </g>
+
+  <g transform="translate(842 292)">
+    <rect width="300" height="136" rx="20" fill="#0E1E27" stroke="rgba(255,255,255,0.18)"/>
+    <path d="M48 30L76 47V81L48 98L20 81V47L48 30Z" fill="url(#teal)"/>
+    <path d="M48 47V81M31 56L65 75M65 56L31 75" stroke="#07131A" stroke-width="4" stroke-linecap="round"/>
+    <text x="98" y="54" class="label">Backend Broker</text>
+    <text x="34" y="96" class="small">Production vs Kernel Lab</text>
+  </g>
+
+  <g transform="translate(1184 292)">
+    <rect width="260" height="136" rx="20" fill="#0E1E27" stroke="rgba(255,255,255,0.18)"/>
+    <rect x="30" y="31" width="54" height="42" rx="9" fill="url(#gold)"/>
+    <rect x="39" y="40" width="36" height="8" rx="4" fill="#07131A"/>
+    <rect x="39" y="55" width="28" height="8" rx="4" fill="#07131A"/>
+    <text x="104" y="54" class="label">WebGPU</text>
+    <text x="34" y="96" class="small">Compiled inference</text>
+  </g>
+
+  <path class="line" d="M458 360H500"/>
+  <path class="line" d="M800 360H842"/>
+  <path class="line" d="M1142 360H1184"/>
+
+  <g transform="translate(158 480)">
+    <rect width="402" height="80" rx="18" fill="rgba(86,214,181,0.12)" stroke="rgba(86,214,181,0.28)"/>
+    <text x="28" y="34" class="label">Production Backend</text>
+    <text x="28" y="60" class="small">compiled-browser-webllm</text>
+  </g>
+
+  <g transform="translate(600 480)">
+    <rect width="402" height="80" rx="18" fill="rgba(248,198,107,0.12)" stroke="rgba(248,198,107,0.30)"/>
+    <text x="28" y="34" class="label">Kernel Lab</text>
+    <text x="28" y="60" class="small">SSA, KVSwap, TSP, fusion</text>
+  </g>
+
+  <g transform="translate(1042 480)">
+    <rect width="402" height="80" rx="18" fill="rgba(46,157,211,0.12)" stroke="rgba(46,157,211,0.28)"/>
+    <text x="28" y="34" class="label">Readiness Gates</text>
+    <text x="28" y="60" class="small">grounded exact answers</text>
+  </g>
+
+  <g transform="translate(156 590)">
+    <rect width="160" height="34" rx="17" fill="#56D6B5"/>
+    <text x="27" y="23" class="tiny">LOCAL-FIRST</text>
+  </g>
+  <g transform="translate(332 590)">
+    <rect width="168" height="34" rx="17" fill="#F8C66B"/>
+    <text x="27" y="23" class="tiny">HOSTED PROOF</text>
+  </g>
+  <g transform="translate(516 590)">
+    <rect width="182" height="34" rx="17" fill="#8DD4FF"/>
+    <text x="27" y="23" class="tiny">BROWSER NATIVE</text>
+  </g>
+</svg>

@@ -3,7 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local-first persistent AI agent architecture with first-class LanceDB, Context Runtime, SSA, TSP, MTP, and KVSwap contracts.",
+  "description": "Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab.",
+  "keywords": [
+    "browser-ai",
+    "webgpu",
+    "local-first",
+    "ai-agent",
+    "persistent-memory",
+    "rag",
+    "webllm",
+    "edge-inference"
+  ],
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev:web": "pnpm --filter @infinite-edge-agent/web dev",

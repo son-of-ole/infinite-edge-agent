@@ -21,5 +21,6 @@
   "devDependencies": {
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
-  }
+  },
+  "description": "Optional LanceDB-compatible memory sidecar for Infinite Edge Agent."
 }
