@@ -800,8 +800,13 @@ export function resolveBrowserAnswerBackendSelection(
   if (!backendEntry) {
     throw new Error(`Unsupported backend ${input.backend}. Backend Broker only ships registered browser backends.`);
   }
+  if (backendEntry.productionRole === "fallback" && input.task === undefined) {
+    throw new Error(`Bounded fallback-only backend ${input.backend} cannot run browser answer generation.`);
+  }
+  const task = input.task
+    ?? (backendEntry.productionRole === "research_kernel_lab" ? "kernel_research" : "grounded_answer");
   return selectBrowserBackend({
-    task: input.task ?? "grounded_answer",
+    task,
     preferredBackendId: input.backend,
     preferredModelId: input.modelId,
     ...(input.availableBackendIds ? { availableBackendIds: input.availableBackendIds } : {}),

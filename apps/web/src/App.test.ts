@@ -37,6 +37,13 @@ describe("App unlocked worker wiring", () => {
     });
   });
 
+  it("rejects bounded fallback backends as answer-generation runtimes", () => {
+    expect(() => resolveBrowserAnswerBackendSelection({
+      backend: "wasm-small-core",
+      modelId: "small-core-control",
+    })).toThrow(/fallback-only backend wasm-small-core cannot run browser answer generation/);
+  });
+
   it("passes supported browser MTP options through to the unlocked worker client", () => {
     const options = makeUnlockedBrowserWorkerOptions({
       modelId: "Qwen/Qwen3-0.6B",

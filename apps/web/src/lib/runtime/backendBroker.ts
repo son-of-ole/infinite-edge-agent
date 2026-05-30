@@ -131,6 +131,12 @@ export function getBrowserBackendRegistryEntry(backendId: string): BrowserBacken
 export function selectBrowserBackend(input: BrowserBackendSelectionInput): BrowserBackendSelection {
   const available = new Set(input.availableBackendIds ?? BROWSER_BACKEND_REGISTRY.map((entry) => entry.backendId));
   const preferred = input.preferredBackendId ? getAvailableEntry(input.preferredBackendId, available) : undefined;
+  if (preferred && !backendSupportsTask(preferred, input.task)) {
+    throw new Error(
+      `Preferred browser backend "${preferred.backendId}" cannot run task "${input.task}". `
+      + `Registered tasks: ${preferred.defaultTasks.join(", ") || "none"}.`,
+    );
+  }
   const selected = preferred ?? selectByTask(input.task, available);
   if (!selected) {
     throw new Error(`No registered browser backend can run task "${input.task}" with the available backend set.`);
@@ -166,6 +172,10 @@ function selectByTask(task: BrowserBackendTask, available: Set<string>): Browser
 function getAvailableEntry(backendId: string, available: Set<string>): BrowserBackendRegistryEntry | undefined {
   if (!available.has(backendId)) return undefined;
   return getBrowserBackendRegistryEntry(backendId);
+}
+
+function backendSupportsTask(entry: BrowserBackendRegistryEntry, task: BrowserBackendTask): boolean {
+  return entry.defaultTasks.includes(task);
 }
 
 function selectionReason(task: BrowserBackendTask, entry: BrowserBackendRegistryEntry): string {

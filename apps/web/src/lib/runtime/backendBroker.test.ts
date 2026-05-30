@@ -56,4 +56,31 @@ describe("backend broker", () => {
       reason: "kernel_lab_required",
     });
   });
+
+  it("rejects preferred Kernel Lab or fallback backends for production answer tasks", () => {
+    expect(() => selectBrowserBackend({
+      task: "grounded_answer",
+      preferredBackendId: "unlocked-browser-transformer",
+    })).toThrow(/cannot run task "grounded_answer"/);
+
+    expect(() => selectBrowserBackend({
+      task: "final_answer",
+      preferredBackendId: "wasm-small-core",
+    })).toThrow(/cannot run task "final_answer"/);
+  });
+
+  it("selects the bounded fallback only for registered control tasks", () => {
+    const selection = selectBrowserBackend({
+      task: "memory_label",
+      availableBackendIds: ["compiled-browser-webllm", "unlocked-browser-transformer", "wasm-small-core"],
+    });
+
+    expect(selection).toMatchObject({
+      backendId: "wasm-small-core",
+      productionRole: "fallback",
+      deployReadyCandidate: false,
+      reason: "wasm-fallback_memory_label",
+      proofRequirements: ["task_bounds", "fallback_trace"],
+    });
+  });
 });
