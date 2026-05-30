@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { evaluateV12ProductionWorkflowPreflight } from "./v12ProductionWorkflowPreflight";
 
 export interface RepositoryReadinessCheck {
   id: string;
@@ -62,6 +63,7 @@ export async function evaluateRepositoryReadiness(input: { rootDir?: string } = 
     checkPublicReleaseFiles(rootDir),
     await checkReadmeV12Story(rootDir),
     await checkGithubWorkflows(rootDir),
+    await checkV12ProductionWorkflowPreflight(rootDir),
   ];
   const blockers = checks.flatMap((check) =>
     check.passed ? [] : check.blockers.map((blocker) => `${check.id}: ${blocker}`));
@@ -194,6 +196,17 @@ async function checkGithubWorkflows(rootDir: string): Promise<RepositoryReadines
     label: "GitHub workflows enforce v12 invariant and hosted production proof gates.",
     evidence: [ciWorkflowPath, productionWorkflowPath],
     blockers,
+  });
+}
+
+async function checkV12ProductionWorkflowPreflight(rootDir: string): Promise<RepositoryReadinessCheck> {
+  const report = await evaluateV12ProductionWorkflowPreflight({ rootDir });
+
+  return makeCheck({
+    id: "v12_production_workflow_preflight",
+    label: "V12 production proof workflow passes the dedicated hosted-proof preflight.",
+    evidence: [".github/workflows/v12-production-proof.yml", "package.json"],
+    blockers: report.blockers,
   });
 }
 

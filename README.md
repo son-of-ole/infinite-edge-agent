@@ -162,6 +162,7 @@ pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
 pnpm verify:repository      # Check public repo metadata, docs, assets, and v12 workflows
 pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
 pnpm verify:hosted-benchmark-proof # Validate a saved real browser benchmark artifact
+pnpm verify:v12-production-workflow # Preflight the manual GitHub hosted production-proof workflow
 pnpm smoke:sdk              # Validate embeddable browser SDK package
 ```
 

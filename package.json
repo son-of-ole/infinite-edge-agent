@@ -50,6 +50,7 @@
     "materialize:hosted-benchmark": "node --import tsx scripts/materializeHostedBenchmarkArtifact.ts",
     "verify:hosted-benchmark-proof": "node --import tsx scripts/hostedBenchmarkProof.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",
+    "verify:v12-production-workflow": "node --import tsx scripts/v12ProductionWorkflowPreflight.ts",
     "release:gate": "node --import tsx scripts/release-gate.ts"
   },
   "dependencies": {

@@ -18,6 +18,7 @@ describe("repository readiness", () => {
       expect.objectContaining({ id: "public_release_files", passed: true }),
       expect.objectContaining({ id: "readme_v12_story", passed: true }),
       expect.objectContaining({ id: "github_workflows", passed: true }),
+      expect.objectContaining({ id: "v12_production_workflow_preflight", passed: true }),
     ]));
   });
 
