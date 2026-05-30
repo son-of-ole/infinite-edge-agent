@@ -912,6 +912,20 @@ describe("browser preview benchmark payload", () => {
     }]);
   });
 
+  it("parses opt-in benchmark telemetry requests without enabling upload by default", () => {
+    const request = readBrowserPreviewBenchmarkRequest(new URL(
+      "http://localhost:5173/__bench/browser-runtime"
+      + "?memoryGrounding=montana_capital"
+      + "&submitTelemetry=true",
+    ));
+
+    expect(request.benchmarkTelemetryRequested).toBe(true);
+    expect(request.benchmarkTelemetryConfig).toMatchObject({
+      enabled: false,
+      url: "",
+    });
+  });
+
   it("builds a non-exact seed run before the target prompt for predictive KVSwap proof", () => {
     const request = readBrowserPreviewBenchmarkRequest(new URL(
       "http://localhost:5173/__bench/browser-runtime"

@@ -11,6 +11,7 @@ import {
   type UnlockedWebGpuCoverageSummary,
 } from "@infinite-edge-agent/core";
 import {
+  BENCHMARK_TELEMETRY_CONFIG,
   CHAT_MAX_GENERATION_TOKENS,
   COMPILED_WEBLLM_ENABLED,
   DEFAULT_LLM_BACKEND,
@@ -35,6 +36,7 @@ import {
   UNLOCKED_MODEL_MANIFEST_PATH,
   UNLOCKED_MODEL_MANIFEST_SHA256,
 } from "../config";
+import { submitBenchmarkTelemetry, type BenchmarkTelemetryConfig } from "./benchmarkTelemetry";
 import { CompiledWebLlmClient, type CompiledWebLlmProof } from "../lib/llm/compiledWebLlmClient";
 import {
   UnlockedBrowserTransformerClient,
@@ -96,6 +98,8 @@ export interface BrowserPreviewBenchmarkRequest {
   memoryGroundingCorpusSize: number;
   memoryGroundingPromptLimit?: number;
   memoryGroundingAuditOnly: boolean;
+  benchmarkTelemetryRequested: boolean;
+  benchmarkTelemetryConfig: BenchmarkTelemetryConfig;
 }
 
 const BENCHMARK_PATH = "/__bench/browser-runtime";
@@ -213,9 +217,32 @@ function runBrowserPreviewBenchmarkWithTimeout(
     }),
   );
   return Promise.race([benchmark, timeout])
+    .then((payload) => attachBenchmarkTelemetryResult(payload, request))
     .finally(() => {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
     });
+}
+
+async function attachBenchmarkTelemetryResult(
+  payload: BrowserPreviewBenchmarkPayload,
+  request: BrowserPreviewBenchmarkRequest,
+): Promise<BrowserPreviewBenchmarkPayload> {
+  const result = await submitBenchmarkTelemetry({
+    requested: request.benchmarkTelemetryRequested,
+    config: request.benchmarkTelemetryConfig,
+    benchmarkPayload: payload,
+  });
+  return {
+    ...payload,
+    summary: {
+      ...payload.summary,
+      benchmarkTelemetryRequested: result.requested,
+      benchmarkTelemetryConfigured: result.configured,
+      benchmarkTelemetrySubmitted: result.submitted,
+      ...(result.status !== undefined ? { benchmarkTelemetryStatus: result.status } : {}),
+      ...(result.error ? { benchmarkTelemetryError: result.error } : {}),
+    },
+  };
 }
 
 export function runBrowserPreviewBenchmarkWithExclusiveLock<T>(
@@ -815,6 +842,11 @@ export function readBrowserPreviewBenchmarkRequest(url: URL): BrowserPreviewBenc
     ? parseBooleanSearchValue(warmModelResidencyValue)
     : strictWebGpuRequested;
   const warmModelResidencyMode = parseWarmupMode(url.searchParams.get("warmupMode") ?? url.searchParams.get("warmModelResidencyMode"));
+  const benchmarkTelemetryRequested = parseBooleanSearchParam(url, [
+    "submitTelemetry",
+    "benchmarkTelemetry",
+    "saveBenchmark",
+  ]);
   return {
     backendId,
     modelId,
@@ -846,6 +878,8 @@ export function readBrowserPreviewBenchmarkRequest(url: URL): BrowserPreviewBenc
     memoryGroundingCorpusSize,
     ...(memoryGroundingPromptLimit ? { memoryGroundingPromptLimit } : {}),
     memoryGroundingAuditOnly,
+    benchmarkTelemetryRequested,
+    benchmarkTelemetryConfig: BENCHMARK_TELEMETRY_CONFIG,
   };
 }
 

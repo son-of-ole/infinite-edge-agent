@@ -6,6 +6,7 @@ import {
   makeBackendProfile,
   makeRuntimeMtpConfig,
   normalizeMemoryProviderMode,
+  resolveBenchmarkTelemetryConfig,
   resolveCompiledWebLlmEnabled,
   resolveDefaultModel,
   resolveAgentMaxPromptTokens,
@@ -89,6 +90,34 @@ describe("compiled WebLLM adapter config", () => {
     expect(resolveDefaultModel({}, "compiled-browser-webllm")).toBe("Qwen3-0.6B-q4f16_1-MLC");
     expect(resolveDefaultModel({}, "unlocked-browser-transformer")).toBe("Qwen/Qwen3-0.6B");
     expect(resolveDefaultModel({ VITE_DEFAULT_MODEL: "custom-model" }, "compiled-browser-webllm")).toBe("custom-model");
+  });
+});
+
+describe("benchmark telemetry config", () => {
+  it("requires both the enable flag and endpoint before browser benchmarks can submit telemetry", () => {
+    expect(resolveBenchmarkTelemetryConfig({})).toEqual({
+      enabled: false,
+      url: "",
+    });
+    expect(resolveBenchmarkTelemetryConfig({
+      VITE_BENCHMARK_TELEMETRY_ENABLED: "true",
+    })).toEqual({
+      enabled: false,
+      url: "",
+    });
+    expect(resolveBenchmarkTelemetryConfig({
+      VITE_BENCHMARK_TELEMETRY_ENABLED: "true",
+      VITE_BENCHMARK_TELEMETRY_URL: " /api/benchmark-runs ",
+      VITE_APP_VERSION: " 0.1.0 ",
+      VITE_GIT_SHA: " abc123 ",
+      VITE_DEPLOY_URL: " https://agent.example.com ",
+    })).toEqual({
+      enabled: true,
+      url: "/api/benchmark-runs",
+      appVersion: "0.1.0",
+      gitSha: "abc123",
+      deployUrl: "https://agent.example.com",
+    });
   });
 });
 

@@ -68,7 +68,28 @@ create table benchmark_runs (
 
 ## Client Payload
 
-The client should submit:
+The browser benchmark route now includes an opt-in telemetry submitter. It only submits when both are true:
+
+- deployment config enables and points telemetry at an endpoint,
+- the benchmark URL includes `submitTelemetry=true` or `benchmarkTelemetry=true`.
+
+Example:
+
+```bash
+VITE_BENCHMARK_TELEMETRY_ENABLED=true
+VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs
+VITE_APP_VERSION=0.1.0
+VITE_GIT_SHA=<deployment-sha>
+VITE_DEPLOY_URL=https://your-hosted-agent.example
+```
+
+```text
+/__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true
+```
+
+The current implementation submits a sanitized artifact. Raw prompts, raw responses, expected strings, and token diagnostics are redacted before upload.
+
+The client submits:
 
 ```ts
 interface BenchmarkTelemetryPayload {
@@ -102,7 +123,7 @@ interface BenchmarkTelemetryPayload {
     expectedExactPassed: boolean;
     productionDeployReadyPassed: boolean;
   };
-  artifactJson: unknown;
+  artifactJson: unknown; // sanitized benchmark artifact
 }
 ```
 

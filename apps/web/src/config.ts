@@ -60,6 +60,22 @@ export interface CompiledWebLlmEnv {
   VITE_COMPILED_WEBLLM_ENABLED?: string | undefined;
 }
 
+export interface BenchmarkTelemetryEnv {
+  VITE_BENCHMARK_TELEMETRY_ENABLED?: string | undefined;
+  VITE_BENCHMARK_TELEMETRY_URL?: string | undefined;
+  VITE_APP_VERSION?: string | undefined;
+  VITE_GIT_SHA?: string | undefined;
+  VITE_DEPLOY_URL?: string | undefined;
+}
+
+export interface BenchmarkTelemetryConfig {
+  enabled: boolean;
+  url: string;
+  appVersion?: string;
+  gitSha?: string;
+  deployUrl?: string;
+}
+
 export interface DefaultModelEnv {
   VITE_DEFAULT_MODEL?: string | undefined;
 }
@@ -74,6 +90,17 @@ export function resolveDefaultModel(env: DefaultModelEnv, backend: string): stri
 
 export function resolveCompiledWebLlmEnabled(env: CompiledWebLlmEnv): boolean {
   return env.VITE_COMPILED_WEBLLM_ENABLED === "true";
+}
+
+export function resolveBenchmarkTelemetryConfig(env: BenchmarkTelemetryEnv): BenchmarkTelemetryConfig {
+  const url = env.VITE_BENCHMARK_TELEMETRY_URL?.trim() ?? "";
+  return {
+    enabled: env.VITE_BENCHMARK_TELEMETRY_ENABLED === "true" && url.length > 0,
+    url,
+    ...(env.VITE_APP_VERSION?.trim() ? { appVersion: env.VITE_APP_VERSION.trim() } : {}),
+    ...(env.VITE_GIT_SHA?.trim() ? { gitSha: env.VITE_GIT_SHA.trim() } : {}),
+    ...(env.VITE_DEPLOY_URL?.trim() ? { deployUrl: env.VITE_DEPLOY_URL.trim() } : {}),
+  };
 }
 
 export function resolveUnlockedModelAssetConfig(env: UnlockedModelAssetEnv, _production = false): UnlockedModelAssetConfig {
@@ -97,6 +124,7 @@ export const UNLOCKED_MANIFEST_FORMAT = UNLOCKED_MODEL_ASSET_CONFIG.manifestForm
 export const UNLOCKED_ALLOW_FIXTURE = UNLOCKED_MODEL_ASSET_CONFIG.allowFixture;
 export const UNLOCKED_BACKEND_PREFERENCE = UNLOCKED_MODEL_ASSET_CONFIG.backendPreference;
 export const COMPILED_WEBLLM_ENABLED = resolveCompiledWebLlmEnabled(import.meta.env);
+export const BENCHMARK_TELEMETRY_CONFIG = resolveBenchmarkTelemetryConfig(import.meta.env);
 export const UNLOCKED_RUNTIME_PROFILE_RESOLUTION: UnlockedRuntimeProfileResolution = resolveUnlockedRuntimeProfile(import.meta.env);
 export const UNLOCKED_RUNTIME_PROFILE = UNLOCKED_RUNTIME_PROFILE_RESOLUTION.profile;
 export const UNLOCKED_RUNTIME_CAPS = UNLOCKED_RUNTIME_PROFILE_RESOLUTION.caps;

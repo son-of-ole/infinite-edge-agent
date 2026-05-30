@@ -50,6 +50,11 @@ interface ImportMetaEnv {
   readonly VITE_EMBEDDING_MODEL?: string;
   readonly VITE_EMBEDDING_PREFER_WEBGPU?: string;
   readonly VITE_PUBLIC_EMBED_ALLOWED_ORIGINS?: string;
+  readonly VITE_BENCHMARK_TELEMETRY_ENABLED?: string;
+  readonly VITE_BENCHMARK_TELEMETRY_URL?: string;
+  readonly VITE_APP_VERSION?: string;
+  readonly VITE_GIT_SHA?: string;
+  readonly VITE_DEPLOY_URL?: string;
 }
 
 interface ImportMeta {
