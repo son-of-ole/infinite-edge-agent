@@ -163,7 +163,7 @@ Inputs:
 - `deploy_url`: public hosted app URL,
 - `hosted_production_benchmark_url`: optional explicit benchmark URL,
 - exactly one of these saved-artifact inputs:
-  - `hosted_benchmark_artifact_url`: URL to the saved benchmark JSON,
+  - `hosted_benchmark_artifact_url`: HTTPS URL to the saved benchmark JSON,
   - `hosted_benchmark_artifact_json`: pasted saved benchmark JSON,
   - `hosted_benchmark_artifact_base64`: base64-encoded saved benchmark JSON.
 

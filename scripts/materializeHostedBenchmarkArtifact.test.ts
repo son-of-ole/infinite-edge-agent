@@ -55,6 +55,33 @@ describe("hosted benchmark artifact materializer", () => {
     expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
   });
 
+  it("writes HTTPS-hosted benchmark JSON to a stable output path", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
+    const outputPath = join(dir, "browser-runtime-bench-latest.json");
+
+    const result = await materializeHostedBenchmarkArtifact({
+      url: "https://agent.example.com/browser-runtime-bench-latest.json",
+      outputPath,
+      fetchImpl: async () => new Response(JSON.stringify(makeArtifact()), { status: 200 }),
+    });
+
+    expect(result).toMatchObject({
+      artifactPath: outputPath,
+      source: "url",
+    });
+
+    const written = JSON.parse(await readFile(outputPath, "utf8")) as ReturnType<typeof makeArtifact>;
+    expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
+  });
+
+  it("rejects insecure HTTP-hosted benchmark artifact URLs", async () => {
+    await expect(materializeHostedBenchmarkArtifact({
+      url: "http://agent.example.com/browser-runtime-bench-latest.json",
+      outputPath: join(await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-")), "artifact.json"),
+      fetchImpl: async () => new Response(JSON.stringify(makeArtifact()), { status: 200 }),
+    })).rejects.toThrow("HOSTED_BENCHMARK_ARTIFACT_URL must be an absolute https URL.");
+  });
+
   it("rejects ambiguous hosted benchmark artifact sources", async () => {
     const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
     const outputPath = join(dir, "browser-runtime-bench-latest.json");

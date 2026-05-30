@@ -78,8 +78,8 @@ async function fetchArtifactJson(
     throw new Error("Provide HOSTED_BENCHMARK_ARTIFACT_JSON, HOSTED_BENCHMARK_ARTIFACT_BASE64, or HOSTED_BENCHMARK_ARTIFACT_URL.");
   }
   const url = new URL(artifactUrl);
-  if (url.protocol !== "https:" && url.protocol !== "http:") {
-    throw new Error("HOSTED_BENCHMARK_ARTIFACT_URL must be an absolute http(s) URL.");
+  if (url.protocol !== "https:") {
+    throw new Error("HOSTED_BENCHMARK_ARTIFACT_URL must be an absolute https URL.");
   }
   const response = await fetchImpl(url);
   if (!response.ok) {
