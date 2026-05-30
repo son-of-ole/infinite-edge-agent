@@ -84,7 +84,17 @@ pnpm release:gate
 
 `pnpm release:gate` writes `.artifacts/evals/release-gate/<timestamp>/results.json`, `trace.jsonl`, and `summary.md`, plus `.artifacts/evals/release-gate-latest.json`. Leave `RELEASE_REQUIRE_SIDECAR=false` for the browser-only/default open-source release lane. Set `RELEASE_REQUIRE_SIDECAR=true` only for sidecar-packaged releases where LanceDB availability is intentionally blocking.
 
-## 7. Final manual checks
+## 7. Hosted compiled deployment profile
+
+For the hosted compiled backend, verify the environment and production benchmark URL before claiming deploy readiness:
+
+```bash
+pnpm verify:hosted-profile
+```
+
+This check must pass before the real Chrome hosted benchmark is treated as authoritative. It requires the compiled backend, MTP-off production policy, Postgres-backed benchmark telemetry, admin-protected telemetry review routes, rate limiting, and the grounded exact Montana canary URL with telemetry opt-in.
+
+## 8. Final manual checks
 
 - Browser-smoke the target deployment in Chrome or Edge: initialize one configured backend, send a prompt, retrieve memory, export memory, clear memory, confirm runtime traces persist, and confirm the browser-preview benchmark route returns `passed: true` for non-degenerate visible output.
 - Confirm missing model assets fail with actionable errors rather than app-shell HTML fallbacks.

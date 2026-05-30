@@ -163,6 +163,33 @@ interface BenchmarkTelemetryPayload {
 }
 ```
 
+## Hosted Profile Verification
+
+Use the hosted profile verifier before calling a deployment production-ready:
+
+```bash
+pnpm verify:hosted-profile
+```
+
+For the hosted compiled profile, it expects:
+
+```bash
+VITE_LLM_BACKEND=compiled-browser-webllm
+VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC
+VITE_COMPILED_WEBLLM_ENABLED=true
+VITE_REQUIRE_UNLOCKED_RUNTIME=false
+VITE_MTP_ENABLED=false
+VITE_BENCHMARK_TELEMETRY_ENABLED=true
+VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs
+BENCHMARK_TELEMETRY_ENABLED=true
+BENCHMARK_TELEMETRY_STORAGE=postgres
+BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
+BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
+HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+```
+
+If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the canonical URL from `VITE_DEPLOY_URL`. The generated URL still has to be run in real Chrome or Edge for authoritative proof.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:

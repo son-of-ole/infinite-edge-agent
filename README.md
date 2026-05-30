@@ -68,7 +68,7 @@ The latest local production proof artifact for the compiled backend reported:
 }
 ```
 
-See [Hosted Device Proof](docs/56_HOSTED_DEVICE_PROOF.md) for the device matrix and [Benchmark Telemetry Plan](docs/57_BENCHMARK_TELEMETRY.md) for the next step: saving cross-device benchmark runs to a hosted database.
+See [Hosted Device Proof](docs/56_HOSTED_DEVICE_PROOF.md) for the device matrix and [Benchmark Telemetry](docs/57_BENCHMARK_TELEMETRY.md) for the opt-in database-backed benchmark collector.
 
 ## Quick Start
 
@@ -126,7 +126,7 @@ The benchmark records:
 - CPU/fallback indicators where available,
 - and the raw JSON artifact.
 
-Opt-in hosted telemetry can be enabled with `VITE_BENCHMARK_TELEMETRY_ENABLED=true`, `VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs`, and the optional memory-server collector `BENCHMARK_TELEMETRY_ENABLED=true`, then requested per run with `submitTelemetry=true`. Uploaded artifacts are sanitized in the browser and again at the server so raw prompts, raw responses, expected strings, and token diagnostics are not stored. The collector exposes `/api/benchmark-runs/dashboard` and `/api/benchmark-runs/export.csv` for reviewing hosted device results, supports `BENCHMARK_TELEMETRY_STORAGE=postgres` for durable hosted storage, rate-limits submissions, and can protect review/export routes with `BENCHMARK_TELEMETRY_ADMIN_TOKEN`. See [Benchmark Telemetry Plan](docs/57_BENCHMARK_TELEMETRY.md).
+Opt-in hosted telemetry can be enabled with `VITE_BENCHMARK_TELEMETRY_ENABLED=true`, `VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs`, and the optional memory-server collector `BENCHMARK_TELEMETRY_ENABLED=true`, then requested per run with `submitTelemetry=true`. Uploaded artifacts are sanitized in the browser and again at the server so raw prompts, raw responses, expected strings, and token diagnostics are not stored. The collector exposes `/api/benchmark-runs/dashboard` and `/api/benchmark-runs/export.csv` for reviewing hosted device results, supports `BENCHMARK_TELEMETRY_STORAGE=postgres` for durable hosted storage, rate-limits submissions, and can protect review/export routes with `BENCHMARK_TELEMETRY_ADMIN_TOKEN`. See [Benchmark Telemetry](docs/57_BENCHMARK_TELEMETRY.md).
 
 ## Main Commands
 
@@ -136,6 +136,7 @@ pnpm test                   # Run converter, core, web, memory-server, and SDK t
 pnpm build                  # Build packages and browser app
 pnpm eval:production        # Run production eval harness
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
+pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
 pnpm smoke:sdk              # Validate embeddable browser SDK package
 ```
 
@@ -222,6 +223,19 @@ VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC
 VITE_MEMORY_PROVIDER=browser-vector
 VITE_QWEN_THINKING_MODE=disabled
 VITE_MTP_ENABLED=false
+```
+
+For hosted deployments that collect cross-device benchmark results, also configure durable telemetry and verify the profile before making a deploy-ready claim:
+
+```bash
+VITE_BENCHMARK_TELEMETRY_ENABLED=true
+VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs
+BENCHMARK_TELEMETRY_ENABLED=true
+BENCHMARK_TELEMETRY_STORAGE=postgres
+BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
+BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
+HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+pnpm verify:hosted-profile
 ```
 
 For WebGPU and WASM performance, use a secure context and cross-origin isolation headers where your hosting platform supports them.

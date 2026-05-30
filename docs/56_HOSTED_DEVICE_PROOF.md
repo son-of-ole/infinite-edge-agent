@@ -72,8 +72,29 @@ A hosted run counts only when it proves all of this:
 - `productionDeployReadyPassed` is true,
 - and direct model factual output is not counted as retrieval proof.
 
+## Hosted Profile Verifier
+
+Before a hosted deploy-ready claim, run the environment and benchmark URL verifier:
+
+```bash
+pnpm verify:hosted-profile
+```
+
+The verifier checks the deploy profile, not the model output. It requires:
+
+- `compiled-browser-webllm` as the hosted production backend,
+- `VITE_COMPILED_WEBLLM_ENABLED=true`,
+- MTP disabled in production,
+- benchmark telemetry enabled on both browser and collector,
+- `BENCHMARK_TELEMETRY_STORAGE=postgres`,
+- admin protection for list, summary, dashboard, and CSV export routes,
+- rate limiting configured,
+- and a benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
+
+The verifier does not replace the real Chrome benchmark. It prevents a hosted environment from being called production-ready before the authoritative browser proof can even produce the right artifact.
+
 ## What Still Needs Automation
 
-Manual device testing has been encouraging. The next release-hardening step is to store benchmark results automatically in a database so the project can track real-world performance over time.
+Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.
 
 See [Benchmark Telemetry Plan](57_BENCHMARK_TELEMETRY.md).
