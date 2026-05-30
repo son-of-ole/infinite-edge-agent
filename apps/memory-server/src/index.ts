@@ -56,7 +56,9 @@ const corsOrigin = parseCorsOrigin(process.env.MEMORY_CORS_ORIGIN);
 const memoryEncryptionKey = process.env.MEMORY_ENCRYPTION_KEY;
 const benchmarkTelemetryEnabled = process.env.BENCHMARK_TELEMETRY_ENABLED === "true";
 const benchmarkTelemetryPrefix = process.env.BENCHMARK_TELEMETRY_PREFIX ?? "/api/benchmark-runs";
+const benchmarkTelemetryStorage = process.env.BENCHMARK_TELEMETRY_STORAGE === "postgres" ? "postgres" : "jsonl";
 const benchmarkTelemetryDir = process.env.BENCHMARK_TELEMETRY_DIR ?? ".data/benchmark-runs";
+const benchmarkTelemetryDatabaseUrl = process.env.BENCHMARK_TELEMETRY_DATABASE_URL ?? process.env.DATABASE_URL;
 const benchmarkTelemetryMaxArtifactBytes = readPositiveInt(
   process.env.BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES,
   1024 * 1024
@@ -87,7 +89,9 @@ if (apiPrefix) {
 registerBenchmarkTelemetryRoutes(server, {
   enabled: benchmarkTelemetryEnabled,
   prefix: benchmarkTelemetryPrefix,
+  storage: benchmarkTelemetryStorage,
   dir: benchmarkTelemetryDir,
+  ...(benchmarkTelemetryDatabaseUrl ? { databaseUrl: benchmarkTelemetryDatabaseUrl } : {}),
   maxArtifactBytes: benchmarkTelemetryMaxArtifactBytes
 });
 

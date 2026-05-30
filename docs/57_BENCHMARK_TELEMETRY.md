@@ -31,17 +31,27 @@ Enable it with:
 ```bash
 BENCHMARK_TELEMETRY_ENABLED=true
 BENCHMARK_TELEMETRY_PREFIX=/api/benchmark-runs
+BENCHMARK_TELEMETRY_STORAGE=jsonl
 BENCHMARK_TELEMETRY_DIR=.data/benchmark-runs
 BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES=1048576
 ```
 
-The included collector is JSONL-backed so it works in local development and simple hosted environments without adding another service. The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata and pass/fail/speed fields, not prompt or response text.
+The included collector defaults to JSONL so it works in local development and simple hosted environments without adding another service. For durable hosted storage, set:
+
+```bash
+BENCHMARK_TELEMETRY_STORAGE=postgres
+BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
+```
+
+The Postgres adapter uses the same store contract as JSONL, creates the `benchmark_runs` table if needed, and writes the sanitized artifact as `jsonb`. It loads the optional `pg` package at runtime only when Postgres storage is selected, so local JSONL development does not require a database client dependency.
+
+The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata and pass/fail/speed fields, not prompt or response text.
 
 ## Recommended Durable Storage
 
-For Replit-hosted deployments, use hosted SQL/Postgres rather than writing JSON files to the app filesystem. Deployment filesystems are not a durable benchmark database.
+For Replit-hosted deployments, use hosted SQL/Postgres rather than writing JSON files to the app filesystem. Deployment filesystems are not a durable benchmark database. The JSONL store remains useful for local proof and static/simple demos; production telemetry should use `BENCHMARK_TELEMETRY_STORAGE=postgres`.
 
-The database should store one row per benchmark run and keep the raw artifact JSON for later analysis.
+The database should store one row per benchmark run and keep the sanitized artifact JSON for later analysis.
 
 ## Suggested Table
 

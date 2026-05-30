@@ -5,6 +5,8 @@ import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import {
   JsonlBenchmarkTelemetryStore,
+  SqlBenchmarkTelemetryStore,
+  createBenchmarkTelemetryStore,
   registerBenchmarkTelemetryRoutes,
   type BenchmarkTelemetryPayload
 } from "./benchmarkTelemetry";
@@ -132,7 +134,97 @@ describe("benchmark telemetry server", () => {
     expect(response.statusCode).toBe(404);
     await app.close();
   });
+
+  it("persists benchmark runs through a durable SQL client abstraction", async () => {
+    const client = new CapturingSqlClient();
+    const store = new SqlBenchmarkTelemetryStore({ client });
+
+    const saved = await store.save(makePayload());
+    const listed = await store.list({ limit: 10 });
+    const summary = await store.summary({ limit: 10 });
+
+    expect(saved).toMatchObject({
+      schemaVersion: 1,
+      runId: "bench_test",
+      backendId: "compiled-browser-webllm"
+    });
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({
+      runId: "bench_test",
+      summary: { tokensPerSecond: 8.25 }
+    });
+    expect(summary).toMatchObject({
+      count: 1,
+      productionDeployReadyCount: 1
+    });
+    expect(client.sql).toEqual(expect.arrayContaining([
+      expect.stringContaining("create table if not exists benchmark_runs"),
+      expect.stringContaining("insert into benchmark_runs"),
+      expect.stringContaining("select * from benchmark_runs")
+    ]));
+    expect(JSON.stringify(client.rows)).not.toContain("private benchmark prompt");
+    expect(JSON.stringify(client.rows)).not.toContain("Helena");
+  });
+
+  it("selects SQL storage only when explicitly configured with a database url", () => {
+    expect(createBenchmarkTelemetryStore({
+      storage: "jsonl",
+      dir: ".data/benchmark-runs"
+    })).toBeInstanceOf(JsonlBenchmarkTelemetryStore);
+    expect(() => createBenchmarkTelemetryStore({
+      storage: "postgres",
+      dir: ".data/benchmark-runs"
+    })).toThrow(/requires BENCHMARK_TELEMETRY_DATABASE_URL or DATABASE_URL/);
+  });
 });
+
+class CapturingSqlClient {
+  readonly sql: string[] = [];
+  readonly rows: Array<Record<string, unknown>> = [];
+
+  async query(sql: string, values: readonly unknown[] = []): Promise<{ rows: Array<Record<string, unknown>> }> {
+    this.sql.push(sql);
+    if (sql.includes("insert into benchmark_runs")) {
+      const row = {
+        id: values[0],
+        received_at: values[1],
+        created_at: values[2],
+        app_version: values[3],
+        git_sha: values[4],
+        deploy_url: values[5],
+        benchmark_profile: values[6],
+        backend_id: values[7],
+        model_id: values[8],
+        os: values[9],
+        browser_name: values[10],
+        browser_version: values[11],
+        user_agent_hash: values[12],
+        mobile: values[13],
+        hardware_concurrency: values[14],
+        device_memory_gb: values[15],
+        screen_width: values[16],
+        screen_height: values[17],
+        webgpu_available: values[18],
+        init_load_ms: values[19],
+        time_to_first_token_ms: values[20],
+        tokens_per_second: values[21],
+        memory_grounding_passed: values[22],
+        expected_exact_passed: values[23],
+        compiled_backend_ready_passed: values[24],
+        production_deploy_ready_passed: values[25],
+        artifact_json: values[26],
+        artifact_bytes: values[27],
+        schema_version: 1
+      };
+      this.rows.splice(0, this.rows.length, row);
+      return { rows: [row] };
+    }
+    if (sql.includes("select * from benchmark_runs")) {
+      return { rows: [...this.rows] };
+    }
+    return { rows: [] };
+  }
+}
 
 function makePayload(): BenchmarkTelemetryPayload {
   return {
