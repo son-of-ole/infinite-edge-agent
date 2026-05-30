@@ -48,6 +48,10 @@ function makePassingBrowserPreviewArtifact() {
       productionSpeedTokensPerSecond: 2.7,
       productionSpeedFloorTokensPerSecond: 2,
       meanTokensPerSecond: 2.7,
+      benchmarkTelemetryRequested: true,
+      benchmarkTelemetryConfigured: true,
+      benchmarkTelemetrySubmitted: true,
+      benchmarkTelemetryStatus: 202,
       benchmarkGpuLabelEvidencePassed: true,
       benchmarkGpuVendor: "apple",
       benchmarkGpuDescription: "Apple M3",
@@ -209,6 +213,17 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof requires browser GPU label evidence.");
   });
 
+  it("fails production proof when benchmark telemetry was not successfully submitted", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    (artifact.summary as Record<string, unknown>).benchmarkTelemetrySubmitted = false;
+    (artifact.summary as Record<string, unknown>).benchmarkTelemetryStatus = 500;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires successful benchmark telemetry submission.");
+  });
+
   it("fails production proof when the hosted artifact does not match the expected source commit", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: makePassingBrowserPreviewArtifact(),
@@ -298,6 +313,10 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkExpectedExactPassed: true,
         hostedBenchmarkProductionSpeedFloorPassed: true,
         hostedBenchmarkMeanTokensPerSecond: 2.7,
+        hostedBenchmarkTelemetryRequested: true,
+        hostedBenchmarkTelemetryConfigured: true,
+        hostedBenchmarkTelemetrySubmitted: true,
+        hostedBenchmarkTelemetryStatus: 202,
         hostedBenchmarkGpuLabelEvidencePassed: true,
         hostedBenchmarkGpuVendor: "apple",
         hostedBenchmarkGpuDescription: "Apple M3",

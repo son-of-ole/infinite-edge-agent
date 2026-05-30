@@ -32,6 +32,10 @@ export interface HostedBenchmarkProof {
   productionSpeedTokensPerSecond: number | null;
   productionSpeedFloorTokensPerSecond: number | null;
   meanTokensPerSecond: number | null;
+  benchmarkTelemetryRequested: boolean;
+  benchmarkTelemetryConfigured: boolean;
+  benchmarkTelemetrySubmitted: boolean;
+  benchmarkTelemetryStatus: number | null;
   gpuLabelEvidencePassed: boolean;
   gpuVendor: string | null;
   gpuArchitecture: string | null;
@@ -186,6 +190,14 @@ export function evaluateHostedBenchmarkProof(input: {
   if ((proof.productionSpeedTokensPerSecond ?? proof.meanTokensPerSecond ?? 0) < minTokensPerSecond) {
     blockers.push(`Hosted benchmark proof requires at least ${minTokensPerSecond} tokens/sec.`);
   }
+  if (
+    proof.benchmarkTelemetryRequested !== true
+    || proof.benchmarkTelemetryConfigured !== true
+    || proof.benchmarkTelemetrySubmitted !== true
+    || !isSuccessfulHttpStatus(proof.benchmarkTelemetryStatus)
+  ) {
+    blockers.push("Hosted benchmark proof requires successful benchmark telemetry submission.");
+  }
   if (proof.gpuLabelEvidencePassed !== true) {
     blockers.push("Hosted benchmark proof requires browser GPU label evidence.");
   }
@@ -267,6 +279,10 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkExpectedExactPassed: report.proof.expectedExactPassed,
       hostedBenchmarkProductionSpeedFloorPassed: report.proof.productionSpeedFloorPassed,
       hostedBenchmarkMeanTokensPerSecond: report.proof.meanTokensPerSecond,
+      hostedBenchmarkTelemetryRequested: report.proof.benchmarkTelemetryRequested,
+      hostedBenchmarkTelemetryConfigured: report.proof.benchmarkTelemetryConfigured,
+      hostedBenchmarkTelemetrySubmitted: report.proof.benchmarkTelemetrySubmitted,
+      hostedBenchmarkTelemetryStatus: report.proof.benchmarkTelemetryStatus,
       hostedBenchmarkGpuLabelEvidencePassed: report.proof.gpuLabelEvidencePassed,
       hostedBenchmarkGpuVendor: report.proof.gpuVendor,
       hostedBenchmarkGpuArchitecture: report.proof.gpuArchitecture,
@@ -422,6 +438,10 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     productionSpeedTokensPerSecond: readNumber(source.summary.productionSpeedTokensPerSecond),
     productionSpeedFloorTokensPerSecond: readNumber(source.summary.productionSpeedFloorTokensPerSecond),
     meanTokensPerSecond: readNumber(source.summary.meanTokensPerSecond),
+    benchmarkTelemetryRequested: readBoolean(source.summary.benchmarkTelemetryRequested),
+    benchmarkTelemetryConfigured: readBoolean(source.summary.benchmarkTelemetryConfigured),
+    benchmarkTelemetrySubmitted: readBoolean(source.summary.benchmarkTelemetrySubmitted),
+    benchmarkTelemetryStatus: readNumber(source.summary.benchmarkTelemetryStatus),
     gpuLabelEvidencePassed: gpuEvidence.passed,
     gpuVendor: gpuEvidence.vendor,
     gpuArchitecture: gpuEvidence.architecture,
@@ -481,6 +501,10 @@ function buildEmptyProof(): HostedBenchmarkProof {
     productionSpeedTokensPerSecond: null,
     productionSpeedFloorTokensPerSecond: null,
     meanTokensPerSecond: null,
+    benchmarkTelemetryRequested: false,
+    benchmarkTelemetryConfigured: false,
+    benchmarkTelemetrySubmitted: false,
+    benchmarkTelemetryStatus: null,
     gpuLabelEvidencePassed: false,
     gpuVendor: null,
     gpuArchitecture: null,
@@ -522,6 +546,10 @@ function readBoolean(value: unknown): boolean {
 
 function readNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function isSuccessfulHttpStatus(value: number | null): boolean {
+  return typeof value === "number" && value >= 200 && value < 300;
 }
 
 function normalizeString(value: unknown): string | null {

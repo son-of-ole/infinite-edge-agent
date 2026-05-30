@@ -109,6 +109,22 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails standalone hosted benchmark proof when telemetry submission was not proven", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkTelemetrySubmitted: false,
+            hostedBenchmarkTelemetryStatus: 500,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails standalone hosted benchmark proof when Backend Broker selection is missing", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1264,6 +1280,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when telemetry submission proof is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionTelemetrySubmitted: false,
+            v12ProductionTelemetryStatus: 500,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when concrete memory grounding evidence is missing", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1351,6 +1384,10 @@ function makeHostedBenchmarkProofSummary(
     hostedBenchmarkExpectedExactPassed: true,
     hostedBenchmarkProductionSpeedFloorPassed: true,
     hostedBenchmarkMeanTokensPerSecond: 2.7,
+    hostedBenchmarkTelemetryRequested: true,
+    hostedBenchmarkTelemetryConfigured: true,
+    hostedBenchmarkTelemetrySubmitted: true,
+    hostedBenchmarkTelemetryStatus: 202,
     hostedBenchmarkDirectModelFactualProofUsed: false,
     hostedBenchmarkTechnicalProofOnly: false,
     hostedBenchmarkCpuFallbackUsed: false,
@@ -1507,6 +1544,10 @@ function makeV12ProductionArchiveSummary(
       v12ProductionExpectedExactPassed: true,
       v12ProductionSpeedFloorPassed: true,
       v12ProductionMeanTokensPerSecond: 2.7,
+      v12ProductionTelemetryRequested: true,
+      v12ProductionTelemetryConfigured: true,
+      v12ProductionTelemetrySubmitted: true,
+      v12ProductionTelemetryStatus: 202,
       v12ProductionGpuLabelEvidencePassed: true,
       v12ProductionGpuDescription: "Apple M3",
       v12ProductionDirectModelFactualProofUsed: false,

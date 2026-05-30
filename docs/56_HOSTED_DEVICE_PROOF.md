@@ -73,6 +73,7 @@ A hosted run counts only when it proves all of this:
 - the expected memory hit has a concrete retrieval rank,
 - the exact answer check passes,
 - the backend id is `compiled-browser-webllm`,
+- benchmark telemetry was requested, configured, submitted, and returned a successful HTTP status,
 - `productionDeployReadyPassed` is true,
 - and direct model factual output is not counted as retrieval proof.
 

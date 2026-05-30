@@ -126,6 +126,10 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionExpectedExactPassed === true
     && artifact.summary?.v12ProductionSpeedFloorPassed === true
     && Number(artifact.summary?.v12ProductionMeanTokensPerSecond ?? 0) >= 2
+    && artifact.summary?.v12ProductionTelemetryRequested === true
+    && artifact.summary?.v12ProductionTelemetryConfigured === true
+    && artifact.summary?.v12ProductionTelemetrySubmitted === true
+    && isSuccessfulHttpStatus(artifact.summary?.v12ProductionTelemetryStatus)
     && artifact.summary?.v12ProductionDirectModelFactualProofUsed === false
     && artifact.summary?.v12ProductionTechnicalProofOnly === false
     && artifact.summary?.v12ProductionCpuFallbackUsed === false
@@ -182,6 +186,10 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkExpectedExactPassed === true
     && artifact.summary?.hostedBenchmarkProductionSpeedFloorPassed === true
     && Number(artifact.summary?.hostedBenchmarkMeanTokensPerSecond ?? 0) >= 2
+    && artifact.summary?.hostedBenchmarkTelemetryRequested === true
+    && artifact.summary?.hostedBenchmarkTelemetryConfigured === true
+    && artifact.summary?.hostedBenchmarkTelemetrySubmitted === true
+    && isSuccessfulHttpStatus(artifact.summary?.hostedBenchmarkTelemetryStatus)
     && artifact.summary?.hostedBenchmarkDirectModelFactualProofUsed === false
     && artifact.summary?.hostedBenchmarkTechnicalProofOnly === false
     && artifact.summary?.hostedBenchmarkCpuFallbackUsed === false
@@ -224,6 +232,10 @@ function hasBrokerProofRequirements(
     && Number(summary?.[`${prefix}BrokerProofRequirementCount`] ?? 0) >= 2
     && summary?.[`${prefix}BrokerRequiresBackendTrace`] === true
     && summary?.[`${prefix}BrokerRequiresMemoryGrounding`] === true;
+}
+
+function isSuccessfulHttpStatus(value: unknown): boolean {
+  return typeof value === "number" && value >= 200 && value < 300;
 }
 
 function hasGpuLabelEvidence(
