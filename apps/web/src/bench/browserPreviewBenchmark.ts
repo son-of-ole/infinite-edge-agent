@@ -239,12 +239,14 @@ export interface BrowserPreviewBenchmarkRun {
 
 export interface BrowserPreviewBenchmarkPayload {
   name: "browser-preview-benchmark";
+  schemaVersion: number;
   createdAt: string;
   passed: boolean;
   summary: Record<string, unknown>;
   runs: BrowserPreviewBenchmarkRun[];
 }
 
+export const BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION = 2;
 const PROOF_MARKER = "[unlocked:ssa-kv-tsp]";
 const PRODUCTION_SPEED_FLOOR_TOKENS_PER_SECOND = 2;
 const PRODUCTION_MIN_LAYER_VISITS_PER_TOKEN = 28;
@@ -489,6 +491,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const productionDeployReadyPassed = compiledBackendReadyPassed;
   return {
     name: "browser-preview-benchmark",
+    schemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
     createdAt: input.createdAt,
     passed: input.runs.length > 0
       && (!visibleResponseQualityRequired || visibleResponseQualityPassed)
@@ -506,6 +509,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       && (!stopQualityRequired || stopQualityPassed),
     summary: {
       profile: input.profile,
+      v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       memoryQueryMode: memoryGroundingRequired
         ? summarizeStringField(memoryGroundingRuns.map((proof) => proof.mode)) ?? "seeded_browser_vector_context_rebuild"
         : "direct_model_no_memory_retrieval",

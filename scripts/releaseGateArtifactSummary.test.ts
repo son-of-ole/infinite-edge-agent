@@ -27,6 +27,7 @@ describe("release gate artifact summary", () => {
         v12ProductionTechnicalProofOnly: false,
         v12ProductionCpuFallbackUsed: false,
         v12ProductionStrictWebGpuPassed: true,
+        v12ProductionProofSchemaVersion: 2,
       },
     })).toMatchObject({
       v12ProductionArchivePassed: true,
@@ -51,6 +52,7 @@ describe("release gate artifact summary", () => {
       v12ProductionTechnicalProofOnly: false,
       v12ProductionCpuFallbackUsed: false,
       v12ProductionStrictWebGpuPassed: true,
+      v12ProductionProofSchemaVersion: 2,
     });
   });
 
@@ -71,6 +73,7 @@ describe("release gate artifact summary", () => {
         hostedBenchmarkTechnicalProofOnly: false,
         hostedBenchmarkCpuFallbackUsed: false,
         hostedBenchmarkStrictWebGpuPassed: true,
+        hostedBenchmarkV12ProductionProofSchemaVersion: 2,
       },
     })).toMatchObject({
       hostedBenchmarkProofPassed: true,
@@ -87,6 +90,7 @@ describe("release gate artifact summary", () => {
       hostedBenchmarkTechnicalProofOnly: false,
       hostedBenchmarkCpuFallbackUsed: false,
       hostedBenchmarkStrictWebGpuPassed: true,
+      hostedBenchmarkV12ProductionProofSchemaVersion: 2,
     });
   });
 

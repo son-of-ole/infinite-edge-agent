@@ -82,6 +82,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
       v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),
+      v12ProductionProofSchemaVersion: hostedProof?.v12ProductionProofSchemaVersion ?? null,
       v12ProductionArtifactCount: artifactCount,
       v12ProductionSuiteArtifactCount: suite.totalArtifactCount,
       v12ProductionChildArtifactCount: suite.childArtifactCount,

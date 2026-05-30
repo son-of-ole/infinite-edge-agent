@@ -23,8 +23,10 @@ function makePassingBrowserPreviewArtifact() {
   return {
     name: "browser-preview-benchmark",
     createdAt: "2026-05-30T21:00:00.000Z",
+    schemaVersion: 2,
     passed: true,
     summary: {
+      v12ProductionProofSchemaVersion: 2,
       runtimeBackendId: "compiled-browser-webllm",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",
@@ -128,6 +130,17 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker selection evidence for compiled-browser-webllm.");
   });
 
+  it("fails production proof when the hosted artifact uses a stale v12 proof schema", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    artifact.schemaVersion = 1;
+    (artifact.summary as Record<string, unknown>).v12ProductionProofSchemaVersion = 1;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires v12 production proof schema version 2.");
+  });
+
   it("extracts proof fields from a browser-runtime-bench wrapper artifact", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: {
@@ -180,6 +193,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkTechnicalProofOnly: false,
         hostedBenchmarkCpuFallbackUsed: false,
         hostedBenchmarkStrictWebGpuPassed: true,
+        hostedBenchmarkV12ProductionProofSchemaVersion: 2,
         hostedBenchmarkBackendBrokerSelectionPassed: true,
         hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
         hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",

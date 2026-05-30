@@ -39,8 +39,10 @@ function makePassingHostedBenchmarkArtifact() {
   return {
     name: "browser-preview-benchmark",
     createdAt: "2026-05-30T21:00:00.000Z",
+    schemaVersion: 2,
     passed: true,
     summary: {
+      v12ProductionProofSchemaVersion: 2,
       runtimeBackendId: "compiled-browser-webllm",
       deployBackendId: "compiled-browser-webllm",
       productionDeployReadyPassed: true,
@@ -145,6 +147,7 @@ describe("v12 production archive", () => {
         v12ProductionTechnicalProofOnly: false,
         v12ProductionCpuFallbackUsed: false,
         v12ProductionStrictWebGpuPassed: true,
+        v12ProductionProofSchemaVersion: 2,
         v12ProductionBackendBrokerSelectionPassed: true,
         v12ProductionBackendBrokerTraceCount: 1,
         v12ProductionBrokerSelectedBackendId: "compiled-browser-webllm",

@@ -124,6 +124,7 @@ describe("benchmark telemetry", () => {
 function makePayload(): BrowserPreviewBenchmarkPayload {
   return {
     name: "browser-preview-benchmark",
+    schemaVersion: 2,
     createdAt: "2026-05-30T00:00:00.000Z",
     passed: true,
     summary: {

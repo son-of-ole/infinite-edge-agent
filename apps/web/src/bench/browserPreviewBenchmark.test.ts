@@ -1941,8 +1941,10 @@ describe("browser preview benchmark payload", () => {
     });
 
     expect(payload.passed).toBe(true);
+    expect(payload.schemaVersion).toBe(2);
     expect(payload.summary).toMatchObject({
       runtimeBackendId: "compiled-browser-webllm",
+      v12ProductionProofSchemaVersion: 2,
       runtimeBackendRole: "production_candidate",
       backendBrokerTraceCount: 1,
       backendBrokerSelectionPassed: true,

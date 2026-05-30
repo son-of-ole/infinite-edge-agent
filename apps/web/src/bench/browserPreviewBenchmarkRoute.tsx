@@ -59,6 +59,7 @@ import { IndexedDbMemoryStore } from "../lib/storage/indexedDbMemoryStore";
 import {
   buildDeterministicLongPrompt,
   buildBrowserPreviewBenchmarkPayload,
+  BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
   MAX_LONG_PROMPT_SEED_CHARS,
   MAX_LONG_PROMPT_REPEAT,
   MAX_LONG_PROMPT_TARGET_TOKENS,
@@ -361,10 +362,12 @@ export async function runMemoryGroundingAuditOnlyBenchmark(
   const elapsedMs = roundMs(performance.now() - startedAt);
   return {
     name: "browser-preview-benchmark",
+    schemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
     createdAt: new Date().toISOString(),
     passed: memoryGroundingPassed,
     summary: {
       profile: request.profile.profile,
+      v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       memoryGroundingAuditOnly: true,
       memoryQueryMode: "seeded_browser_vector_context_rebuild",
       memoryGroundingRequired: true,
@@ -1959,10 +1962,12 @@ export function buildBrowserPreviewBenchmarkFailurePayload(
   const prefillChunkMetadata = readPrefillChunkMetadata(error);
   return {
     name: "browser-preview-benchmark",
+    schemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
     createdAt: new Date().toISOString(),
     passed: false,
     summary: {
       profile: request.profile.profile,
+      v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       promptCount: request.prompts.length,
       coherentResponseCount: 0,
       expectedSubstringCheckCount: request.prompts.filter((prompt) => prompt.expectedSubstrings.length > 0).length,

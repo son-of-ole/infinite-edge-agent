@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 export interface HostedBenchmarkProof {
   sourceName: string;
+  v12ProductionProofSchemaVersion: number | null;
   runtimeBackendId: string | null;
   deployBackendId: string | null;
   response: string | null;
@@ -58,6 +59,7 @@ export interface HostedBenchmarkProofArtifactWriteResult {
 const DEFAULT_BACKEND_ID = "compiled-browser-webllm";
 const DEFAULT_EXPECTED_RESPONSE = "Helena";
 const DEFAULT_SPEED_FLOOR = 2;
+export const REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION = 2;
 
 export async function evaluateHostedBenchmarkProofFile(
   artifactPath: string,
@@ -98,6 +100,9 @@ export function evaluateHostedBenchmarkProof(input: {
   }
   if (proof.runtimeBackendId !== expectedBackendId) {
     blockers.push(`Hosted benchmark proof requires runtimeBackendId=${expectedBackendId}.`);
+  }
+  if (proof.v12ProductionProofSchemaVersion !== REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION) {
+    blockers.push(`Hosted benchmark proof requires v12 production proof schema version ${REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION}.`);
   }
   if (proof.deployBackendId !== expectedBackendId) {
     blockers.push(`Hosted benchmark proof requires deployBackendId=${expectedBackendId}.`);
@@ -182,6 +187,7 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkProofPassed: report.passed,
       hostedBenchmarkProofBlockerCount: report.blockers.length,
       hostedBenchmarkArtifactPath: report.artifactPath,
+      hostedBenchmarkV12ProductionProofSchemaVersion: report.proof.v12ProductionProofSchemaVersion,
       hostedBenchmarkRuntimeBackendId: report.proof.runtimeBackendId,
       hostedBenchmarkDeployBackendId: report.proof.deployBackendId,
       hostedBenchmarkCompiledBackendReadyPassed: report.proof.compiledBackendReadyPassed,
@@ -232,6 +238,7 @@ export async function writeHostedBenchmarkProofArtifact(
 interface BenchmarkSource {
   sourceName: string;
   sourcePassed: boolean;
+  schemaVersion: number | null;
   summary: Record<string, unknown>;
   runs: unknown[];
 }
@@ -245,6 +252,7 @@ function extractBenchmarkSource(artifact: unknown): BenchmarkSource | null {
     return {
       sourceName: "browser-runtime-bench.browserPreview",
       sourcePassed: artifact.passed === true && browserPreview.passed === true,
+      schemaVersion: readNumber(browserPreview.schemaVersion) ?? readNumber(artifact.schemaVersion),
       summary: browserPreview.summary,
       runs: Array.isArray(browserPreview.runs) ? browserPreview.runs : [],
     };
@@ -253,6 +261,7 @@ function extractBenchmarkSource(artifact: unknown): BenchmarkSource | null {
   return {
     sourceName: name,
     sourcePassed: artifact.passed === true,
+    schemaVersion: readNumber(artifact.schemaVersion),
     summary: artifact.summary,
     runs: Array.isArray(artifact.runs) ? artifact.runs : [],
   };
@@ -262,6 +271,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
   const firstRun = isRecord(source.runs[0]) ? source.runs[0] : {};
   const runtimeTrace = isRecord(firstRun.runtimeTrace) ? firstRun.runtimeTrace : {};
   const runtimeBackendId = readString(source.summary.runtimeBackendId) ?? readString(runtimeTrace.backend);
+  const v12ProductionProofSchemaVersion = readNumber(source.summary.v12ProductionProofSchemaVersion) ?? source.schemaVersion;
   const brokerSelection = readBrokerSelection(runtimeTrace.brokerSelection);
   const brokerSelectedBackendId = readString(source.summary.backendBrokerSelectedBackendId) ?? brokerSelection?.backendId ?? null;
   const brokerSelectedModelId = readString(source.summary.backendBrokerSelectedModelId) ?? brokerSelection?.modelId ?? null;
@@ -284,6 +294,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     );
   return {
     sourceName: source.sourceName,
+    v12ProductionProofSchemaVersion,
     runtimeBackendId,
     deployBackendId: readString(source.summary.deployBackendId) ?? runtimeBackendId,
     response: readString(firstRun.response),
@@ -319,6 +330,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
 function buildEmptyProof(): HostedBenchmarkProof {
   return {
     sourceName: "unknown",
+    v12ProductionProofSchemaVersion: null,
     runtimeBackendId: null,
     deployBackendId: null,
     response: null,

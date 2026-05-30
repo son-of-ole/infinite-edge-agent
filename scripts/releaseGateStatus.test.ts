@@ -841,6 +841,22 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when the production proof schema is stale", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionProofSchemaVersion: 1,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -989,6 +1005,7 @@ function makeV12ProductionArchiveSummary(
       v12ProductionTechnicalProofOnly: false,
       v12ProductionCpuFallbackUsed: false,
       v12ProductionStrictWebGpuPassed: true,
+      v12ProductionProofSchemaVersion: 2,
       v12ProductionBackendBrokerSelectionPassed: true,
       v12ProductionBackendBrokerTraceCount: 1,
       v12ProductionBrokerSelectedBackendId: "compiled-browser-webllm",

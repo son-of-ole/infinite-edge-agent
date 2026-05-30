@@ -43,8 +43,10 @@ function makePassingHostedBenchmarkProofReport() {
     artifact: {
       name: "browser-preview-benchmark",
       createdAt: "2026-05-30T21:00:00.000Z",
+      schemaVersion: 2,
       passed: true,
       summary: {
+        v12ProductionProofSchemaVersion: 2,
         runtimeBackendId: "compiled-browser-webllm",
         runtimeBackendRole: "production_candidate",
         deployBackendId: "compiled-browser-webllm",
