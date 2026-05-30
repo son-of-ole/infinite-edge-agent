@@ -61,6 +61,25 @@ function makePassingBrowserPreviewArtifact() {
     runs: [
       {
         response: "Helena",
+        expectedAnswerOnlyPassed: true,
+        memoryGrounding: {
+          mode: "seeded_browser_vector_context_rebuild",
+          caseId: "montana_capital",
+          corpusCount: 16,
+          retrievedMemoryIds: ["bench_memory_montana_capital"],
+          includedMemoryIds: ["bench_memory_montana_capital"],
+          expectedMemoryIds: ["bench_memory_montana_capital"],
+          expectedMemoryHitPassed: true,
+          contextRebuildPassed: true,
+          answerOnlyExpected: true,
+          answerOnlyPassed: true,
+          contextEstimatedTokens: 42,
+          retrievalMs: 2,
+          contextRebuildMs: 1,
+          retrievalRank: 1,
+          retrievalScore: 0.99,
+          retrievalTopScoreMargin: 0.4,
+        },
         runtimeTrace: {
           backend: "compiled-browser-webllm",
           brokerSelection,
@@ -117,6 +136,16 @@ describe("hosted benchmark proof verifier", () => {
       "Hosted benchmark proof requires memoryGroundingPassed=true.",
       "Hosted benchmark proof cannot count direct model factual output as retrieval proof.",
     ]));
+  });
+
+  it("fails when summary booleans claim grounding but run-level retrieval evidence is missing", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    delete (artifact.runs[0] as Record<string, unknown>).memoryGrounding;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires concrete run-level memory grounding evidence.");
   });
 
   it("fails production proof when the hosted artifact lacks Backend Broker selection evidence", () => {
@@ -219,6 +248,15 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkCompiledBackendReadyPassed: true,
         hostedBenchmarkProductionDeployReadyPassed: true,
         hostedBenchmarkMemoryGroundingPassed: true,
+        hostedBenchmarkConcreteMemoryGroundingPassed: true,
+        hostedBenchmarkMemoryGroundingRunCount: 1,
+        hostedBenchmarkMemoryGroundingCaseId: "montana_capital",
+        hostedBenchmarkMemorySeededCorpusCount: 16,
+        hostedBenchmarkMemoryRetrievedCount: 1,
+        hostedBenchmarkMemoryIncludedCount: 1,
+        hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+        hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+        hostedBenchmarkMemoryExpectedHitMinTopScoreMargin: 0.4,
         hostedBenchmarkExpectedExactPassed: true,
         hostedBenchmarkProductionSpeedFloorPassed: true,
         hostedBenchmarkMeanTokensPerSecond: 2.7,

@@ -124,7 +124,7 @@ HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runti
 pnpm verify:hosted-profile
 ```
 
-The verifier fails if the hosted profile points at the Kernel Lab, uses local JSONL telemetry for hosted production, leaves dashboard/export routes unprotected, uses a localhost/private/non-HTTPS benchmark origin, or omits the grounded exact `Helena` benchmark with telemetry opt-in.
+The verifier fails if the hosted profile points at the Kernel Lab, uses local JSONL telemetry for hosted production, leaves dashboard/export routes unprotected, uses a localhost/private/non-HTTPS benchmark origin, or omits the grounded exact `Helena` benchmark with telemetry opt-in. The later hosted benchmark proof also requires run-level memory evidence: expected, retrieved, and context-included memory ids plus retrieval rank.
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` plus a timestamped artifact under `.artifacts/evals/hosted-deployment-profile/`. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` to make `pnpm release:gate` run this verifier and include the hosted profile artifact in the release summary.
 

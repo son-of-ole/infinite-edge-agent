@@ -68,7 +68,8 @@ A hosted run counts only when it proves all of this:
 - the app loads from HTTPS or an equivalent hosted secure context,
 - WebGPU or the compiled browser runtime initializes,
 - memory grounding is required for the factual canary,
-- the selected memory id is retrieved and packed into context,
+- the expected memory id is retrieved and packed into context with run-level retrieved/included id evidence,
+- the expected memory hit has a concrete retrieval rank,
 - the exact answer check passes,
 - the backend id is `compiled-browser-webllm`,
 - `productionDeployReadyPassed` is true,
@@ -146,7 +147,7 @@ HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
-It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove grounded memory, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
+It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove grounded memory with concrete run-level retrieved/included/expected memory ids and retrieval rank, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
 For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. The production archive preserves that strict verifier mode as `v12ProductionProofSourceBoundRequired`; the release gate requires it to be true.
 

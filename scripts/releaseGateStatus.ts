@@ -106,6 +106,13 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
     && artifact.summary?.v12ProductionDeployReadyPassed === true
     && artifact.summary?.v12ProductionMemoryGroundingPassed === true
+    && artifact.summary?.v12ProductionConcreteMemoryGroundingPassed === true
+    && Number(artifact.summary?.v12ProductionMemoryGroundingRunCount ?? 0) > 0
+    && Number(artifact.summary?.v12ProductionMemorySeededCorpusCount ?? 0) > 0
+    && Number(artifact.summary?.v12ProductionMemoryRetrievedCount ?? 0) > 0
+    && Number(artifact.summary?.v12ProductionMemoryIncludedCount ?? 0) > 0
+    && Number(artifact.summary?.v12ProductionMemoryExpectedMemoryIdCount ?? 0) > 0
+    && Number(artifact.summary?.v12ProductionMemoryExpectedHitMeanRank ?? Number.POSITIVE_INFINITY) <= 1
     && artifact.summary?.v12ProductionExpectedExactPassed === true
     && artifact.summary?.v12ProductionSpeedFloorPassed === true
     && Number(artifact.summary?.v12ProductionMeanTokensPerSecond ?? 0) >= 2
@@ -153,6 +160,13 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkProofPassed === true
     && artifact.summary?.hostedBenchmarkProofSourceBoundRequired === true
     && artifact.summary?.hostedBenchmarkProofSourceBound === true
+    && artifact.summary?.hostedBenchmarkConcreteMemoryGroundingPassed === true
+    && Number(artifact.summary?.hostedBenchmarkMemoryGroundingRunCount ?? 0) > 0
+    && Number(artifact.summary?.hostedBenchmarkMemorySeededCorpusCount ?? 0) > 0
+    && Number(artifact.summary?.hostedBenchmarkMemoryRetrievedCount ?? 0) > 0
+    && Number(artifact.summary?.hostedBenchmarkMemoryIncludedCount ?? 0) > 0
+    && Number(artifact.summary?.hostedBenchmarkMemoryExpectedMemoryIdCount ?? 0) > 0
+    && Number(artifact.summary?.hostedBenchmarkMemoryExpectedHitMeanRank ?? Number.POSITIVE_INFINITY) <= 1
     && typeof artifact.summary?.hostedBenchmarkProofSourceGitSha === "string"
     && artifact.summary.hostedBenchmarkProofSourceGitSha.trim().length > 0
     && typeof artifact.summary?.hostedBenchmarkExpectedSourceGitSha === "string"

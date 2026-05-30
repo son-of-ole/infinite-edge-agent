@@ -12,6 +12,15 @@ export interface HostedBenchmarkProof {
   compiledBackendReadyPassed: boolean;
   memoryGroundingRequired: boolean;
   memoryGroundingPassed: boolean;
+  concreteMemoryGroundingPassed: boolean;
+  memoryGroundingRunCount: number;
+  memoryGroundingCaseId: string | null;
+  memorySeededCorpusCount: number | null;
+  memoryRetrievedCount: number | null;
+  memoryIncludedCount: number | null;
+  memoryExpectedMemoryIdCount: number | null;
+  memoryExpectedHitMeanRank: number | null;
+  memoryExpectedHitMinTopScoreMargin: number | null;
   memoryExpectedHitPassed: boolean;
   memoryContextRebuildPassed: boolean;
   memoryAnswerOnlyPassed: boolean;
@@ -134,6 +143,9 @@ export function evaluateHostedBenchmarkProof(input: {
   if (proof.memoryGroundingPassed !== true) {
     blockers.push("Hosted benchmark proof requires memoryGroundingPassed=true.");
   }
+  if (proof.concreteMemoryGroundingPassed !== true) {
+    blockers.push("Hosted benchmark proof requires concrete run-level memory grounding evidence.");
+  }
   if (proof.memoryExpectedHitPassed !== true) {
     blockers.push("Hosted benchmark proof requires memoryExpectedHitPassed=true.");
   }
@@ -216,6 +228,15 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkCompiledBackendReadyPassed: report.proof.compiledBackendReadyPassed,
       hostedBenchmarkProductionDeployReadyPassed: report.proof.productionDeployReadyPassed,
       hostedBenchmarkMemoryGroundingPassed: report.proof.memoryGroundingPassed,
+      hostedBenchmarkConcreteMemoryGroundingPassed: report.proof.concreteMemoryGroundingPassed,
+      hostedBenchmarkMemoryGroundingRunCount: report.proof.memoryGroundingRunCount,
+      hostedBenchmarkMemoryGroundingCaseId: report.proof.memoryGroundingCaseId,
+      hostedBenchmarkMemorySeededCorpusCount: report.proof.memorySeededCorpusCount,
+      hostedBenchmarkMemoryRetrievedCount: report.proof.memoryRetrievedCount,
+      hostedBenchmarkMemoryIncludedCount: report.proof.memoryIncludedCount,
+      hostedBenchmarkMemoryExpectedMemoryIdCount: report.proof.memoryExpectedMemoryIdCount,
+      hostedBenchmarkMemoryExpectedHitMeanRank: report.proof.memoryExpectedHitMeanRank,
+      hostedBenchmarkMemoryExpectedHitMinTopScoreMargin: report.proof.memoryExpectedHitMinTopScoreMargin,
       hostedBenchmarkExpectedExactPassed: report.proof.expectedExactPassed,
       hostedBenchmarkProductionSpeedFloorPassed: report.proof.productionSpeedFloorPassed,
       hostedBenchmarkMeanTokensPerSecond: report.proof.meanTokensPerSecond,
@@ -318,6 +339,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
       && brokerProofRequirements.includes("backend_trace")
       && brokerProofRequirements.includes("memory_grounding")
     );
+  const memoryGroundingEvidence = readMemoryGroundingEvidence(source.runs);
   return {
     sourceName: source.sourceName,
     v12ProductionProofSchemaVersion,
@@ -329,6 +351,15 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     compiledBackendReadyPassed: readBoolean(source.summary.compiledBackendReadyPassed),
     memoryGroundingRequired: readBoolean(source.summary.memoryGroundingRequired),
     memoryGroundingPassed: readBoolean(source.summary.memoryGroundingPassed),
+    concreteMemoryGroundingPassed: memoryGroundingEvidence.passed,
+    memoryGroundingRunCount: memoryGroundingEvidence.runCount,
+    memoryGroundingCaseId: memoryGroundingEvidence.caseId,
+    memorySeededCorpusCount: memoryGroundingEvidence.seededCorpusCount,
+    memoryRetrievedCount: memoryGroundingEvidence.retrievedCount,
+    memoryIncludedCount: memoryGroundingEvidence.includedCount,
+    memoryExpectedMemoryIdCount: memoryGroundingEvidence.expectedMemoryIdCount,
+    memoryExpectedHitMeanRank: memoryGroundingEvidence.expectedHitMeanRank,
+    memoryExpectedHitMinTopScoreMargin: memoryGroundingEvidence.expectedHitMinTopScoreMargin,
     memoryExpectedHitPassed: readBoolean(source.summary.memoryExpectedHitPassed),
     memoryContextRebuildPassed: readBoolean(source.summary.memoryContextRebuildPassed),
     memoryAnswerOnlyPassed: readBoolean(source.summary.memoryAnswerOnlyPassed),
@@ -366,6 +397,15 @@ function buildEmptyProof(): HostedBenchmarkProof {
     compiledBackendReadyPassed: false,
     memoryGroundingRequired: false,
     memoryGroundingPassed: false,
+    concreteMemoryGroundingPassed: false,
+    memoryGroundingRunCount: 0,
+    memoryGroundingCaseId: null,
+    memorySeededCorpusCount: null,
+    memoryRetrievedCount: null,
+    memoryIncludedCount: null,
+    memoryExpectedMemoryIdCount: null,
+    memoryExpectedHitMeanRank: null,
+    memoryExpectedHitMinTopScoreMargin: null,
     memoryExpectedHitPassed: false,
     memoryContextRebuildPassed: false,
     memoryAnswerOnlyPassed: false,
@@ -414,6 +454,109 @@ function normalizeString(value: unknown): string | null {
 function readStringList(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function readMemoryGroundingEvidence(runs: unknown[]): {
+  passed: boolean;
+  runCount: number;
+  caseId: string | null;
+  seededCorpusCount: number | null;
+  retrievedCount: number | null;
+  includedCount: number | null;
+  expectedMemoryIdCount: number | null;
+  expectedHitMeanRank: number | null;
+  expectedHitMinTopScoreMargin: number | null;
+} {
+  const records = runs
+    .map((run) => isRecord(run) && isRecord(run.memoryGrounding)
+      ? readMemoryGroundingRecord(run, run.memoryGrounding)
+      : null)
+    .filter((record): record is NonNullable<ReturnType<typeof readMemoryGroundingRecord>> => Boolean(record));
+  const validRecords = records.filter((record) => record.passed);
+  return {
+    passed: records.length > 0 && records.every((record) => record.passed),
+    runCount: records.length,
+    caseId: summarizeString(records.map((record) => record.caseId)),
+    seededCorpusCount: maxNumber(records.map((record) => record.corpusCount)),
+    retrievedCount: sumNumber(records.map((record) => record.retrievedCount)),
+    includedCount: sumNumber(records.map((record) => record.includedCount)),
+    expectedMemoryIdCount: sumNumber(records.map((record) => record.expectedMemoryIdCount)),
+    expectedHitMeanRank: meanNumber(validRecords.map((record) => record.retrievalRank)),
+    expectedHitMinTopScoreMargin: minNumber(validRecords.map((record) => record.retrievalTopScoreMargin)),
+  };
+}
+
+function readMemoryGroundingRecord(
+  run: Record<string, unknown>,
+  memoryGrounding: Record<string, unknown>,
+): {
+  passed: boolean;
+  caseId: string | null;
+  corpusCount: number | null;
+  retrievedCount: number;
+  includedCount: number;
+  expectedMemoryIdCount: number;
+  retrievalRank: number | null;
+  retrievalTopScoreMargin: number | null;
+} {
+  const expectedMemoryIds = readStringList(memoryGrounding.expectedMemoryIds) ?? [];
+  const retrievedMemoryIds = readStringList(memoryGrounding.retrievedMemoryIds) ?? [];
+  const includedMemoryIds = readStringList(memoryGrounding.includedMemoryIds) ?? [];
+  const retrieved = new Set(retrievedMemoryIds);
+  const included = new Set(includedMemoryIds);
+  const retrievalRank = readNumber(memoryGrounding.retrievalRank);
+  const retrievalTopScoreMargin = readNumber(memoryGrounding.retrievalTopScoreMargin);
+  const answerOnlyExpected = readBoolean(memoryGrounding.answerOnlyExpected);
+  const answerOnlyPassed = readBoolean(memoryGrounding.answerOnlyPassed) || readBoolean(run.expectedAnswerOnlyPassed);
+  const expectedIdsPresent = expectedMemoryIds.length > 0;
+  const expectedIdsRetrieved = expectedMemoryIds.every((id) => retrieved.has(id));
+  const expectedIdsIncluded = expectedMemoryIds.every((id) => included.has(id));
+  return {
+    passed: readString(memoryGrounding.mode) === "seeded_browser_vector_context_rebuild"
+      && readNumber(memoryGrounding.corpusCount) !== null
+      && (readNumber(memoryGrounding.corpusCount) ?? 0) > 0
+      && expectedIdsPresent
+      && expectedIdsRetrieved
+      && expectedIdsIncluded
+      && readBoolean(memoryGrounding.expectedMemoryHitPassed)
+      && readBoolean(memoryGrounding.contextRebuildPassed)
+      && (!answerOnlyExpected || answerOnlyPassed)
+      && retrievalRank !== null
+      && retrievalRank > 0,
+    caseId: readString(memoryGrounding.caseId),
+    corpusCount: readNumber(memoryGrounding.corpusCount),
+    retrievedCount: retrievedMemoryIds.length,
+    includedCount: includedMemoryIds.length,
+    expectedMemoryIdCount: expectedMemoryIds.length,
+    retrievalRank,
+    retrievalTopScoreMargin,
+  };
+}
+
+function summarizeString(values: Array<string | null>): string | null {
+  const unique = [...new Set(values.filter((value): value is string => Boolean(value)))];
+  return unique.length === 1 ? unique[0] ?? null : unique.length > 1 ? "mixed" : null;
+}
+
+function sumNumber(values: Array<number | null>): number | null {
+  const finite = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  return finite.length > 0 ? finite.reduce((total, value) => total + value, 0) : null;
+}
+
+function maxNumber(values: Array<number | null>): number | null {
+  const finite = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  return finite.length > 0 ? Math.max(...finite) : null;
+}
+
+function minNumber(values: Array<number | null>): number | null {
+  const finite = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  return finite.length > 0 ? Math.min(...finite) : null;
+}
+
+function meanNumber(values: Array<number | null>): number | null {
+  const finite = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (finite.length === 0) return null;
+  return finite.reduce((total, value) => total + value, 0) / finite.length;
 }
 
 function readBrokerSelection(value: unknown): {

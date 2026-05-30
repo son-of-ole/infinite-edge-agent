@@ -76,10 +76,38 @@ describe("release gate status", () => {
             hostedBenchmarkExpectedSourceGitSha: "abc123",
             hostedBenchmarkProofSourceBound: true,
             hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkConcreteMemoryGroundingPassed: true,
+            hostedBenchmarkMemoryGroundingRunCount: 1,
+            hostedBenchmarkMemorySeededCorpusCount: 16,
+            hostedBenchmarkMemoryRetrievedCount: 1,
+            hostedBenchmarkMemoryIncludedCount: 1,
+            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
           },
         },
       ],
     })).toBe(true);
+  });
+
+  it("fails standalone hosted benchmark proof without concrete memory grounding evidence", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkConcreteMemoryGroundingPassed: false,
+            hostedBenchmarkMemoryGroundingRunCount: 0,
+          },
+        },
+      ],
+    })).toBe(false);
   });
 
   it("fails strict unlocked model releases when real parity or benchmark mode is still fixture", () => {
@@ -946,6 +974,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when concrete memory grounding evidence is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionConcreteMemoryGroundingPassed: false,
+            v12ProductionMemoryGroundingRunCount: 0,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1087,6 +1132,15 @@ function makeV12ProductionArchiveSummary(
       v12ProductionCompiledBackendReadyPassed: true,
       v12ProductionDeployReadyPassed: true,
       v12ProductionMemoryGroundingPassed: true,
+      v12ProductionConcreteMemoryGroundingPassed: true,
+      v12ProductionMemoryGroundingRunCount: 1,
+      v12ProductionMemoryGroundingCaseId: "montana_capital",
+      v12ProductionMemorySeededCorpusCount: 16,
+      v12ProductionMemoryRetrievedCount: 1,
+      v12ProductionMemoryIncludedCount: 1,
+      v12ProductionMemoryExpectedMemoryIdCount: 1,
+      v12ProductionMemoryExpectedHitMeanRank: 1,
+      v12ProductionMemoryExpectedHitMinTopScoreMargin: 0.4,
       v12ProductionExpectedExactPassed: true,
       v12ProductionSpeedFloorPassed: true,
       v12ProductionMeanTokensPerSecond: 2.7,

@@ -139,7 +139,7 @@ HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
-This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` when `pnpm release:gate` should fail unless the saved browser artifact proves proof schema version `2`, the compiled backend, Backend Broker selection, grounded memory, exact output, speed floor, and no CPU fallback.
+This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` when `pnpm release:gate` should fail unless the saved browser artifact proves proof schema version `2`, the compiled backend, Backend Broker selection, concrete run-level grounded memory evidence, exact output, speed floor, and no CPU fallback. Concrete memory evidence means the run carries expected memory ids, retrieved memory ids, context-included memory ids, and a retrieval rank for the grounded answer.
 
 For production release proof, set `VITE_GIT_SHA=<deployment-commit-sha>` on the hosted build. The benchmark artifact must report that SHA as `v12ProductionProofSourceGitSha`, and the verifier/release gate must compare it with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` so an older hosted artifact cannot pass for a newer commit. The release gate rejects standalone `hosted-benchmark-proof` artifacts when `hostedBenchmarkProofSourceBoundRequired` or `hostedBenchmarkProofSourceBound` is not true, and rejects v12 production archives when `v12ProductionProofSourceBoundRequired` or `v12ProductionProofSourceBound` is not true.
 
