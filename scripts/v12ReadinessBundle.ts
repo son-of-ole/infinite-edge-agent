@@ -65,6 +65,10 @@ export function evaluateV12ReadinessBundle(input: {
     && deployBackendId === "compiled-browser-webllm"
     && kernelLabBackendId === "unlocked-browser-transformer"
     && fallbackBackendId === "wasm-small-core";
+  const modelRegistryAlignmentPassed = sharedRuntime.modelRegistryAlignment.aligned === true
+    && sharedRuntime.modelRegistryAlignment.publicDeployOptionCount === 1
+    && sharedRuntime.modelRegistryAlignment.publicKernelLabOptionCount === 1
+    && sharedRuntime.modelRegistryAlignment.publicOptionCount >= 2;
   const requirements: V12ReadinessRequirement[] = [
     {
       id: "backend_broker",
@@ -97,6 +101,13 @@ export function evaluateV12ReadinessBundle(input: {
         ),
       evidence: "backend-readiness-matrix",
       blockers: kernelLabBackendId === "unlocked-browser-transformer" ? [] : ["Kernel Lab backend is not recorded as unlocked-browser-transformer."],
+    },
+    {
+      id: "model_registry_alignment",
+      label: "Model registry exposes one deploy model option and one Kernel Lab option aligned to Backend Broker roles.",
+      passed: modelRegistryAlignmentPassed,
+      evidence: "backend-readiness-matrix+shared-runtime-readiness",
+      blockers: modelRegistryAlignmentPassed ? [] : ["Model registry role/options do not match Backend Broker production roles."],
     },
     {
       id: "shared_memory_context_runtime",
@@ -160,6 +171,11 @@ export function buildV12ReadinessBundleArtifact(
       v12KernelLabBackendId: bundle.kernelLabBackendId,
       v12FallbackBackendId: bundle.fallbackBackendId,
       v12BackendRoleBoundaryPassed: bundle.backendRoleBoundaryPassed,
+      v12ModelRegistryAligned: bundle.sharedRuntime.modelRegistryAlignment.aligned,
+      v12ModelRegistryModelCount: bundle.sharedRuntime.modelRegistryAlignment.modelCount,
+      v12PublicModelOptionCount: bundle.sharedRuntime.modelRegistryAlignment.publicOptionCount,
+      v12PublicDeployOptionCount: bundle.sharedRuntime.modelRegistryAlignment.publicDeployOptionCount,
+      v12PublicKernelLabOptionCount: bundle.sharedRuntime.modelRegistryAlignment.publicKernelLabOptionCount,
       v12RequirementCount: bundle.requirements.length,
       v12PassedRequirementCount: bundle.requirements.filter((requirement) => requirement.passed).length,
       v12HostedProfilePassed: bundle.hostedProfile.passed,
