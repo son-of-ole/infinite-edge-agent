@@ -181,6 +181,12 @@ async function checkGithubWorkflows(rootDir: string): Promise<RepositoryReadines
   if (!ciWorkflow.includes("name: V12 readiness invariants")) {
     blockers.push("CI must run the V12 readiness invariants step.");
   }
+  if (!ciWorkflow.includes("VITE_DEPLOY_URL:")) {
+    blockers.push("CI V12 readiness invariants must set VITE_DEPLOY_URL.");
+  }
+  if (!ciWorkflow.includes("HOSTED_PRODUCTION_BENCHMARK_URL:")) {
+    blockers.push("CI V12 readiness invariants must set HOSTED_PRODUCTION_BENCHMARK_URL.");
+  }
   if (!productionWorkflow.includes("HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND: \"true\"")) {
     blockers.push("V12 production proof workflow must require source-bound hosted benchmark proof.");
   }
