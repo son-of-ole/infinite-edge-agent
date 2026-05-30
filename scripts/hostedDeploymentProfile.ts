@@ -1,3 +1,6 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
 export type HostedDeploymentProfileEnv = Record<string, string | undefined>;
 
 export interface HostedDeploymentProfileReport {
@@ -22,6 +25,20 @@ export interface HostedDeploymentProfileReport {
     benchmarkExpectedExact: string | null;
     benchmarkRequiresSubmitTelemetry: boolean;
   };
+}
+
+export interface HostedDeploymentProfileArtifact {
+  name: "hosted-deployment-profile";
+  createdAt: string;
+  passed: boolean;
+  summary: Record<string, number | string | boolean | null>;
+  report: HostedDeploymentProfileReport;
+}
+
+export interface HostedDeploymentProfileArtifactWriteResult {
+  artifact: HostedDeploymentProfileArtifact;
+  latestPath: string;
+  resultPath: string;
 }
 
 const HOSTED_BACKEND_ID = "compiled-browser-webllm";
@@ -128,6 +145,60 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   };
 }
 
+export function buildHostedDeploymentProfileArtifact(
+  report: HostedDeploymentProfileReport,
+  createdAt = new Date().toISOString(),
+): HostedDeploymentProfileArtifact {
+  return {
+    name: "hosted-deployment-profile",
+    createdAt,
+    passed: report.passed,
+    summary: {
+      hostedProfilePassed: report.passed,
+      hostedProfileBlockerCount: report.blockers.length,
+      hostedProfileWarningCount: report.warnings.length,
+      hostedProfileBackend: report.profile.llmBackend,
+      hostedProfileDefaultModel: report.profile.defaultModel,
+      hostedProfileCompiledWebLlmEnabled: report.profile.compiledWebLlmEnabled,
+      hostedProfileRequireUnlockedRuntime: report.profile.requireUnlockedRuntime,
+      hostedProfileMtpProductionDisabled: report.profile.mtpProductionDisabled,
+      hostedProfileTelemetryEnabled: report.profile.telemetryEnabled,
+      hostedProfileTelemetryStorage: report.profile.telemetryStorage,
+      hostedProfileTelemetryAdminProtected: report.profile.telemetryAdminProtected,
+      hostedProfileTelemetryRateLimited: report.profile.telemetryRateLimited,
+      hostedProfileBenchmarkBackend: report.profile.benchmarkBackend,
+      hostedProfileBenchmarkMemoryGrounding: report.profile.benchmarkMemoryGrounding,
+      hostedProfileBenchmarkMemoryGroundingProfile: report.profile.benchmarkMemoryGroundingProfile,
+      hostedProfileBenchmarkExpectedExact: report.profile.benchmarkExpectedExact,
+      hostedProfileBenchmarkRequiresSubmitTelemetry: report.profile.benchmarkRequiresSubmitTelemetry,
+    },
+    report,
+  };
+}
+
+export async function writeHostedDeploymentProfileArtifact(
+  report: HostedDeploymentProfileReport,
+  options: { artifactDir?: string; createdAt?: string } = {},
+): Promise<HostedDeploymentProfileArtifactWriteResult> {
+  const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
+  const artifact = buildHostedDeploymentProfileArtifact(report, options.createdAt);
+  const runDir = join(artifactDir, "hosted-deployment-profile");
+  const timestamp = artifact.createdAt.replace(/[:.]/g, "-");
+  const latestPath = join(artifactDir, "hosted-deployment-profile-latest.json");
+  const resultPath = join(runDir, `${timestamp}.json`);
+  const json = `${JSON.stringify(artifact, null, 2)}\n`;
+
+  await mkdir(runDir, { recursive: true });
+  await writeFile(resultPath, json);
+  await writeFile(latestPath, json);
+
+  return {
+    artifact,
+    latestPath,
+    resultPath,
+  };
+}
+
 function resolveBenchmarkUrl(env: HostedDeploymentProfileEnv): string | null {
   const configured = readString(env.HOSTED_PRODUCTION_BENCHMARK_URL)
     ?? readString(env.BROWSER_RUNTIME_BENCH_PREVIEW_URL);
@@ -183,6 +254,7 @@ function readPositiveNumber(value: string | undefined): boolean {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = evaluateHostedDeploymentProfile(process.env);
+  await writeHostedDeploymentProfileArtifact(report);
   console.log(JSON.stringify(report, null, 2));
   if (!report.passed) process.exitCode = 1;
 }

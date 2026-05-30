@@ -1,5 +1,12 @@
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { evaluateHostedDeploymentProfile } from "./hostedDeploymentProfile";
+import {
+  buildHostedDeploymentProfileArtifact,
+  evaluateHostedDeploymentProfile,
+  writeHostedDeploymentProfileArtifact,
+} from "./hostedDeploymentProfile";
 
 const completeHostedEnv = {
   VITE_LLM_BACKEND: "compiled-browser-webllm",
@@ -108,5 +115,51 @@ describe("evaluateHostedDeploymentProfile", () => {
     expect(report.expectedBenchmarkUrl).toBe(
       "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
     );
+  });
+
+  it("builds a release-gate friendly artifact with backend-specific hosted readiness summary fields", () => {
+    const report = evaluateHostedDeploymentProfile(completeHostedEnv);
+    const artifact = buildHostedDeploymentProfileArtifact(report, "2026-05-30T16:00:00.000Z");
+
+    expect(artifact).toMatchObject({
+      name: "hosted-deployment-profile",
+      createdAt: "2026-05-30T16:00:00.000Z",
+      passed: true,
+      summary: {
+        hostedProfilePassed: true,
+        hostedProfileBackend: "compiled-browser-webllm",
+        hostedProfileDefaultModel: "Qwen3-0.6B-q4f16_1-MLC",
+        hostedProfileCompiledWebLlmEnabled: true,
+        hostedProfileMtpProductionDisabled: true,
+        hostedProfileTelemetryEnabled: true,
+        hostedProfileTelemetryStorage: "postgres",
+        hostedProfileTelemetryAdminProtected: true,
+        hostedProfileTelemetryRateLimited: true,
+        hostedProfileBenchmarkBackend: "compiled-browser-webllm",
+        hostedProfileBenchmarkMemoryGrounding: "montana_capital",
+        hostedProfileBenchmarkExpectedExact: "Helena",
+        hostedProfileBenchmarkRequiresSubmitTelemetry: true,
+      },
+    });
+  });
+
+  it("writes latest and timestamped hosted deployment profile artifacts", async () => {
+    const artifactDir = await mkdtemp(join(tmpdir(), "hosted-profile-artifacts-"));
+    const report = evaluateHostedDeploymentProfile(completeHostedEnv);
+
+    const written = await writeHostedDeploymentProfileArtifact(report, {
+      artifactDir,
+      createdAt: "2026-05-30T16:00:00.000Z",
+    });
+
+    expect(written.latestPath).toBe(join(artifactDir, "hosted-deployment-profile-latest.json"));
+    expect(written.resultPath).toBe(join(artifactDir, "hosted-deployment-profile", "2026-05-30T16-00-00-000Z.json"));
+
+    const latest = JSON.parse(await readFile(written.latestPath, "utf8")) as ReturnType<typeof buildHostedDeploymentProfileArtifact>;
+    const timestamped = JSON.parse(await readFile(written.resultPath, "utf8")) as ReturnType<typeof buildHostedDeploymentProfileArtifact>;
+
+    expect(latest).toEqual(timestamped);
+    expect(latest.passed).toBe(true);
+    expect(latest.summary.hostedProfileBackend).toBe("compiled-browser-webllm");
   });
 });

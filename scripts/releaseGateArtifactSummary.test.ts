@@ -2,6 +2,40 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps hosted compiled deployment profile fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        hostedProfilePassed: true,
+        hostedProfileBackend: "compiled-browser-webllm",
+        hostedProfileDefaultModel: "Qwen3-0.6B-q4f16_1-MLC",
+        hostedProfileCompiledWebLlmEnabled: true,
+        hostedProfileMtpProductionDisabled: true,
+        hostedProfileTelemetryEnabled: true,
+        hostedProfileTelemetryStorage: "postgres",
+        hostedProfileTelemetryAdminProtected: true,
+        hostedProfileTelemetryRateLimited: true,
+        hostedProfileBenchmarkBackend: "compiled-browser-webllm",
+        hostedProfileBenchmarkMemoryGrounding: "montana_capital",
+        hostedProfileBenchmarkExpectedExact: "Helena",
+        hostedProfileBenchmarkRequiresSubmitTelemetry: true,
+      },
+    })).toMatchObject({
+      hostedProfilePassed: true,
+      hostedProfileBackend: "compiled-browser-webllm",
+      hostedProfileDefaultModel: "Qwen3-0.6B-q4f16_1-MLC",
+      hostedProfileCompiledWebLlmEnabled: true,
+      hostedProfileMtpProductionDisabled: true,
+      hostedProfileTelemetryEnabled: true,
+      hostedProfileTelemetryStorage: "postgres",
+      hostedProfileTelemetryAdminProtected: true,
+      hostedProfileTelemetryRateLimited: true,
+      hostedProfileBenchmarkBackend: "compiled-browser-webllm",
+      hostedProfileBenchmarkMemoryGrounding: "montana_capital",
+      hostedProfileBenchmarkExpectedExact: "Helena",
+      hostedProfileBenchmarkRequiresSubmitTelemetry: true,
+    });
+  });
+
   it("keeps unlocked WebGPU coverage visible in release gate latest summaries", () => {
     expect(summarizeReleaseGateArtifact({
       requestedBackendPreference: "webgpu",

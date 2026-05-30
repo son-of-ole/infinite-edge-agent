@@ -39,6 +39,7 @@ const childArtifactRoot = join(suiteDir, "child-evals");
 const failFast = process.argv.includes("--fail-fast");
 const releaseGateDefaultEnv = makeReleaseGateDefaultEnvOverrides(process.env);
 const releaseGateEnv = { ...process.env, ...releaseGateDefaultEnv };
+const requireHostedProfile = releaseGateEnv.RELEASE_REQUIRE_HOSTED_PROFILE === "true";
 
 const steps: GateStep[] = [];
 
@@ -61,6 +62,9 @@ await runGate(
 );
 await runGate("Qwen parity accuracy", ["run", "eval:qwen-parity"], undefined, makeQwenParityEnvOverrides(releaseGateEnv));
 await runGate("production eval", ["run", "eval:production"], undefined, makeProductionEvalEnvOverrides(releaseGateEnv));
+if (requireHostedProfile) {
+  await runGate("hosted deployment profile", ["run", "verify:hosted-profile"]);
+}
 await runGate("build", ["run", "build"]);
 await runGate("web dist size", ["run", "check:web-dist"]);
 
@@ -158,6 +162,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
     ["qwen-parity-accuracy", join(childArtifactRoot, "qwen-parity-accuracy-latest.json")],
     ["unlocked-verify", join(childArtifactRoot, "unlocked-verify-latest.json")],
     ["production-readiness", join(childArtifactRoot, "production-latest.json")],
+    ...(requireHostedProfile
+      ? [["hosted-deployment-profile", join(childArtifactRoot, "hosted-deployment-profile-latest.json")] as const]
+      : []),
   ] as const;
   const artifacts: LatestArtifact[] = [];
   for (const [name, path] of files) {

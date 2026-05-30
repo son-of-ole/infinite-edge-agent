@@ -238,6 +238,8 @@ HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runti
 pnpm verify:hosted-profile
 ```
 
+The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` to make `pnpm release:gate` run the hosted profile verifier and include that artifact in its release summary.
+
 For WebGPU and WASM performance, use a secure context and cross-origin isolation headers where your hosting platform supports them.
 
 ## Publication Path

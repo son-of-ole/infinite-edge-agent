@@ -132,6 +132,28 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const hostedProfileFields = [
+      "hostedProfilePassed",
+      "hostedProfileBlockerCount",
+      "hostedProfileWarningCount",
+      "hostedProfileBackend",
+      "hostedProfileDefaultModel",
+      "hostedProfileCompiledWebLlmEnabled",
+      "hostedProfileRequireUnlockedRuntime",
+      "hostedProfileMtpProductionDisabled",
+      "hostedProfileTelemetryEnabled",
+      "hostedProfileTelemetryStorage",
+      "hostedProfileTelemetryAdminProtected",
+      "hostedProfileTelemetryRateLimited",
+      "hostedProfileBenchmarkBackend",
+      "hostedProfileBenchmarkMemoryGrounding",
+      "hostedProfileBenchmarkMemoryGroundingProfile",
+      "hostedProfileBenchmarkExpectedExact",
+      "hostedProfileBenchmarkRequiresSubmitTelemetry",
+    ] as const;
+    for (const key of hostedProfileFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     for (const key of [
       "maxAbsError",
       "tokenParityPassed",

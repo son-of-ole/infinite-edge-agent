@@ -93,6 +93,8 @@ The verifier checks the deploy profile, not the model output. It requires:
 
 The verifier does not replace the real Chrome benchmark. It prevents a hosted environment from being called production-ready before the authoritative browser proof can even produce the right artifact.
 
+The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` so the deploy profile can be archived alongside the real browser benchmark artifact. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` when the full release gate should include this proof.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

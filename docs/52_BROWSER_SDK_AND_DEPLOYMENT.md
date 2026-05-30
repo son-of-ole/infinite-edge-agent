@@ -126,6 +126,8 @@ pnpm verify:hosted-profile
 
 The verifier fails if the hosted profile points at the Kernel Lab, uses local JSONL telemetry for hosted production, leaves dashboard/export routes unprotected, or omits the grounded exact `Helena` benchmark with telemetry opt-in.
 
+The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` plus a timestamped artifact under `.artifacts/evals/hosted-deployment-profile/`. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` to make `pnpm release:gate` run this verifier and include the hosted profile artifact in the release summary.
+
 Before shipping a hosted embed, verify app and model URLs behave like assets instead of falling back to HTML:
 
 ```bash
