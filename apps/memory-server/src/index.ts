@@ -59,6 +59,10 @@ const benchmarkTelemetryPrefix = process.env.BENCHMARK_TELEMETRY_PREFIX ?? "/api
 const benchmarkTelemetryStorage = process.env.BENCHMARK_TELEMETRY_STORAGE === "postgres" ? "postgres" : "jsonl";
 const benchmarkTelemetryDir = process.env.BENCHMARK_TELEMETRY_DIR ?? ".data/benchmark-runs";
 const benchmarkTelemetryDatabaseUrl = process.env.BENCHMARK_TELEMETRY_DATABASE_URL ?? process.env.DATABASE_URL;
+const benchmarkTelemetrySubmitToken = process.env.BENCHMARK_TELEMETRY_SUBMIT_TOKEN;
+const benchmarkTelemetryAdminToken = process.env.BENCHMARK_TELEMETRY_ADMIN_TOKEN;
+const benchmarkTelemetryRateLimitMax = readPositiveInt(process.env.BENCHMARK_TELEMETRY_RATE_LIMIT_MAX, 60);
+const benchmarkTelemetryRateLimitWindowMs = readPositiveInt(process.env.BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS, 10 * 60 * 1000);
 const benchmarkTelemetryMaxArtifactBytes = readPositiveInt(
   process.env.BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES,
   1024 * 1024
@@ -92,6 +96,12 @@ registerBenchmarkTelemetryRoutes(server, {
   storage: benchmarkTelemetryStorage,
   dir: benchmarkTelemetryDir,
   ...(benchmarkTelemetryDatabaseUrl ? { databaseUrl: benchmarkTelemetryDatabaseUrl } : {}),
+  ...(benchmarkTelemetrySubmitToken ? { submitToken: benchmarkTelemetrySubmitToken } : {}),
+  ...(benchmarkTelemetryAdminToken ? { adminToken: benchmarkTelemetryAdminToken } : {}),
+  submitRateLimit: {
+    max: benchmarkTelemetryRateLimitMax,
+    windowMs: benchmarkTelemetryRateLimitWindowMs
+  },
   maxArtifactBytes: benchmarkTelemetryMaxArtifactBytes
 });
 

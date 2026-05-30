@@ -102,10 +102,19 @@ export interface BenchmarkTelemetryStoreFactoryOptions extends JsonlBenchmarkTel
   databaseUrl?: string;
 }
 
+export interface BenchmarkTelemetryRateLimitOptions {
+  max: number;
+  windowMs: number;
+  now?: () => number;
+}
+
 export interface RegisterBenchmarkTelemetryRoutesOptions extends BenchmarkTelemetryStoreFactoryOptions {
   enabled: boolean;
   prefix: string;
   store?: BenchmarkTelemetryStore;
+  submitToken?: string;
+  adminToken?: string;
+  submitRateLimit?: BenchmarkTelemetryRateLimitOptions;
 }
 
 export class JsonlBenchmarkTelemetryStore implements BenchmarkTelemetryStore {
@@ -285,8 +294,34 @@ export function registerBenchmarkTelemetryRoutes(
   if (!options.enabled) return;
   const prefix = normalizePrefix(options.prefix);
   const store = options.store ?? createBenchmarkTelemetryStore(options);
+  const submitRateLimiter = options.submitRateLimit
+    ? new BenchmarkTelemetryRateLimiter(options.submitRateLimit)
+    : null;
 
   app.post(prefix, async (request, reply) => {
+    const submitAuth = enforceTelemetryBearerToken(
+      request,
+      reply,
+      options.submitToken,
+      "BENCHMARK_TELEMETRY_SUBMIT_UNAUTHORIZED",
+      "Benchmark telemetry submit token is required."
+    );
+    if (!submitAuth.ok) return submitAuth.response;
+
+    if (submitRateLimiter) {
+      const rateLimit = submitRateLimiter.consume(readClientIdentity(request));
+      if (!rateLimit.allowed) {
+        return reply
+          .status(429)
+          .header("retry-after", String(Math.ceil(rateLimit.retryAfterMs / 1000)))
+          .send({
+            errorCode: "BENCHMARK_TELEMETRY_RATE_LIMITED",
+            message: "Benchmark telemetry submission rate limit exceeded.",
+            retryAfterMs: rateLimit.retryAfterMs
+          });
+      }
+    }
+
     const parsed = benchmarkTelemetryPayloadSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: parsed.error.flatten() });
@@ -305,6 +340,14 @@ export function registerBenchmarkTelemetryRoutes(
   });
 
   app.get(`${prefix}/dashboard`, async (request, reply) => {
+    const adminAuth = enforceTelemetryBearerToken(
+      request,
+      reply,
+      options.adminToken,
+      "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
+      "Benchmark telemetry admin token is required."
+    );
+    if (!adminAuth.ok) return adminAuth.response;
     const limit = readQueryLimit(request);
     const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
     const summary = summarizeBenchmarkTelemetryRuns(runs);
@@ -314,6 +357,14 @@ export function registerBenchmarkTelemetryRoutes(
   });
 
   app.get(`${prefix}/export.csv`, async (request, reply) => {
+    const adminAuth = enforceTelemetryBearerToken(
+      request,
+      reply,
+      options.adminToken,
+      "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
+      "Benchmark telemetry admin token is required."
+    );
+    if (!adminAuth.ok) return adminAuth.response;
     const limit = readQueryLimit(request);
     const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
     return reply
@@ -322,12 +373,28 @@ export function registerBenchmarkTelemetryRoutes(
       .send(renderBenchmarkTelemetryCsv(runs));
   });
 
-  app.get(prefix, async (request) => {
+  app.get(prefix, async (request, reply) => {
+    const adminAuth = enforceTelemetryBearerToken(
+      request,
+      reply,
+      options.adminToken,
+      "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
+      "Benchmark telemetry admin token is required."
+    );
+    if (!adminAuth.ok) return adminAuth.response;
     const limit = readQueryLimit(request);
     return { runs: await store.list({ ...(limit !== undefined ? { limit } : {}) }) };
   });
 
-  app.get(`${prefix}/summary`, async (request) => {
+  app.get(`${prefix}/summary`, async (request, reply) => {
+    const adminAuth = enforceTelemetryBearerToken(
+      request,
+      reply,
+      options.adminToken,
+      "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
+      "Benchmark telemetry admin token is required."
+    );
+    if (!adminAuth.ok) return adminAuth.response;
     const limit = readQueryLimit(request);
     return await store.summary({ ...(limit !== undefined ? { limit } : {}) });
   });
@@ -380,6 +447,63 @@ function sanitizeBenchmarkArtifactJson(value: unknown): unknown {
     sanitized[key] = sanitizeBenchmarkArtifactJson(child);
   }
   return sanitized;
+}
+
+class BenchmarkTelemetryRateLimiter {
+  private readonly buckets = new Map<string, { count: number; resetAt: number }>();
+  private readonly now: () => number;
+
+  constructor(private readonly options: BenchmarkTelemetryRateLimitOptions) {
+    this.now = options.now ?? (() => Date.now());
+  }
+
+  consume(identity: string): { allowed: true } | { allowed: false; retryAfterMs: number } {
+    const now = this.now();
+    const current = this.buckets.get(identity);
+    if (!current || current.resetAt <= now) {
+      this.buckets.set(identity, { count: 1, resetAt: now + this.options.windowMs });
+      return { allowed: true };
+    }
+    if (current.count >= this.options.max) {
+      return { allowed: false, retryAfterMs: Math.max(0, current.resetAt - now) };
+    }
+    current.count += 1;
+    return { allowed: true };
+  }
+}
+
+function enforceTelemetryBearerToken(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  token: string | undefined,
+  errorCode: string,
+  message: string
+): { ok: true } | { ok: false; response: FastifyReply } {
+  if (!token) return { ok: true };
+  if (readBearerToken(request) === token) return { ok: true };
+  return {
+    ok: false,
+    response: reply.status(401).send({ errorCode, message })
+  };
+}
+
+function readBearerToken(request: FastifyRequest): string | null {
+  const authorization = request.headers.authorization;
+  if (typeof authorization === "string" && authorization.startsWith("Bearer ")) {
+    return authorization.slice("Bearer ".length);
+  }
+  const headerToken = request.headers["x-benchmark-telemetry-token"];
+  return typeof headerToken === "string" ? headerToken : null;
+}
+
+function readClientIdentity(request: FastifyRequest): string {
+  const forwarded = request.headers["x-forwarded-for"];
+  if (typeof forwarded === "string" && forwarded.trim()) {
+    return forwarded.split(",")[0]?.trim() || "unknown";
+  }
+  const realIp = request.headers["x-real-ip"];
+  if (typeof realIp === "string" && realIp.trim()) return realIp.trim();
+  return request.ip || "unknown";
 }
 
 const CREATE_BENCHMARK_RUNS_TABLE_SQL = `

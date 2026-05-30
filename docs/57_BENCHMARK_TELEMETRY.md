@@ -34,6 +34,9 @@ BENCHMARK_TELEMETRY_PREFIX=/api/benchmark-runs
 BENCHMARK_TELEMETRY_STORAGE=jsonl
 BENCHMARK_TELEMETRY_DIR=.data/benchmark-runs
 BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES=1048576
+BENCHMARK_TELEMETRY_RATE_LIMIT_MAX=60
+BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS=600000
+BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
 ```
 
 The included collector defaults to JSONL so it works in local development and simple hosted environments without adding another service. For durable hosted storage, set:
@@ -46,6 +49,8 @@ BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 The Postgres adapter uses the same store contract as JSONL, creates the `benchmark_runs` table if needed, and writes the sanitized artifact as `jsonb`. It loads the optional `pg` package at runtime only when Postgres storage is selected, so local JSONL development does not require a database client dependency.
 
 The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata and pass/fail/speed fields, not prompt or response text.
+
+The submit endpoint is rate-limited by client identity. Configure `BENCHMARK_TELEMETRY_RATE_LIMIT_MAX` and `BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS` for the hosted traffic profile. Set `BENCHMARK_TELEMETRY_SUBMIT_TOKEN` only for private benchmark collectors; do not expose a submit secret through `VITE_*` browser variables. Set `BENCHMARK_TELEMETRY_ADMIN_TOKEN` to protect list, summary, dashboard, and CSV export routes.
 
 ## Recommended Durable Storage
 

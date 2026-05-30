@@ -176,6 +176,110 @@ describe("benchmark telemetry server", () => {
       dir: ".data/benchmark-runs"
     })).toThrow(/requires BENCHMARK_TELEMETRY_DATABASE_URL or DATABASE_URL/);
   });
+
+  it("rate limits telemetry submissions by client identity", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edge-ai-benchmark-telemetry-rate-limit-"));
+    const app = Fastify();
+    registerBenchmarkTelemetryRoutes(app, {
+      enabled: true,
+      prefix: "/api/benchmark-runs",
+      dir,
+      submitRateLimit: {
+        max: 1,
+        windowMs: 60_000
+      }
+    });
+
+    const first = await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      headers: { "x-forwarded-for": "203.0.113.10" },
+      payload: makePayload()
+    });
+    expect(first.statusCode).toBe(202);
+
+    const second = await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      headers: { "x-forwarded-for": "203.0.113.10" },
+      payload: { ...makePayload(), runId: "bench_test_second" }
+    });
+    expect(second.statusCode).toBe(429);
+    expect(second.json()).toMatchObject({
+      errorCode: "BENCHMARK_TELEMETRY_RATE_LIMITED"
+    });
+
+    await app.close();
+  });
+
+  it("requires a submit token when public submission token gating is configured", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edge-ai-benchmark-telemetry-submit-token-"));
+    const app = Fastify();
+    registerBenchmarkTelemetryRoutes(app, {
+      enabled: true,
+      prefix: "/api/benchmark-runs",
+      dir,
+      submitToken: "submit-secret"
+    });
+
+    const unauthorized = await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      payload: makePayload()
+    });
+    expect(unauthorized.statusCode).toBe(401);
+    expect(unauthorized.json()).toMatchObject({
+      errorCode: "BENCHMARK_TELEMETRY_SUBMIT_UNAUTHORIZED"
+    });
+
+    const authorized = await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      headers: { authorization: "Bearer submit-secret" },
+      payload: makePayload()
+    });
+    expect(authorized.statusCode).toBe(202);
+
+    await app.close();
+  });
+
+  it("requires an admin token for list, summary, dashboard, and CSV export when configured", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edge-ai-benchmark-telemetry-admin-token-"));
+    const app = Fastify();
+    registerBenchmarkTelemetryRoutes(app, {
+      enabled: true,
+      prefix: "/api/benchmark-runs",
+      dir,
+      adminToken: "admin-secret"
+    });
+    await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      payload: makePayload()
+    });
+
+    for (const url of [
+      "/api/benchmark-runs",
+      "/api/benchmark-runs/summary",
+      "/api/benchmark-runs/dashboard",
+      "/api/benchmark-runs/export.csv"
+    ]) {
+      const unauthorized = await app.inject({ method: "GET", url });
+      expect(unauthorized.statusCode).toBe(401);
+      expect(unauthorized.json()).toMatchObject({
+        errorCode: "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED"
+      });
+
+      const authorized = await app.inject({
+        method: "GET",
+        url,
+        headers: { authorization: "Bearer admin-secret" }
+      });
+      expect(authorized.statusCode).toBe(200);
+    }
+
+    await app.close();
+  });
 });
 
 class CapturingSqlClient {
