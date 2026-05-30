@@ -128,6 +128,7 @@ This manifest started as the v4 handoff package inventory. The authoritative fil
 - `docs/REFERENCES.md`
 - `docs/assets/infinite-edge-agent-hero.jpg`
 - `docs/assets/infinite-edge-agent-hero.svg`
+- `docs/assets/infinite-edge-agent-social.png`
 - `package.json`
 - `packages/core/package.json`
 - `packages/core/src/chunking.test.ts`

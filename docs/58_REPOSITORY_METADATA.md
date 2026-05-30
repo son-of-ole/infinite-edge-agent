@@ -35,9 +35,15 @@ benchmarking
 
 ## Social Preview
 
-Use `docs/assets/infinite-edge-agent-hero.jpg` as the GitHub social preview image.
+Use `docs/assets/infinite-edge-agent-social.png` as the GitHub social preview image.
 
-The generated hero is intentionally text-free so it remains usable across GitHub, Hugging Face, project pages, and launch posts.
+The generated social preview is intentionally text-free so it remains usable across GitHub, Hugging Face, project pages, and launch posts.
+
+**Generation prompt**
+
+```text
+Create a polished text-free hero image for an open source project called Infinite Edge Agent. Visual concept: a browser-native AI runtime running across edge devices, with a laptop browser window, phone, and small workstation implied by silhouettes, connected by luminous memory graph nodes and subtle WebGPU-like compute grids. Style: realistic cinematic product/technology photography blended with clean technical visualization, high-end open source systems project, modern but not dark or cluttered. No readable text, no logos, no watermarks. Wide landscape composition suitable for a GitHub README social preview, generous safe margins, crisp details, professional lighting.
+```
 
 ## Short Project Summary
 

@@ -3,7 +3,7 @@
 > Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab.
 
 <p align="center">
-  <img src="docs/assets/infinite-edge-agent-hero.jpg" alt="Infinite Edge Agent running as a browser-native AI runtime across edge devices" width="100%" />
+  <img src="docs/assets/infinite-edge-agent-social.png" alt="Infinite Edge Agent running as a browser-native AI runtime across edge devices" width="100%" />
 </p>
 
 <p align="center">
@@ -25,6 +25,18 @@ The v12 architecture has two answer lanes:
 | `unlocked-browser-transformer` | Custom WebGPU Kernel Lab for SSA, KVSwap, TSP, top-k, residency, and fusion research | Useful for research gates, not the default deploy claim |
 
 The practical goal is simple: give a browser-hosted agent persistent memory and grounded answers while keeping the execution path honest about which backend is actually production-ready.
+
+## Public Repository Metadata
+
+Use these values for the GitHub repository settings:
+
+| Field | Value |
+|---|---|
+| Name | `infinite-edge-agent` |
+| Display title | Infinite Edge Agent |
+| Description | Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab. |
+| Social preview | `docs/assets/infinite-edge-agent-social.png` |
+| Topics | `ai-agent`, `browser-ai`, `webgpu`, `webllm`, `local-first`, `persistent-memory`, `rag`, `edge-inference`, `typescript`, `react`, `indexeddb`, `benchmarking` |
 
 ## Why It Is Different
 
