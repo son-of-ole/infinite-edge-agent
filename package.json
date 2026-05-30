@@ -47,6 +47,7 @@
     "eval:v12-readiness": "node --import tsx scripts/v12ReadinessBundle.ts",
     "eval:v12-production": "node --import tsx scripts/v12ProductionArchive.ts",
     "eval:v12-suite": "node --import tsx scripts/v12ReadinessSuite.ts",
+    "eval:repository-publication": "node --import tsx scripts/repositoryPublicationStatus.ts",
     "materialize:hosted-benchmark": "node --import tsx scripts/materializeHostedBenchmarkArtifact.ts",
     "verify:hosted-benchmark-proof": "node --import tsx scripts/hostedBenchmarkProof.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",

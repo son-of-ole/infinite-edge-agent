@@ -124,6 +124,14 @@ pnpm eval:v12-suite
 
 This writes hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, v12 production workflow preflight, and `.artifacts/evals/v12-readiness-suite-latest.json` with one timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also writes `hosted-benchmark-proof-latest.json` as a child artifact. Set `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` for release evidence so the suite validates the saved browser proof against `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` or `GITHUB_SHA`; the suite summary records this as `v12SuiteHostedBenchmarkProofSourceBoundRequired` and records workflow coverage as `v12SuiteProductionWorkflowPreflightPassed`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
+For source publication status, run:
+
+```bash
+pnpm eval:repository-publication
+```
+
+This writes `.artifacts/evals/repository-publication-status-latest.json`. It passes when the local `main` is either published to `origin/main` or, if local commits are still ahead because network publishing is unavailable, a verified exact-history Git bundle contains the current head. This is a handoff/status artifact only; a bundle-ready state is not the same as the GitHub repository being published.
+
 For strict production archive proof, run:
 
 ```bash
