@@ -165,6 +165,35 @@ describe("v12 final state status", () => {
     });
   });
 
+  it("prioritizes publishing source history when exact-history handoff is ready even if hosted env is not configured", () => {
+    const status = evaluateV12FinalStateStatus({
+      readinessBundle: makeReadinessBundle({
+        passed: false,
+        deployBackendId: null,
+        backendRoleBoundaryPassed: false,
+        blockers: ["Hosted deployment profile did not pass."],
+      }),
+      repositoryPublication: makePublication({
+        published: false,
+        bundleHandoffReady: true,
+        snapshot: {
+          branch: "main",
+          headSha: "c".repeat(40),
+          upstream: "origin/main",
+          remoteUrl: "https://github.com/son-of-ole/infinite-edge-agent.git",
+          aheadCount: 82,
+          behindCount: 0,
+          dirty: false,
+          bundles: [],
+        },
+      }),
+      productionArchive: null,
+    });
+
+    expect(status.passed).toBe(false);
+    expect(status.nextAction).toBe("publish_source_history");
+  });
+
   it("requires a source-bound hosted production archive after architecture and source publication are ready", () => {
     const status = evaluateV12FinalStateStatus({
       readinessBundle: makeReadinessBundle(),

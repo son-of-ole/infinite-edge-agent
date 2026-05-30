@@ -141,6 +141,7 @@ export function evaluateV12FinalStateStatus(input: {
   const nextAction = chooseNextAction({
     architectureReady,
     sourcePublished,
+    exactHistoryHandoffReady,
     sourceBoundHostedArchiveReady,
     backendSpecificProductionEvidenceReady,
   });
@@ -235,9 +236,11 @@ export async function evaluateCurrentV12FinalStateStatus(options: {
 function chooseNextAction(input: {
   architectureReady: boolean;
   sourcePublished: boolean;
+  exactHistoryHandoffReady: boolean;
   sourceBoundHostedArchiveReady: boolean;
   backendSpecificProductionEvidenceReady: boolean;
 }): V12FinalStateNextAction {
+  if (!input.sourcePublished && input.exactHistoryHandoffReady) return "publish_source_history";
   if (!input.architectureReady) return "fix_v12_architecture_readiness";
   if (!input.sourcePublished) return "publish_source_history";
   if (!input.sourceBoundHostedArchiveReady) return "run_hosted_production_proof";
