@@ -23,8 +23,8 @@ The repo now includes an optional telemetry collector in `apps/memory-server`:
 - `POST /api/benchmark-runs` validates and stores one benchmark run.
 - `GET /api/benchmark-runs?limit=100` lists recent runs.
 - `GET /api/benchmark-runs/summary` returns small aggregate counts.
-- `GET /api/benchmark-runs/dashboard` renders a minimal sanitized dashboard.
-- `GET /api/benchmark-runs/export.csv` exports sanitized run metadata for spreadsheet analysis.
+- `GET /api/benchmark-runs/dashboard` renders a minimal sanitized dashboard with backend, OS/browser, GPU label, speed, and readiness fields.
+- `GET /api/benchmark-runs/export.csv` exports sanitized run metadata, including GPU adapter/WebGL renderer fields, for spreadsheet analysis.
 
 Enable it with:
 
@@ -48,7 +48,7 @@ BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 
 The Postgres adapter uses the same store contract as JSONL, creates the `benchmark_runs` table if needed, and writes the sanitized artifact as `jsonb`. It loads the optional `pg` package at runtime only when Postgres storage is selected, so local JSONL development does not require a database client dependency.
 
-The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata and pass/fail/speed fields, not prompt or response text.
+The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata, GPU/device class labels, and pass/fail/speed fields, not prompt or response text.
 
 The submit endpoint is rate-limited by client identity. Configure `BENCHMARK_TELEMETRY_RATE_LIMIT_MAX` and `BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS` for the hosted traffic profile. Set `BENCHMARK_TELEMETRY_SUBMIT_TOKEN` only for private benchmark collectors; do not expose a submit secret through `VITE_*` browser variables. Set `BENCHMARK_TELEMETRY_ADMIN_TOKEN` to protect list, summary, dashboard, and CSV export routes.
 
@@ -125,7 +125,7 @@ For v12 production proof, the browser benchmark artifact carries this deployment
 /__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true
 ```
 
-The current implementation submits a sanitized artifact. Raw prompts, raw responses, expected strings, and token diagnostics are redacted before upload.
+The current implementation submits a sanitized artifact. Raw prompts, raw responses, expected strings, and token diagnostics are redacted before upload. When available, the browser also includes WebGPU adapter info (`vendor`, `architecture`, `device`, `description`) and a WebGL renderer string so cross-device benchmarks can distinguish Apple, NVIDIA, AMD, Intel, and mobile GPU classes without storing the raw user agent.
 
 The client submits:
 
@@ -147,11 +147,11 @@ interface BenchmarkTelemetryPayload {
     deviceMemoryGb: number | null;
     screen: { width: number; height: number };
     webgpuAvailable: boolean;
-    gpuVendor?: string;
-    gpuArchitecture?: string;
-    gpuDevice?: string;
-    gpuDescription?: string;
-    webglRenderer?: string;
+    gpuVendor: string | null;
+    gpuArchitecture: string | null;
+    gpuDevice: string | null;
+    gpuDescription: string | null;
+    webglRenderer: string | null;
   };
   summary: {
     initLoadMs: number | null;
@@ -229,7 +229,7 @@ Benchmark telemetry can become browser fingerprinting if it is collected silentl
 - hash user/session ids if a stable id is needed,
 - store only fixed public canary prompts and outputs,
 - never upload private chat content,
-- show the user what will be submitted,
+- show the user what will be submitted, including GPU adapter/WebGL renderer fields when available,
 - allow deletion/export if account-based telemetry is added later.
 
 ## Public Dashboard

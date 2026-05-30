@@ -25,6 +25,11 @@ describe("benchmark telemetry", () => {
         screenWidth: 1440,
         screenHeight: 900,
         webgpuAvailable: true,
+        gpuVendor: "apple",
+        gpuArchitecture: "apple7",
+        gpuDevice: "apple-m3",
+        gpuDescription: "Apple M3",
+        webglRenderer: "ANGLE Metal Renderer: Apple M3",
       },
     });
 
@@ -41,6 +46,11 @@ describe("benchmark telemetry", () => {
         hardwareConcurrency: 10,
         deviceMemoryGb: 8,
         webgpuAvailable: true,
+        gpuVendor: "apple",
+        gpuArchitecture: "apple7",
+        gpuDevice: "apple-m3",
+        gpuDescription: "Apple M3",
+        webglRenderer: "ANGLE Metal Renderer: Apple M3",
       },
       summary: {
         tokensPerSecond: 9.1,

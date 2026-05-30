@@ -32,6 +32,11 @@ export interface BenchmarkTelemetryBrowserContext {
   screenWidth: number | null;
   screenHeight: number | null;
   webgpuAvailable: boolean;
+  gpuVendor?: string | null;
+  gpuArchitecture?: string | null;
+  gpuDevice?: string | null;
+  gpuDescription?: string | null;
+  webglRenderer?: string | null;
   deployUrl: string;
 }
 
@@ -57,6 +62,11 @@ export interface BenchmarkTelemetryPayload {
       height: number | null;
     };
     webgpuAvailable: boolean;
+    gpuVendor: string | null;
+    gpuArchitecture: string | null;
+    gpuDevice: string | null;
+    gpuDescription: string | null;
+    webglRenderer: string | null;
   };
   summary: {
     initLoadMs: number | null;
@@ -84,7 +94,10 @@ export async function submitBenchmarkTelemetry(
   }
 
   try {
-    const payload = buildBenchmarkTelemetryPayload(input);
+    const payload = buildBenchmarkTelemetryPayload({
+      ...input,
+      browserContext: input.browserContext ?? await collectBenchmarkTelemetryBrowserContext(),
+    });
     const response = await (input.fetcher ?? fetch)(input.config.url, {
       method: "POST",
       headers: {
@@ -141,6 +154,11 @@ export function buildBenchmarkTelemetryPayload(
         height: browserContext.screenHeight,
       },
       webgpuAvailable: browserContext.webgpuAvailable,
+      gpuVendor: readNullableDeviceString(browserContext.gpuVendor),
+      gpuArchitecture: readNullableDeviceString(browserContext.gpuArchitecture),
+      gpuDevice: readNullableDeviceString(browserContext.gpuDevice),
+      gpuDescription: readNullableDeviceString(browserContext.gpuDescription),
+      webglRenderer: readNullableDeviceString(browserContext.webglRenderer),
     },
     summary: {
       initLoadMs: readSummaryNumber(summary.meanInitLoadMs),
@@ -152,6 +170,18 @@ export function buildBenchmarkTelemetryPayload(
       compiledBackendReadyPassed: readSummaryBoolean(summary.compiledBackendReadyPassed),
     },
     artifactJson: sanitizeBenchmarkArtifact(input.benchmarkPayload),
+  };
+}
+
+export async function collectBenchmarkTelemetryBrowserContext(): Promise<BenchmarkTelemetryBrowserContext> {
+  const base = readBrowserTelemetryContext();
+  const adapterInfo = await readWebGpuAdapterInfo().catch(() => null);
+  return {
+    ...base,
+    ...(adapterInfo?.vendor ? { gpuVendor: adapterInfo.vendor } : {}),
+    ...(adapterInfo?.architecture ? { gpuArchitecture: adapterInfo.architecture } : {}),
+    ...(adapterInfo?.device ? { gpuDevice: adapterInfo.device } : {}),
+    ...(adapterInfo?.description ? { gpuDescription: adapterInfo.description } : {}),
   };
 }
 
@@ -184,8 +214,56 @@ function readBrowserTelemetryContext(): BenchmarkTelemetryBrowserContext {
     screenWidth: screenLike?.width ?? null,
     screenHeight: screenLike?.height ?? null,
     webgpuAvailable: Boolean(navigatorLike?.gpu),
+    webglRenderer: readWebGlRenderer(),
     deployUrl: globalThis.location?.origin ?? "",
   };
+}
+
+async function readWebGpuAdapterInfo(): Promise<{
+  vendor?: string;
+  architecture?: string;
+  device?: string;
+  description?: string;
+} | null> {
+  const gpu = (globalThis.navigator as (Navigator & {
+    gpu?: { requestAdapter?: () => Promise<unknown> };
+  }) | undefined)?.gpu;
+  if (typeof gpu?.requestAdapter !== "function") return null;
+  const adapter = await gpu.requestAdapter();
+  if (!adapter || typeof adapter !== "object") return null;
+  const adapterRecord = adapter as Record<string, unknown>;
+  const info = adapterRecord.info
+    ?? (typeof adapterRecord.requestAdapterInfo === "function"
+      ? await (adapterRecord.requestAdapterInfo as () => Promise<unknown>)()
+      : null);
+  if (!info || typeof info !== "object") return null;
+  return {
+    ...readInfoString(info, "vendor"),
+    ...readInfoString(info, "architecture"),
+    ...readInfoString(info, "device"),
+    ...readInfoString(info, "description"),
+  };
+}
+
+function readWebGlRenderer(): string | null {
+  const documentLike = globalThis.document;
+  if (!documentLike?.createElement) return null;
+  const canvas = documentLike.createElement("canvas");
+  const context = (canvas.getContext("webgl") ?? canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+  if (!context) return null;
+  const debugInfo = context.getExtension("WEBGL_debug_renderer_info") as {
+    UNMASKED_RENDERER_WEBGL: number;
+  } | null;
+  const renderer = debugInfo
+    ? context.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+    : context.getParameter(context.RENDERER);
+  return typeof renderer === "string" && renderer.trim() ? renderer : null;
+}
+
+function readInfoString(info: unknown, key: "vendor" | "architecture" | "device" | "description"): Partial<Record<typeof key, string>> {
+  if (!info || typeof info !== "object") return {};
+  const value = (info as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? { [key]: value } as Partial<Record<typeof key, string>> : {};
 }
 
 function makeTelemetryRunId(payload: BrowserPreviewBenchmarkPayload): string {
@@ -235,4 +313,8 @@ function readSummaryNumber(value: unknown): number | null {
 
 function readSummaryBoolean(value: unknown): boolean | null {
   return typeof value === "boolean" ? value : null;
+}
+
+function readNullableDeviceString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }

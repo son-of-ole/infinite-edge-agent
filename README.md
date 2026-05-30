@@ -143,7 +143,7 @@ The benchmark records:
 - CPU/fallback indicators where available,
 - and the raw JSON artifact.
 
-Opt-in hosted telemetry can be enabled with `VITE_BENCHMARK_TELEMETRY_ENABLED=true`, `VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs`, and the optional memory-server collector `BENCHMARK_TELEMETRY_ENABLED=true`, then requested per run with `submitTelemetry=true`. Uploaded artifacts are sanitized in the browser and again at the server so raw prompts, raw responses, expected strings, and token diagnostics are not stored. The collector exposes `/api/benchmark-runs/dashboard` and `/api/benchmark-runs/export.csv` for reviewing hosted device results, supports `BENCHMARK_TELEMETRY_STORAGE=postgres` for durable hosted storage, rate-limits submissions, and can protect review/export routes with `BENCHMARK_TELEMETRY_ADMIN_TOKEN`. See [Benchmark Telemetry](docs/57_BENCHMARK_TELEMETRY.md).
+Opt-in hosted telemetry can be enabled with `VITE_BENCHMARK_TELEMETRY_ENABLED=true`, `VITE_BENCHMARK_TELEMETRY_URL=/api/benchmark-runs`, and the optional memory-server collector `BENCHMARK_TELEMETRY_ENABLED=true`, then requested per run with `submitTelemetry=true`. Uploaded artifacts are sanitized in the browser and again at the server so raw prompts, raw responses, expected strings, and token diagnostics are not stored. The collector stores GPU adapter/WebGL renderer labels when browsers expose them, exposes `/api/benchmark-runs/dashboard` and `/api/benchmark-runs/export.csv` for reviewing hosted device results, supports `BENCHMARK_TELEMETRY_STORAGE=postgres` for durable hosted storage, rate-limits submissions, and can protect review/export routes with `BENCHMARK_TELEMETRY_ADMIN_TOKEN`. See [Benchmark Telemetry](docs/57_BENCHMARK_TELEMETRY.md).
 
 ## Main Commands
 

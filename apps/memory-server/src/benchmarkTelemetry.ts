@@ -44,7 +44,12 @@ export const benchmarkTelemetryPayloadSchema = z.object({
       width: z.number().int().positive().max(100_000).nullable(),
       height: z.number().int().positive().max(100_000).nullable()
     }),
-    webgpuAvailable: z.boolean()
+    webgpuAvailable: z.boolean(),
+    gpuVendor: nullableString.default(null),
+    gpuArchitecture: nullableString.default(null),
+    gpuDevice: nullableString.default(null),
+    gpuDescription: nullableString.default(null),
+    webglRenderer: nullableString.default(null)
   }).strict(),
   summary: z.object({
     initLoadMs: nullableNumber,
@@ -79,6 +84,7 @@ export interface BenchmarkTelemetrySummary {
   backendCounts: Record<string, number>;
   browserCounts: Record<string, number>;
   osCounts: Record<string, number>;
+  gpuCounts: Record<string, number>;
   webgpuAvailableCount: number;
   productionDeployReadyCount: number;
 }
@@ -208,6 +214,11 @@ export class SqlBenchmarkTelemetryStore implements BenchmarkTelemetryStore {
       sanitized.device.screen.width,
       sanitized.device.screen.height,
       sanitized.device.webgpuAvailable,
+      sanitized.device.gpuVendor,
+      sanitized.device.gpuArchitecture,
+      sanitized.device.gpuDevice,
+      sanitized.device.gpuDescription,
+      sanitized.device.webglRenderer,
       sanitized.summary.initLoadMs,
       sanitized.summary.timeToFirstTokenMs,
       sanitized.summary.tokensPerSecond,
@@ -238,6 +249,11 @@ export class SqlBenchmarkTelemetryStore implements BenchmarkTelemetryStore {
       screen_width: sanitized.device.screen.width,
       screen_height: sanitized.device.screen.height,
       webgpu_available: sanitized.device.webgpuAvailable,
+      gpu_vendor: sanitized.device.gpuVendor,
+      gpu_architecture: sanitized.device.gpuArchitecture,
+      gpu_device: sanitized.device.gpuDevice,
+      gpu_description: sanitized.device.gpuDescription,
+      webgl_renderer: sanitized.device.webglRenderer,
       init_load_ms: sanitized.summary.initLoadMs,
       time_to_first_token_ms: sanitized.summary.timeToFirstTokenMs,
       tokens_per_second: sanitized.summary.tokensPerSecond,
@@ -266,7 +282,9 @@ export class SqlBenchmarkTelemetryStore implements BenchmarkTelemetryStore {
   }
 
   private async ensureSchema(): Promise<void> {
-    this.schemaReady ??= this.options.client.query(CREATE_BENCHMARK_RUNS_TABLE_SQL).then(() => undefined);
+    this.schemaReady ??= this.options.client.query(CREATE_BENCHMARK_RUNS_TABLE_SQL)
+      .then(() => this.options.client.query(ALTER_BENCHMARK_RUNS_GPU_COLUMNS_SQL))
+      .then(() => undefined);
     await this.schemaReady;
   }
 }
@@ -424,9 +442,18 @@ export function summarizeBenchmarkTelemetryRuns(
     backendCounts: countBy(runs.map((run) => run.backendId ?? "unknown")),
     browserCounts: countBy(runs.map((run) => run.device.browserName || "unknown")),
     osCounts: countBy(runs.map((run) => run.device.os || "unknown")),
+    gpuCounts: countBy(runs.map((run) => describeBenchmarkGpu(run))),
     webgpuAvailableCount: runs.filter((run) => run.device.webgpuAvailable).length,
     productionDeployReadyCount: runs.filter((run) => run.summary.productionDeployReadyPassed === true).length
   };
+}
+
+function describeBenchmarkGpu(run: StoredBenchmarkTelemetryRun): string {
+  return run.device.gpuDescription
+    ?? run.device.gpuDevice
+    ?? run.device.webglRenderer
+    ?? run.device.gpuVendor
+    ?? "unknown";
 }
 
 function sanitizeBenchmarkArtifactJson(value: unknown): unknown {
@@ -527,6 +554,11 @@ create table if not exists benchmark_runs (
   screen_width integer,
   screen_height integer,
   webgpu_available boolean not null,
+  gpu_vendor text,
+  gpu_architecture text,
+  gpu_device text,
+  gpu_description text,
+  webgl_renderer text,
   init_load_ms numeric,
   time_to_first_token_ms numeric,
   tokens_per_second numeric,
@@ -540,6 +572,16 @@ create table if not exists benchmark_runs (
 );
 create index if not exists benchmark_runs_received_at_idx on benchmark_runs (received_at desc);
 create index if not exists benchmark_runs_backend_id_idx on benchmark_runs (backend_id);
+create index if not exists benchmark_runs_gpu_vendor_idx on benchmark_runs (gpu_vendor);
+`;
+
+const ALTER_BENCHMARK_RUNS_GPU_COLUMNS_SQL = `
+alter table benchmark_runs add column if not exists gpu_vendor text;
+alter table benchmark_runs add column if not exists gpu_architecture text;
+alter table benchmark_runs add column if not exists gpu_device text;
+alter table benchmark_runs add column if not exists gpu_description text;
+alter table benchmark_runs add column if not exists webgl_renderer text;
+create index if not exists benchmark_runs_gpu_vendor_idx on benchmark_runs (gpu_vendor);
 `;
 
 const INSERT_BENCHMARK_RUN_SQL = `
@@ -563,6 +605,11 @@ insert into benchmark_runs (
   screen_width,
   screen_height,
   webgpu_available,
+  gpu_vendor,
+  gpu_architecture,
+  gpu_device,
+  gpu_description,
+  webgl_renderer,
   init_load_ms,
   time_to_first_token_ms,
   tokens_per_second,
@@ -576,7 +623,8 @@ insert into benchmark_runs (
 ) values (
   $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
   $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-  $21, $22, $23, $24, $25, $26, $27, $28, 1
+  $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+  $31, $32, $33, 1
 ) on conflict (id) do update set
   received_at = excluded.received_at,
   app_version = excluded.app_version,
@@ -595,6 +643,11 @@ insert into benchmark_runs (
   screen_width = excluded.screen_width,
   screen_height = excluded.screen_height,
   webgpu_available = excluded.webgpu_available,
+  gpu_vendor = excluded.gpu_vendor,
+  gpu_architecture = excluded.gpu_architecture,
+  gpu_device = excluded.gpu_device,
+  gpu_description = excluded.gpu_description,
+  webgl_renderer = excluded.webgl_renderer,
   init_load_ms = excluded.init_load_ms,
   time_to_first_token_ms = excluded.time_to_first_token_ms,
   tokens_per_second = excluded.tokens_per_second,
@@ -630,7 +683,12 @@ function rowToStoredBenchmarkTelemetryRun(row: Record<string, unknown>): StoredB
         width: readNullableNumber(row.screen_width),
         height: readNullableNumber(row.screen_height)
       },
-      webgpuAvailable: readBoolean(row.webgpu_available)
+      webgpuAvailable: readBoolean(row.webgpu_available),
+      gpuVendor: readNullableString(row.gpu_vendor),
+      gpuArchitecture: readNullableString(row.gpu_architecture),
+      gpuDevice: readNullableString(row.gpu_device),
+      gpuDescription: readNullableString(row.gpu_description),
+      webglRenderer: readNullableString(row.webgl_renderer)
     },
     summary: {
       initLoadMs: readNullableNumber(row.init_load_ms),
@@ -659,6 +717,7 @@ function renderBenchmarkTelemetryDashboard(
         <td>${escapeHtml(run.modelId ?? "unknown")}</td>
         <td>${escapeHtml(run.device.os)}</td>
         <td>${escapeHtml(run.device.browserName)}</td>
+        <td>${escapeHtml(describeBenchmarkGpu(run))}</td>
         <td>${formatMetric(run.summary.tokensPerSecond)}</td>
         <td>${formatBoolean(run.summary.memoryGroundingPassed)}</td>
         <td>${formatBoolean(run.summary.expectedExactPassed)}</td>
@@ -702,13 +761,14 @@ function renderBenchmarkTelemetryDashboard(
             <th>Model</th>
             <th>OS</th>
             <th>Browser</th>
+            <th>GPU</th>
             <th>Tok/s</th>
             <th>Memory</th>
             <th>Exact</th>
             <th>Deploy</th>
           </tr>
         </thead>
-        <tbody>${rows || "<tr><td colspan=\"9\">No benchmark runs saved yet.</td></tr>"}</tbody>
+        <tbody>${rows || "<tr><td colspan=\"10\">No benchmark runs saved yet.</td></tr>"}</tbody>
       </table>
     </main>
   </body>
@@ -728,6 +788,11 @@ function renderBenchmarkTelemetryCsv(runs: readonly StoredBenchmarkTelemetryRun[
     "os",
     "browser_name",
     "browser_version",
+    "gpu_vendor",
+    "gpu_architecture",
+    "gpu_device",
+    "gpu_description",
+    "webgl_renderer",
     "mobile",
     "hardware_concurrency",
     "device_memory_gb",
@@ -752,6 +817,11 @@ function renderBenchmarkTelemetryCsv(runs: readonly StoredBenchmarkTelemetryRun[
     run.device.os,
     run.device.browserName,
     run.device.browserVersion,
+    run.device.gpuVendor,
+    run.device.gpuArchitecture,
+    run.device.gpuDevice,
+    run.device.gpuDescription,
+    run.device.webglRenderer,
     run.device.mobile,
     run.device.hardwareConcurrency,
     run.device.deviceMemoryGb,

@@ -30,6 +30,13 @@ describe("benchmark telemetry server", () => {
     expect(stored).not.toContain("Mozilla/5.0");
     expect(stored).toContain("[redacted]");
     expect(stored).toContain("\"matched\":true");
+    expect(record.device).toMatchObject({
+      gpuVendor: "apple",
+      gpuArchitecture: "apple7",
+      gpuDevice: "apple-m3",
+      gpuDescription: "Apple M3",
+      webglRenderer: "ANGLE Metal Renderer: Apple M3"
+    });
 
     await expect(store.summary()).resolves.toMatchObject({
       count: 1,
@@ -37,6 +44,7 @@ describe("benchmark telemetry server", () => {
       backendCounts: { "compiled-browser-webllm": 1 },
       browserCounts: { Chrome: 1 },
       osCounts: { macOS: 1 },
+      gpuCounts: { "Apple M3": 1 },
       webgpuAvailableCount: 1,
       productionDeployReadyCount: 1
     });
@@ -101,6 +109,7 @@ describe("benchmark telemetry server", () => {
     expect(dashboard.headers["content-type"]).toContain("text/html");
     expect(dashboard.body).toContain("Infinite Edge Agent Benchmark Runs");
     expect(dashboard.body).toContain("compiled-browser-webllm");
+    expect(dashboard.body).toContain("Apple M3");
     expect(dashboard.body).toContain("8.25");
     expect(dashboard.body).not.toContain("private benchmark prompt");
     expect(dashboard.body).not.toContain("Helena");
@@ -109,8 +118,10 @@ describe("benchmark telemetry server", () => {
     expect(csv.statusCode).toBe(200);
     expect(csv.headers["content-type"]).toContain("text/csv");
     expect(csv.body).toContain("run_id,received_at,created_at,backend_id,model_id");
+    expect(csv.body).toContain("gpu_vendor,gpu_architecture,gpu_device,gpu_description,webgl_renderer");
     expect(csv.body).toContain("bench_test");
     expect(csv.body).toContain("compiled-browser-webllm");
+    expect(csv.body).toContain("Apple M3");
     expect(csv.body).toContain("8.25");
     expect(csv.body).not.toContain("private benchmark prompt");
     expect(csv.body).not.toContain("Helena");
@@ -155,10 +166,12 @@ describe("benchmark telemetry server", () => {
     });
     expect(summary).toMatchObject({
       count: 1,
-      productionDeployReadyCount: 1
+      productionDeployReadyCount: 1,
+      gpuCounts: { "Apple M3": 1 }
     });
     expect(client.sql).toEqual(expect.arrayContaining([
       expect.stringContaining("create table if not exists benchmark_runs"),
+      expect.stringContaining("add column if not exists gpu_vendor"),
       expect.stringContaining("insert into benchmark_runs"),
       expect.stringContaining("select * from benchmark_runs")
     ]));
@@ -309,15 +322,20 @@ class CapturingSqlClient {
         screen_width: values[16],
         screen_height: values[17],
         webgpu_available: values[18],
-        init_load_ms: values[19],
-        time_to_first_token_ms: values[20],
-        tokens_per_second: values[21],
-        memory_grounding_passed: values[22],
-        expected_exact_passed: values[23],
-        compiled_backend_ready_passed: values[24],
-        production_deploy_ready_passed: values[25],
-        artifact_json: values[26],
-        artifact_bytes: values[27],
+        gpu_vendor: values[19],
+        gpu_architecture: values[20],
+        gpu_device: values[21],
+        gpu_description: values[22],
+        webgl_renderer: values[23],
+        init_load_ms: values[24],
+        time_to_first_token_ms: values[25],
+        tokens_per_second: values[26],
+        memory_grounding_passed: values[27],
+        expected_exact_passed: values[28],
+        compiled_backend_ready_passed: values[29],
+        production_deploy_ready_passed: values[30],
+        artifact_json: values[31],
+        artifact_bytes: values[32],
         schema_version: 1
       };
       this.rows.splice(0, this.rows.length, row);
@@ -348,8 +366,13 @@ function makePayload(): BenchmarkTelemetryPayload {
       mobile: false,
       hardwareConcurrency: 10,
       deviceMemoryGb: 8,
-      screen: { width: 1440, height: 900 },
-      webgpuAvailable: true
+        screen: { width: 1440, height: 900 },
+      webgpuAvailable: true,
+      gpuVendor: "apple",
+      gpuArchitecture: "apple7",
+      gpuDevice: "apple-m3",
+      gpuDescription: "Apple M3",
+      webglRenderer: "ANGLE Metal Renderer: Apple M3"
     },
     summary: {
       initLoadMs: 100,

@@ -185,6 +185,6 @@ The workflow materializes the saved browser artifact, verifies the hosted deploy
 
 ## What Still Needs Automation
 
-Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.
+Manual device testing has been encouraging. The next release-hardening step is to run the hosted deployment with durable Postgres telemetry enabled and archive saved benchmark rows from each target device class. The collector now stores sanitized browser, WebGPU adapter, WebGL renderer, speed, exact-answer, and grounded-memory fields, so the remaining work is operating the hosted telemetry path against real devices rather than adding a separate benchmark database mechanism.
 
 See [Benchmark Telemetry Plan](57_BENCHMARK_TELEMETRY.md).
