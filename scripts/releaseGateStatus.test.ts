@@ -189,6 +189,7 @@ describe("release gate status", () => {
       passed: true,
       strictUnlockedModel: false,
       requireBrowserPreviewProof: false,
+      requireV12ProductionArchive: true,
       releaseAllowFixtureGate: false,
       unlockedAllowFixture: "false",
       manifestPath: null,
@@ -217,6 +218,9 @@ describe("release gate status", () => {
       backendSpecificProductionProof: true,
       v12ProductionArchiveProof: true,
       deployReadySpeedQualityProof: false,
+      strictEnv: {
+        RELEASE_REQUIRE_V12_PRODUCTION: true,
+      },
     });
   });
 

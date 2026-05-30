@@ -19,6 +19,7 @@ export function classifyReleaseGateProof(input: {
   passed: boolean;
   strictUnlockedModel?: boolean;
   requireBrowserPreviewProof?: boolean;
+  requireV12ProductionArchive?: boolean;
   releaseAllowFixtureGate?: boolean;
   unlockedAllowFixture?: string | null;
   manifestPath?: string | null;
@@ -72,6 +73,7 @@ export function classifyReleaseGateProof(input: {
     strictEnv: {
       RELEASE_REQUIRE_UNLOCKED_MODEL: strictUnlockedModel,
       RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF: requireBrowserPreviewProof,
+      RELEASE_REQUIRE_V12_PRODUCTION: input.requireV12ProductionArchive === true,
       RELEASE_ALLOW_FIXTURE_GATE: input.releaseAllowFixtureGate === true,
       VITE_UNLOCKED_ALLOW_FIXTURE: input.unlockedAllowFixture ?? null,
       VITE_UNLOCKED_MODEL_MANIFEST_PATH: input.manifestPath?.trim() || null,

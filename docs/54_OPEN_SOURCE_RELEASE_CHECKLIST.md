@@ -126,7 +126,7 @@ For strict production archive proof, run:
 pnpm eval:v12-production
 ```
 
-This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive.
+This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive. With that flag enabled, the release gate validates the archive's backend-specific proof fields instead of accepting archive presence alone: deploy backend must be `compiled-browser-webllm`, Kernel Lab must be `unlocked-browser-transformer`, hosted benchmark proof must be required and passed, and blocker count must be zero.
 
 After the real Chrome or Edge hosted benchmark is saved, validate the runtime artifact:
 
