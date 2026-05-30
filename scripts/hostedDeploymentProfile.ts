@@ -97,8 +97,11 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   if (!expectedBenchmarkUrl) {
     blockers.push("Hosted production requires HOSTED_PRODUCTION_BENCHMARK_URL or BROWSER_RUNTIME_BENCH_PREVIEW_URL.");
   } else if (!parsedBenchmark) {
-    blockers.push("Hosted production benchmark URL must be an absolute or root-relative URL.");
+    blockers.push("Hosted production benchmark URL must be an absolute URL.");
   } else {
+    if (!isPublicHttpsUrl(parsedBenchmark)) {
+      blockers.push("Hosted production benchmark URL must use a public HTTPS origin.");
+    }
     if (parsedBenchmark.pathname !== "/__bench/browser-runtime") {
       blockers.push("Hosted production benchmark URL must target /__bench/browser-runtime.");
     }
@@ -223,10 +226,59 @@ function resolveBenchmarkUrl(env: HostedDeploymentProfileEnv): string | null {
 function parseBenchmarkUrl(value: string | null): URL | null {
   if (!value) return null;
   try {
-    return new URL(value, value.startsWith("/") ? "https://hosted-profile.local" : undefined);
+    return new URL(value);
   } catch {
     return null;
   }
+}
+
+function isPublicHttpsUrl(url: URL): boolean {
+  if (url.protocol !== "https:") return false;
+  const hostname = normalizeUrlHostname(url.hostname);
+  return !isLocalhost(hostname) && !isPrivateIpv4Host(hostname) && !isPrivateIpv6Host(hostname);
+}
+
+function normalizeUrlHostname(hostname: string): string {
+  let normalized = hostname.trim().toLowerCase();
+  if (normalized.startsWith("[") && normalized.endsWith("]")) {
+    normalized = normalized.slice(1, -1);
+  }
+  while (normalized.endsWith(".")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local");
+}
+
+function isPrivateIpv4Host(hostname: string): boolean {
+  const parts = hostname.split(".");
+  if (parts.length !== 4) return false;
+  const octets = parts.map((part) => {
+    if (!/^\d{1,3}$/.test(part)) return Number.NaN;
+    return Number(part);
+  });
+  if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  const [a = 0, b = 0] = octets;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168);
+}
+
+function isPrivateIpv6Host(hostname: string): boolean {
+  const host = hostname.split("%", 1)[0] ?? "";
+  if (!host.includes(":")) return false;
+  if (host === "::" || host === "::1" || host === "0:0:0:0:0:0:0:1") return true;
+  if (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:")) return true;
+  const ipv4Mapped = host.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  return Boolean(ipv4Mapped?.[1] && isPrivateIpv4Host(ipv4Mapped[1]));
 }
 
 function benchmarkProvesGrounding(params: URLSearchParams): boolean {

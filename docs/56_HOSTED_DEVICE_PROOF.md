@@ -91,7 +91,7 @@ The verifier checks the deploy profile, not the model output. It requires:
 - `BENCHMARK_TELEMETRY_STORAGE=postgres`,
 - admin protection for list, summary, dashboard, and CSV export routes,
 - rate limiting configured,
-- and a benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
+- and a public HTTPS benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
 
 The verifier does not replace the real Chrome benchmark. It prevents a hosted environment from being called production-ready before the authoritative browser proof can even produce the right artifact.
 
@@ -161,7 +161,7 @@ V12 Production Proof
 Inputs:
 
 - `deploy_url`: public hosted app URL,
-- `hosted_production_benchmark_url`: optional explicit benchmark URL,
+- `hosted_production_benchmark_url`: optional explicit public HTTPS benchmark URL,
 - exactly one of these saved-artifact inputs:
   - `hosted_benchmark_artifact_url`: public HTTPS URL to the saved benchmark JSON,
   - `hosted_benchmark_artifact_json`: pasted saved benchmark JSON,

@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       hosted_production_benchmark_url:
-        description: Optional explicit /__bench/browser-runtime URL. Overrides deploy_url-derived URL.
+        description: Optional explicit public HTTPS /__bench/browser-runtime URL. Overrides deploy_url-derived URL.
         required: false
         type: string
       hosted_benchmark_artifact_url:

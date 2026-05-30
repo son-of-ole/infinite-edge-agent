@@ -192,7 +192,7 @@ HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>
 HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true
 ```
 
-If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the canonical URL from `VITE_DEPLOY_URL`. The generated URL still has to be run in real Chrome or Edge for authoritative proof.
+If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the canonical URL from `VITE_DEPLOY_URL`. The benchmark URL must resolve to a public HTTPS origin; localhost, loopback, link-local, private-network, and non-HTTPS origins are rejected. The generated URL still has to be run in real Chrome or Edge for authoritative proof.
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, and `RELEASE_REQUIRE_HOSTED_PROFILE=true pnpm release:gate` includes that artifact in the release summary. This is the deploy-profile proof; the benchmark route plus telemetry database remain the runtime proof.
 

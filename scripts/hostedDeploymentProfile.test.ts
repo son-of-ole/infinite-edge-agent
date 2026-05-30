@@ -89,6 +89,31 @@ describe("evaluateHostedDeploymentProfile", () => {
     expect(report.blockers).toContain("Hosted production benchmark URL must set backend=compiled-browser-webllm.");
   });
 
+  it.each([
+    "http://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true",
+    "https://localhost/__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true",
+    "https://192.168.1.5/__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true",
+  ])("rejects hosted benchmark URLs that are not public HTTPS: %s", (url) => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      HOSTED_PRODUCTION_BENCHMARK_URL: url,
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted production benchmark URL must use a public HTTPS origin.");
+  });
+
+  it("rejects generated benchmark URLs when VITE_DEPLOY_URL is not public HTTPS", () => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      HOSTED_PRODUCTION_BENCHMARK_URL: "",
+      VITE_DEPLOY_URL: "http://localhost:5173",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted production benchmark URL must use a public HTTPS origin.");
+  });
+
   it("rejects benchmark URLs that do not prove grounded exact Montana retrieval with telemetry submission", () => {
     const report = evaluateHostedDeploymentProfile({
       ...completeHostedEnv,
