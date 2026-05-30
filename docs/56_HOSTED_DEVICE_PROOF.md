@@ -156,7 +156,14 @@ Inputs:
 - `deploy_url`: public hosted app URL,
 - `hosted_production_benchmark_url`: optional explicit benchmark URL,
 - `hosted_benchmark_artifact_url`: URL to the saved benchmark JSON, or
-- `hosted_benchmark_artifact_json`: pasted saved benchmark JSON.
+- `hosted_benchmark_artifact_json`: pasted saved benchmark JSON, or
+- `hosted_benchmark_artifact_base64`: base64-encoded saved benchmark JSON.
+
+Generate base64 from a saved local artifact with:
+
+```bash
+base64 -i .artifacts/evals/hosted/browser-runtime-bench-latest.json | tr -d '\n'
+```
 
 Required repository secrets:
 

@@ -141,10 +141,16 @@ This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_
 For remote release verification, use the manual GitHub Actions workflow **V12 Production Proof**. Provide:
 
 - the public hosted deployment URL,
-- either a saved benchmark artifact URL or pasted benchmark artifact JSON,
+- either a saved benchmark artifact URL, pasted benchmark artifact JSON, or base64-encoded benchmark artifact JSON,
 - repository secrets `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN`.
 
 The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`.
+
+To generate the base64 input from a saved artifact:
+
+```bash
+base64 -i .artifacts/evals/hosted/browser-runtime-bench-latest.json | tr -d '\n'
+```
 
 ## 8. Final manual checks
 

@@ -36,10 +36,49 @@ describe("hosted benchmark artifact materializer", () => {
     expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
   });
 
+  it("writes base64 hosted benchmark JSON to a stable output path", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
+    const outputPath = join(dir, "browser-runtime-bench-latest.json");
+    const base64Json = Buffer.from(JSON.stringify(makeArtifact()), "utf8").toString("base64");
+
+    const result = await materializeHostedBenchmarkArtifact({
+      base64Json,
+      outputPath,
+    });
+
+    expect(result).toMatchObject({
+      artifactPath: outputPath,
+      source: "base64_json",
+    });
+
+    const written = JSON.parse(await readFile(outputPath, "utf8")) as ReturnType<typeof makeArtifact>;
+    expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
+  });
+
+  it("prefers raw inline JSON over base64 hosted benchmark JSON when both are present", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
+    const outputPath = join(dir, "browser-runtime-bench-latest.json");
+    const base64Json = Buffer.from(JSON.stringify({
+      ...makeArtifact(),
+      summary: { runtimeBackendId: "wrong-backend" },
+    }), "utf8").toString("base64");
+
+    const result = await materializeHostedBenchmarkArtifact({
+      inlineJson: JSON.stringify(makeArtifact()),
+      base64Json,
+      outputPath,
+    });
+
+    expect(result.source).toBe("inline_json");
+
+    const written = JSON.parse(await readFile(outputPath, "utf8")) as ReturnType<typeof makeArtifact>;
+    expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
+  });
+
   it("rejects missing hosted benchmark input", async () => {
     await expect(materializeHostedBenchmarkArtifact({
       outputPath: join(await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-")), "artifact.json"),
-    })).rejects.toThrow("Provide HOSTED_BENCHMARK_ARTIFACT_JSON or HOSTED_BENCHMARK_ARTIFACT_URL.");
+    })).rejects.toThrow("Provide HOSTED_BENCHMARK_ARTIFACT_JSON, HOSTED_BENCHMARK_ARTIFACT_BASE64, or HOSTED_BENCHMARK_ARTIFACT_URL.");
   });
 
   it("rejects non-json inline artifact input", async () => {

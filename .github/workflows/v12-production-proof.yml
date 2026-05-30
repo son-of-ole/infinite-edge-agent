@@ -19,6 +19,10 @@ on:
         description: Optional pasted saved browser-runtime benchmark artifact JSON.
         required: false
         type: string
+      hosted_benchmark_artifact_base64:
+        description: Optional base64-encoded saved browser-runtime benchmark artifact JSON.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -40,6 +44,7 @@ jobs:
       HOSTED_PRODUCTION_BENCHMARK_URL: ${{ inputs.hosted_production_benchmark_url }}
       HOSTED_BENCHMARK_ARTIFACT_URL: ${{ inputs.hosted_benchmark_artifact_url }}
       HOSTED_BENCHMARK_ARTIFACT_JSON: ${{ inputs.hosted_benchmark_artifact_json }}
+      HOSTED_BENCHMARK_ARTIFACT_BASE64: ${{ inputs.hosted_benchmark_artifact_base64 }}
       VITE_LLM_BACKEND: compiled-browser-webllm
       VITE_DEFAULT_MODEL: Qwen3-0.6B-q4f16_1-MLC
       VITE_COMPILED_WEBLLM_ENABLED: "true"

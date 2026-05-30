@@ -1,10 +1,11 @@
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-export type HostedBenchmarkArtifactSource = "inline_json" | "url";
+export type HostedBenchmarkArtifactSource = "inline_json" | "base64_json" | "url";
 
 export interface MaterializeHostedBenchmarkArtifactInput {
   inlineJson?: string | undefined;
+  base64Json?: string | undefined;
   url?: string | undefined;
   outputPath?: string | undefined;
   fetchImpl?: typeof fetch | undefined;
@@ -27,12 +28,15 @@ export async function materializeHostedBenchmarkArtifact(
     ?? process.env.HOSTED_BENCHMARK_ARTIFACT_PATH
     ?? DEFAULT_OUTPUT_PATH;
   const inlineJson = input.inlineJson ?? process.env.HOSTED_BENCHMARK_ARTIFACT_JSON;
+  const base64Json = input.base64Json ?? process.env.HOSTED_BENCHMARK_ARTIFACT_BASE64;
   const artifactUrl = input.url ?? process.env.HOSTED_BENCHMARK_ARTIFACT_URL;
 
-  const source: HostedBenchmarkArtifactSource = inlineJson?.trim() ? "inline_json" : "url";
-  const raw = inlineJson?.trim()
-    ? inlineJson
-    : await fetchArtifactJson(artifactUrl, input.fetchImpl ?? fetch);
+  const source = resolveSource({ inlineJson, base64Json });
+  const raw = source === "inline_json"
+    ? inlineJson?.trim() ?? ""
+    : source === "base64_json"
+      ? decodeBase64Json(base64Json)
+      : await fetchArtifactJson(artifactUrl, input.fetchImpl ?? fetch);
   const parsed = parseArtifactJson(raw);
   const json = `${JSON.stringify(parsed, null, 2)}\n`;
 
@@ -51,12 +55,21 @@ export async function materializeHostedBenchmarkArtifact(
   };
 }
 
+function resolveSource(input: {
+  inlineJson?: string | undefined;
+  base64Json?: string | undefined;
+}): HostedBenchmarkArtifactSource {
+  if (input.inlineJson?.trim()) return "inline_json";
+  if (input.base64Json?.trim()) return "base64_json";
+  return "url";
+}
+
 async function fetchArtifactJson(
   artifactUrl: string | undefined,
   fetchImpl: typeof fetch,
 ): Promise<string> {
   if (!artifactUrl?.trim()) {
-    throw new Error("Provide HOSTED_BENCHMARK_ARTIFACT_JSON or HOSTED_BENCHMARK_ARTIFACT_URL.");
+    throw new Error("Provide HOSTED_BENCHMARK_ARTIFACT_JSON, HOSTED_BENCHMARK_ARTIFACT_BASE64, or HOSTED_BENCHMARK_ARTIFACT_URL.");
   }
   const url = new URL(artifactUrl);
   if (url.protocol !== "https:" && url.protocol !== "http:") {
@@ -67,6 +80,17 @@ async function fetchArtifactJson(
     throw new Error(`Failed to fetch hosted benchmark artifact: HTTP ${response.status}.`);
   }
   return response.text();
+}
+
+function decodeBase64Json(base64Json: string | undefined): string {
+  if (!base64Json?.trim()) {
+    throw new Error("Provide HOSTED_BENCHMARK_ARTIFACT_JSON, HOSTED_BENCHMARK_ARTIFACT_BASE64, or HOSTED_BENCHMARK_ARTIFACT_URL.");
+  }
+  try {
+    return Buffer.from(base64Json.trim(), "base64").toString("utf8");
+  } catch {
+    throw new Error("HOSTED_BENCHMARK_ARTIFACT_BASE64 is not valid base64.");
+  }
 }
 
 function parseArtifactJson(raw: string): unknown {
