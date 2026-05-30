@@ -31,7 +31,7 @@ export async function materializeHostedBenchmarkArtifact(
   const base64Json = input.base64Json ?? process.env.HOSTED_BENCHMARK_ARTIFACT_BASE64;
   const artifactUrl = input.url ?? process.env.HOSTED_BENCHMARK_ARTIFACT_URL;
 
-  const source = resolveSource({ inlineJson, base64Json });
+  const source = resolveSource({ inlineJson, base64Json, artifactUrl });
   const raw = source === "inline_json"
     ? inlineJson?.trim() ?? ""
     : source === "base64_json"
@@ -58,10 +58,16 @@ export async function materializeHostedBenchmarkArtifact(
 function resolveSource(input: {
   inlineJson?: string | undefined;
   base64Json?: string | undefined;
+  artifactUrl?: string | undefined;
 }): HostedBenchmarkArtifactSource {
-  if (input.inlineJson?.trim()) return "inline_json";
-  if (input.base64Json?.trim()) return "base64_json";
-  return "url";
+  const sources: HostedBenchmarkArtifactSource[] = [];
+  if (input.inlineJson?.trim()) sources.push("inline_json");
+  if (input.base64Json?.trim()) sources.push("base64_json");
+  if (input.artifactUrl?.trim()) sources.push("url");
+  if (sources.length > 1) {
+    throw new Error("Provide exactly one hosted benchmark artifact source.");
+  }
+  return sources[0] ?? "url";
 }
 
 async function fetchArtifactJson(

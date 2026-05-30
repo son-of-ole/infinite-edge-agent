@@ -55,7 +55,7 @@ describe("hosted benchmark artifact materializer", () => {
     expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
   });
 
-  it("prefers raw inline JSON over base64 hosted benchmark JSON when both are present", async () => {
+  it("rejects ambiguous hosted benchmark artifact sources", async () => {
     const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
     const outputPath = join(dir, "browser-runtime-bench-latest.json");
     const base64Json = Buffer.from(JSON.stringify({
@@ -63,16 +63,11 @@ describe("hosted benchmark artifact materializer", () => {
       summary: { runtimeBackendId: "wrong-backend" },
     }), "utf8").toString("base64");
 
-    const result = await materializeHostedBenchmarkArtifact({
+    await expect(materializeHostedBenchmarkArtifact({
       inlineJson: JSON.stringify(makeArtifact()),
       base64Json,
       outputPath,
-    });
-
-    expect(result.source).toBe("inline_json");
-
-    const written = JSON.parse(await readFile(outputPath, "utf8")) as ReturnType<typeof makeArtifact>;
-    expect(written.summary.runtimeBackendId).toBe("compiled-browser-webllm");
+    })).rejects.toThrow("Provide exactly one hosted benchmark artifact source.");
   });
 
   it("rejects missing hosted benchmark input", async () => {
