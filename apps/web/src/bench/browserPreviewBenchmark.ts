@@ -426,6 +426,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const runtimeBackendRole = runtimeBackendEntry?.productionRole ?? "unknown";
   const benchmarkDeviceInfo = normalizeBenchmarkDeviceInfo(input.benchmarkDeviceInfo);
   const benchmarkGpuLabelEvidencePassed = hasBenchmarkGpuLabelEvidence(benchmarkDeviceInfo);
+  const sourceCommitEvidencePassed = Boolean(input.sourceGitSha?.trim());
   const brokerSelections = input.runs
     .map((run) => run.runtimeTrace.brokerSelection)
     .filter((selection): selection is BrowserBackendSelection => Boolean(selection));
@@ -506,6 +507,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
     && noCpuFallback
     && positiveWebGpuKernelProof
     && benchmarkGpuLabelEvidencePassed
+    && sourceCommitEvidencePassed
     && !directModelFactualProofUsed;
   const productionQualityPassed = kernelLabQualityPassed || compiledBackendReadyPassed;
   const customKernelLabReadyPassed = kernelLabQualityPassed
