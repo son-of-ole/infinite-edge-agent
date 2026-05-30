@@ -39,7 +39,7 @@ jobs:
     env:
       CI: "true"
       EVAL_ARTIFACT_DIR: .artifacts/evals/v12-production-proof
-      HOSTED_BENCHMARK_ARTIFACT_OUTPUT_PATH: .artifacts/evals/hosted/browser-runtime-bench-latest.json
+      HOSTED_BENCHMARK_ARTIFACT_OUTPUT_PATH: .artifacts/evals/v12-production-proof/hosted/browser-runtime-bench-latest.json
       VITE_DEPLOY_URL: ${{ inputs.deploy_url }}
       HOSTED_PRODUCTION_BENCHMARK_URL: ${{ inputs.hosted_production_benchmark_url }}
       HOSTED_BENCHMARK_ARTIFACT_URL: ${{ inputs.hosted_benchmark_artifact_url }}
