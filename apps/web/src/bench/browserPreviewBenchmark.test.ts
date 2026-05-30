@@ -1938,6 +1938,13 @@ describe("browser preview benchmark payload", () => {
       sourceGitSha: "abc123",
       strictWebGpuRequested: false,
       minGeneratedTokens: 1,
+      benchmarkDeviceInfo: {
+        gpuVendor: "apple",
+        gpuArchitecture: "apple7",
+        gpuDevice: "apple-m3",
+        gpuDescription: "Apple M3",
+        webglRenderer: "ANGLE Metal Renderer: Apple M3",
+      },
       runs: [compiledRun],
     });
 
@@ -1947,6 +1954,12 @@ describe("browser preview benchmark payload", () => {
       runtimeBackendId: "compiled-browser-webllm",
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
+      benchmarkGpuLabelEvidencePassed: true,
+      benchmarkGpuVendor: "apple",
+      benchmarkGpuArchitecture: "apple7",
+      benchmarkGpuDevice: "apple-m3",
+      benchmarkGpuDescription: "Apple M3",
+      benchmarkWebGlRenderer: "ANGLE Metal Renderer: Apple M3",
       runtimeBackendRole: "production_candidate",
       backendBrokerTraceCount: 1,
       backendBrokerSelectionPassed: true,

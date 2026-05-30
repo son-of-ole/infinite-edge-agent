@@ -48,6 +48,10 @@ function makePassingBrowserPreviewArtifact() {
       productionSpeedTokensPerSecond: 2.7,
       productionSpeedFloorTokensPerSecond: 2,
       meanTokensPerSecond: 2.7,
+      benchmarkGpuLabelEvidencePassed: true,
+      benchmarkGpuVendor: "apple",
+      benchmarkGpuDescription: "Apple M3",
+      benchmarkWebGlRenderer: "ANGLE Metal Renderer: Apple M3",
       strictWebGpuPassed: true,
       cpuFallbackUsed: false,
       backendBrokerTraceCount: 1,
@@ -117,6 +121,10 @@ describe("hosted benchmark proof verifier", () => {
         expectedExactPassed: true,
         productionSpeedFloorPassed: true,
         meanTokensPerSecond: 2.7,
+        gpuLabelEvidencePassed: true,
+        gpuVendor: "apple",
+        gpuDescription: "Apple M3",
+        webglRenderer: "ANGLE Metal Renderer: Apple M3",
         directModelFactualProofUsed: false,
         technicalProofOnly: false,
         strictWebGpuPassed: true,
@@ -186,6 +194,19 @@ describe("hosted benchmark proof verifier", () => {
 
     expect(report.passed).toBe(false);
     expect(report.blockers).toContain("Hosted benchmark proof requires v12 production proof schema version 2.");
+  });
+
+  it("fails production proof when the hosted artifact lacks GPU label evidence", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    delete (artifact.summary as Record<string, unknown>).benchmarkGpuLabelEvidencePassed;
+    delete (artifact.summary as Record<string, unknown>).benchmarkGpuVendor;
+    delete (artifact.summary as Record<string, unknown>).benchmarkGpuDescription;
+    delete (artifact.summary as Record<string, unknown>).benchmarkWebGlRenderer;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires browser GPU label evidence.");
   });
 
   it("fails production proof when the hosted artifact does not match the expected source commit", () => {
@@ -277,6 +298,10 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkExpectedExactPassed: true,
         hostedBenchmarkProductionSpeedFloorPassed: true,
         hostedBenchmarkMeanTokensPerSecond: 2.7,
+        hostedBenchmarkGpuLabelEvidencePassed: true,
+        hostedBenchmarkGpuVendor: "apple",
+        hostedBenchmarkGpuDescription: "Apple M3",
+        hostedBenchmarkWebGlRenderer: "ANGLE Metal Renderer: Apple M3",
         hostedBenchmarkDirectModelFactualProofUsed: false,
         hostedBenchmarkTechnicalProofOnly: false,
         hostedBenchmarkCpuFallbackUsed: false,

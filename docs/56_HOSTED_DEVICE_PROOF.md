@@ -67,6 +67,7 @@ A hosted run counts only when it proves all of this:
 
 - the app loads from HTTPS or an equivalent hosted secure context,
 - WebGPU or the compiled browser runtime initializes,
+- the benchmark artifact includes GPU label evidence from WebGPU adapter info or WebGL renderer data,
 - memory grounding is required for the factual canary,
 - the expected memory id is retrieved and packed into context with run-level retrieved/included id evidence,
 - the expected memory hit has a concrete retrieval rank,

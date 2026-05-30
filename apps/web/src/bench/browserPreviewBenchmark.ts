@@ -247,6 +247,14 @@ export interface BrowserPreviewBenchmarkPayload {
   runs: BrowserPreviewBenchmarkRun[];
 }
 
+export interface BrowserBenchmarkDeviceInfo {
+  gpuVendor?: string | null;
+  gpuArchitecture?: string | null;
+  gpuDevice?: string | null;
+  gpuDescription?: string | null;
+  webglRenderer?: string | null;
+}
+
 export const BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION = 2;
 const PROOF_MARKER = "[unlocked:ssa-kv-tsp]";
 const PRODUCTION_SPEED_FLOOR_TOKENS_PER_SECOND = 2;
@@ -296,6 +304,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   minGeneratedTokens?: number;
   technicalProofOnly?: boolean;
   sourceGitSha?: string | null;
+  benchmarkDeviceInfo?: BrowserBenchmarkDeviceInfo | null;
 }): BrowserPreviewBenchmarkPayload {
   const coherentResponseCount = input.runs.filter((run) => run.coherent && hasVisibleResponseQuality(run)).length;
   const visibleResponseQualityPassed = input.runs.length > 0 && coherentResponseCount === input.runs.length;
@@ -415,6 +424,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const runtimeBackendId = summarizeStringField(input.runs.map((run) => run.runtimeTrace.backend)) ?? "unknown";
   const runtimeBackendEntry = getBrowserBackendRegistryEntry(runtimeBackendId);
   const runtimeBackendRole = runtimeBackendEntry?.productionRole ?? "unknown";
+  const benchmarkDeviceInfo = normalizeBenchmarkDeviceInfo(input.benchmarkDeviceInfo);
   const brokerSelections = input.runs
     .map((run) => run.runtimeTrace.brokerSelection)
     .filter((selection): selection is BrowserBackendSelection => Boolean(selection));
@@ -530,6 +540,12 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       profile: input.profile,
       v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       ...(input.sourceGitSha?.trim() ? { v12ProductionProofSourceGitSha: input.sourceGitSha.trim() } : {}),
+      benchmarkGpuLabelEvidencePassed: hasBenchmarkGpuLabelEvidence(benchmarkDeviceInfo),
+      benchmarkGpuVendor: benchmarkDeviceInfo.gpuVendor,
+      benchmarkGpuArchitecture: benchmarkDeviceInfo.gpuArchitecture,
+      benchmarkGpuDevice: benchmarkDeviceInfo.gpuDevice,
+      benchmarkGpuDescription: benchmarkDeviceInfo.gpuDescription,
+      benchmarkWebGlRenderer: benchmarkDeviceInfo.webglRenderer,
       memoryQueryMode: memoryGroundingRequired
         ? summarizeStringField(memoryGroundingRuns.map((proof) => proof.mode)) ?? "seeded_browser_vector_context_rebuild"
         : "direct_model_no_memory_retrieval",
@@ -1029,6 +1045,24 @@ function identifyPrimarySpeedBottleneck(runs: BrowserPreviewBenchmarkRun[]): str
 
 function round(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+function normalizeBenchmarkDeviceInfo(input: BrowserBenchmarkDeviceInfo | null | undefined): Required<BrowserBenchmarkDeviceInfo> {
+  return {
+    gpuVendor: normalizeDeviceLabel(input?.gpuVendor),
+    gpuArchitecture: normalizeDeviceLabel(input?.gpuArchitecture),
+    gpuDevice: normalizeDeviceLabel(input?.gpuDevice),
+    gpuDescription: normalizeDeviceLabel(input?.gpuDescription),
+    webglRenderer: normalizeDeviceLabel(input?.webglRenderer),
+  };
+}
+
+function hasBenchmarkGpuLabelEvidence(input: Required<BrowserBenchmarkDeviceInfo>): boolean {
+  return Boolean(input.gpuVendor || input.gpuDevice || input.gpuDescription || input.webglRenderer);
+}
+
+function normalizeDeviceLabel(value: string | null | undefined): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function tokenizePromptSeed(value: string | null | undefined): string[] {

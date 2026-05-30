@@ -31,6 +31,12 @@ export interface HostedBenchmarkProof {
   productionSpeedTokensPerSecond: number | null;
   productionSpeedFloorTokensPerSecond: number | null;
   meanTokensPerSecond: number | null;
+  gpuLabelEvidencePassed: boolean;
+  gpuVendor: string | null;
+  gpuArchitecture: string | null;
+  gpuDevice: string | null;
+  gpuDescription: string | null;
+  webglRenderer: string | null;
   directModelFactualProofUsed: boolean;
   technicalProofOnly: boolean;
   strictWebGpuPassed: boolean;
@@ -179,6 +185,9 @@ export function evaluateHostedBenchmarkProof(input: {
   if ((proof.productionSpeedTokensPerSecond ?? proof.meanTokensPerSecond ?? 0) < minTokensPerSecond) {
     blockers.push(`Hosted benchmark proof requires at least ${minTokensPerSecond} tokens/sec.`);
   }
+  if (proof.gpuLabelEvidencePassed !== true) {
+    blockers.push("Hosted benchmark proof requires browser GPU label evidence.");
+  }
   if (proof.strictWebGpuPassed !== true) {
     blockers.push("Hosted benchmark proof requires strictWebGpuPassed=true.");
   }
@@ -256,6 +265,12 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkExpectedExactPassed: report.proof.expectedExactPassed,
       hostedBenchmarkProductionSpeedFloorPassed: report.proof.productionSpeedFloorPassed,
       hostedBenchmarkMeanTokensPerSecond: report.proof.meanTokensPerSecond,
+      hostedBenchmarkGpuLabelEvidencePassed: report.proof.gpuLabelEvidencePassed,
+      hostedBenchmarkGpuVendor: report.proof.gpuVendor,
+      hostedBenchmarkGpuArchitecture: report.proof.gpuArchitecture,
+      hostedBenchmarkGpuDevice: report.proof.gpuDevice,
+      hostedBenchmarkGpuDescription: report.proof.gpuDescription,
+      hostedBenchmarkWebGlRenderer: report.proof.webglRenderer,
       hostedBenchmarkDirectModelFactualProofUsed: report.proof.directModelFactualProofUsed,
       hostedBenchmarkTechnicalProofOnly: report.proof.technicalProofOnly,
       hostedBenchmarkCpuFallbackUsed: report.proof.cpuFallbackUsed,
@@ -368,6 +383,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
       && brokerProofRequirements.includes("memory_grounding")
     );
   const memoryGroundingEvidence = readMemoryGroundingEvidence(source.runs);
+  const gpuEvidence = readGpuEvidence(source.summary, source.runs);
   return {
     sourceName: source.sourceName,
     v12ProductionProofSchemaVersion,
@@ -398,6 +414,12 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     productionSpeedTokensPerSecond: readNumber(source.summary.productionSpeedTokensPerSecond),
     productionSpeedFloorTokensPerSecond: readNumber(source.summary.productionSpeedFloorTokensPerSecond),
     meanTokensPerSecond: readNumber(source.summary.meanTokensPerSecond),
+    gpuLabelEvidencePassed: gpuEvidence.passed,
+    gpuVendor: gpuEvidence.vendor,
+    gpuArchitecture: gpuEvidence.architecture,
+    gpuDevice: gpuEvidence.device,
+    gpuDescription: gpuEvidence.description,
+    webglRenderer: gpuEvidence.webglRenderer,
     directModelFactualProofUsed: readBoolean(source.summary.directModelFactualProofUsed),
     technicalProofOnly: readBoolean(source.summary.technicalProofOnly),
     strictWebGpuPassed: readBoolean(source.summary.strictWebGpuPassed),
@@ -450,6 +472,12 @@ function buildEmptyProof(): HostedBenchmarkProof {
     productionSpeedTokensPerSecond: null,
     productionSpeedFloorTokensPerSecond: null,
     meanTokensPerSecond: null,
+    gpuLabelEvidencePassed: false,
+    gpuVendor: null,
+    gpuArchitecture: null,
+    gpuDevice: null,
+    gpuDescription: null,
+    webglRenderer: null,
     directModelFactualProofUsed: false,
     technicalProofOnly: true,
     strictWebGpuPassed: false,
@@ -570,6 +598,46 @@ function readMemoryGroundingRecord(
     expectedMemoryIdCount: expectedMemoryIds.length,
     retrievalRank,
     retrievalTopScoreMargin,
+  };
+}
+
+function readGpuEvidence(
+  summary: Record<string, unknown>,
+  runs: unknown[],
+): {
+  passed: boolean;
+  vendor: string | null;
+  architecture: string | null;
+  device: string | null;
+  description: string | null;
+  webglRenderer: string | null;
+} {
+  const runDeviceRecords = runs
+    .map((run) => isRecord(run) && isRecord(run.device) ? run.device : null)
+    .filter((record): record is Record<string, unknown> => Boolean(record));
+  const vendor = readString(summary.benchmarkGpuVendor)
+    ?? readString(summary.gpuVendor)
+    ?? summarizeString(runDeviceRecords.map((record) => readString(record.gpuVendor)));
+  const architecture = readString(summary.benchmarkGpuArchitecture)
+    ?? readString(summary.gpuArchitecture)
+    ?? summarizeString(runDeviceRecords.map((record) => readString(record.gpuArchitecture)));
+  const device = readString(summary.benchmarkGpuDevice)
+    ?? readString(summary.gpuDevice)
+    ?? summarizeString(runDeviceRecords.map((record) => readString(record.gpuDevice)));
+  const description = readString(summary.benchmarkGpuDescription)
+    ?? readString(summary.gpuDescription)
+    ?? summarizeString(runDeviceRecords.map((record) => readString(record.gpuDescription)));
+  const webglRenderer = readString(summary.benchmarkWebGlRenderer)
+    ?? readString(summary.webglRenderer)
+    ?? summarizeString(runDeviceRecords.map((record) => readString(record.webglRenderer)));
+  const hasLabel = Boolean(vendor || device || description || webglRenderer);
+  return {
+    passed: hasLabel && readBoolean(summary.benchmarkGpuLabelEvidencePassed),
+    vendor,
+    architecture,
+    device,
+    description,
+    webglRenderer,
   };
 }
 

@@ -36,7 +36,11 @@ import {
   UNLOCKED_MODEL_MANIFEST_PATH,
   UNLOCKED_MODEL_MANIFEST_SHA256,
 } from "../config";
-import { submitBenchmarkTelemetry, type BenchmarkTelemetryConfig } from "./benchmarkTelemetry";
+import {
+  collectBenchmarkTelemetryBrowserContext,
+  submitBenchmarkTelemetry,
+  type BenchmarkTelemetryConfig,
+} from "./benchmarkTelemetry";
 import { CompiledWebLlmClient, type CompiledWebLlmProof } from "../lib/llm/compiledWebLlmClient";
 import {
   UnlockedBrowserTransformerClient,
@@ -316,6 +320,7 @@ async function runBrowserPreviewBenchmark(
       }, memoryGrounding, signal));
     }
     assertBenchmarkNotAborted(signal);
+    const benchmarkDeviceInfo = await collectBenchmarkTelemetryBrowserContext().catch(() => null);
     return buildBrowserPreviewBenchmarkPayload({
       createdAt: new Date().toISOString(),
       profile: request.profile.profile,
@@ -325,6 +330,7 @@ async function runBrowserPreviewBenchmark(
       requireKvPredictivePrefetch: request.requireKvPredictivePrefetch,
       minGeneratedTokens: request.minGeneratedTokens,
       sourceGitSha: request.benchmarkTelemetryConfig.gitSha ?? null,
+      benchmarkDeviceInfo,
       technicalProofOnly: (
         request.strictLongPromptProof
         || request.requireKvPredictivePrefetch
