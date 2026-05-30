@@ -103,7 +103,7 @@ The backend-specific matrix is written by:
 pnpm eval:backend-readiness
 ```
 
-It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. In strict production archive mode, the matrix also requires the saved hosted browser benchmark proof before `compiled-browser-webllm` can be marked deploy-ready. That proof must be source-bound to the expected deployment commit. This is the artifact that prevents Kernel Lab proof or stale hosted proof from being mixed into the compiled backend deploy claim.
+It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. In strict production archive mode, the matrix also requires the saved hosted browser benchmark proof before `compiled-browser-webllm` can be marked deploy-ready. That proof must be source-bound to the expected deployment commit. The summary distinguishes `backendReadinessCompiledHostedProfilePassed` from `backendReadinessCompiledDeployReady`, which prevents a failed or stale runtime proof from being reported as a hosted profile failure. This is the artifact that prevents Kernel Lab proof or stale hosted proof from being mixed into the compiled backend deploy claim.
 
 The shared runtime proof is written by:
 

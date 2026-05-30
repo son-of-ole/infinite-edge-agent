@@ -22,6 +22,7 @@ export interface BackendReadinessEntry {
   productionRole: BrowserBackendProductionRole;
   deployDefault: boolean;
   deployReady: boolean;
+  hostedProfilePassed: boolean | null;
   readinessStatus: BackendReadinessStatus;
   proofSource: string;
   blockers: string[];
@@ -108,6 +109,7 @@ export function evaluateBackendReadinessMatrix(input: {
         productionRole: entry.productionRole,
         deployDefault: entry.deployDefault,
         deployReady,
+        hostedProfilePassed: hostedProfileReady,
         readinessStatus: deployReady ? "deploy_ready" : "blocked",
         proofSource,
         blockers,
@@ -124,6 +126,7 @@ export function evaluateBackendReadinessMatrix(input: {
         productionRole: entry.productionRole,
         deployDefault: entry.deployDefault,
         deployReady: false,
+        hostedProfilePassed: null,
         readinessStatus: "research_only",
         proofSource: "kernel_lab_research_gates",
         blockers: [],
@@ -144,6 +147,7 @@ export function evaluateBackendReadinessMatrix(input: {
       productionRole: entry.productionRole,
       deployDefault: entry.deployDefault,
       deployReady: false,
+      hostedProfilePassed: null,
       readinessStatus: "fallback_only",
       proofSource: "bounded_fallback_contract",
       blockers: [],
@@ -202,7 +206,8 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessDeployReadyCount: deployReadyCount,
       backendReadinessResearchBackendCount: researchBackendIds.length,
       backendReadinessKernelLabBackendId: researchBackendIds[0] ?? null,
-      backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.deployReady ?? false,
+      backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.hostedProfilePassed ?? false,
+      backendReadinessCompiledDeployReady: hostedCompiledBackend?.deployReady ?? false,
       backendReadinessProofBoundToHostedBenchmark: isBackendReadinessProofBoundToHostedBenchmark(matrix),
       backendReadinessHostedBenchmarkProofSourceGitSha: hostedCompiledBackend?.hostedBenchmarkProofSourceGitSha ?? null,
       backendReadinessHostedBenchmarkExpectedSourceGitSha: hostedCompiledBackend?.hostedBenchmarkExpectedSourceGitSha ?? null,

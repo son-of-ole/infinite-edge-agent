@@ -260,6 +260,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "backendReadinessResearchBackendCount",
       "backendReadinessKernelLabBackendId",
       "backendReadinessCompiledHostedProfilePassed",
+      "backendReadinessCompiledDeployReady",
       "backendReadinessProofBoundToHostedBenchmark",
       "backendReadinessHostedBenchmarkProofSourceGitSha",
       "backendReadinessHostedBenchmarkExpectedSourceGitSha",

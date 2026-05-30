@@ -146,6 +146,11 @@ describe("evaluateBackendReadinessMatrix", () => {
         "hosted_benchmark_artifact_passed",
       ]),
     });
+    expect(buildBackendReadinessMatrixArtifact(matrix, "2026-05-30T17:45:00.000Z").summary).toMatchObject({
+      backendReadinessCompiledHostedProfilePassed: true,
+      backendReadinessCompiledDeployReady: false,
+      backendReadinessHostedBenchmarkProofSourceBound: false,
+    });
   });
 
   it("marks the compiled backend deploy-ready when required hosted benchmark proof passes", () => {
@@ -236,6 +241,7 @@ describe("evaluateBackendReadinessMatrix", () => {
         backendReadinessResearchBackendCount: 1,
         backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
         backendReadinessCompiledHostedProfilePassed: true,
+        backendReadinessCompiledDeployReady: true,
       },
     });
   });
