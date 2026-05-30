@@ -103,6 +103,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionProofSchemaVersion === 2
     && typeof artifact.summary?.v12ProductionProofSourceGitSha === "string"
     && artifact.summary.v12ProductionProofSourceGitSha.trim().length > 0
+    && artifact.summary?.v12ProductionProofSourceCommitEvidencePassed === true
     && typeof artifact.summary?.v12ProductionExpectedSourceGitSha === "string"
     && artifact.summary.v12ProductionExpectedSourceGitSha.trim().length > 0
     && artifact.summary?.v12ProductionProofSourceBoundRequired === true
@@ -174,6 +175,7 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkProofPassed === true
     && artifact.summary?.hostedBenchmarkProofSourceBoundRequired === true
     && artifact.summary?.hostedBenchmarkProofSourceBound === true
+    && artifact.summary?.hostedBenchmarkProofSourceCommitEvidencePassed === true
     && artifact.summary?.hostedBenchmarkConcreteMemoryGroundingPassed === true
     && Number(artifact.summary?.hostedBenchmarkMemoryGroundingRunCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemorySeededCorpusCount ?? 0) > 0

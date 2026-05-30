@@ -35,6 +35,7 @@ describe("release gate status", () => {
           summary: {
             hostedBenchmarkProofPassed: true,
             hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceCommitEvidencePassed: true,
             hostedBenchmarkExpectedSourceGitSha: "abc123",
             hostedBenchmarkProofSourceBound: true,
             hostedBenchmarkProofSourceBoundRequired: false,
@@ -73,6 +74,7 @@ describe("release gate status", () => {
           summary: {
             hostedBenchmarkProofPassed: true,
             hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceCommitEvidencePassed: true,
             hostedBenchmarkExpectedSourceGitSha: "abc123",
             hostedBenchmarkProofSourceBound: true,
             hostedBenchmarkProofSourceBoundRequired: true,
@@ -116,6 +118,39 @@ describe("release gate status", () => {
             hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
             hostedBenchmarkMemoryExpectedHitMeanRank: 1,
             hostedBenchmarkBrokerRoleBoundaryPassed: false,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails standalone hosted benchmark proof without explicit source commit evidence", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceCommitEvidencePassed: false,
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkConcreteMemoryGroundingPassed: true,
+            hostedBenchmarkMemoryGroundingRunCount: 1,
+            hostedBenchmarkMemorySeededCorpusCount: 16,
+            hostedBenchmarkMemoryRetrievedCount: 1,
+            hostedBenchmarkMemoryIncludedCount: 1,
+            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+            hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+            hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+            hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+            hostedBenchmarkBrokerFallbackBackendCount: 1,
+            hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+            hostedBenchmarkBrokerRoleBoundaryPassed: true,
           },
         },
       ],
@@ -1078,6 +1113,22 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when explicit source commit evidence is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionProofSourceCommitEvidencePassed: false,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when concrete memory grounding evidence is missing", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1279,6 +1330,7 @@ function makeV12ProductionArchiveSummary(
       v12ProductionStrictWebGpuPassed: true,
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
+      v12ProductionProofSourceCommitEvidencePassed: true,
       v12ProductionExpectedSourceGitSha: "abc123",
       v12ProductionProofSourceBoundRequired: true,
       v12ProductionProofSourceBound: true,
