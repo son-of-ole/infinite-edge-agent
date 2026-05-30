@@ -202,6 +202,8 @@ This manifest started as the v4 handoff package inventory. The authoritative fil
 - `scripts/releaseGateStatus.ts`
 - `scripts/v12ReadinessSuite.test.ts`
 - `scripts/v12ReadinessSuite.ts`
+- `scripts/v12ProductionArchive.test.ts`
+- `scripts/v12ProductionArchive.ts`
 - `scripts/smoke-test-core.ts`
 - `scripts/smoke-test-sdk-package.mjs`
 - `scripts/smoke-test-sdk.test.ts`

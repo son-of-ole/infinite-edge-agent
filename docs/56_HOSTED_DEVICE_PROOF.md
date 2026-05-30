@@ -127,6 +127,14 @@ pnpm eval:v12-suite
 
 It writes the hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with the same timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also validates and writes `hosted-benchmark-proof-latest.json` as part of the same suite. Archive this suite next to hosted Chrome/Edge benchmark evidence when making a backend-specific deploy-readiness claim.
 
+The strict production archive is written by:
+
+```bash
+pnpm eval:v12-production
+```
+
+It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim.
+
 The saved real-browser benchmark artifact is validated by:
 
 ```bash

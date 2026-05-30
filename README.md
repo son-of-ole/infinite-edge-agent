@@ -138,6 +138,7 @@ pnpm eval:production        # Run production eval harness
 pnpm eval:backend-readiness # Write backend role/readiness matrix artifact
 pnpm eval:shared-runtime    # Write shared memory/context runtime readiness artifact
 pnpm eval:v12-readiness     # Write combined v12 final-state readiness artifact
+pnpm eval:v12-production    # Write strict production archive requiring hosted benchmark proof
 pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
 pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
@@ -256,6 +257,8 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`. Se
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile, backend matrix, and shared-runtime proof into one final-state artifact. Use `RELEASE_REQUIRE_V12_READINESS=true` to require that bundle independently.
 
 `pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp: hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json`. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, the suite also validates and writes `hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+
+`pnpm eval:v12-production` is the strict production archive command. It forces hosted benchmark proof on, writes the v12 suite and `.artifacts/evals/v12-production-archive-latest.json`, and fails if `HOSTED_BENCHMARK_ARTIFACT_PATH` is missing or invalid. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `release:gate` should require the final production archive.
 
 After running the real hosted benchmark in Chrome or Edge, validate the saved browser artifact before making a backend-specific production claim:
 

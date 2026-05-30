@@ -2,6 +2,32 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps v12 production archive fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        v12ProductionArchivePassed: true,
+        v12ProductionSuitePassed: true,
+        v12ProductionDeployBackendId: "compiled-browser-webllm",
+        v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+        v12ProductionHostedBenchmarkProofRequired: true,
+        v12ProductionHostedBenchmarkProofPassed: true,
+        v12ProductionArtifactCount: 7,
+        v12ProductionSuiteArtifactCount: 6,
+        v12ProductionChildArtifactCount: 5,
+      },
+    })).toMatchObject({
+      v12ProductionArchivePassed: true,
+      v12ProductionSuitePassed: true,
+      v12ProductionDeployBackendId: "compiled-browser-webllm",
+      v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+      v12ProductionHostedBenchmarkProofRequired: true,
+      v12ProductionHostedBenchmarkProofPassed: true,
+      v12ProductionArtifactCount: 7,
+      v12ProductionSuiteArtifactCount: 6,
+      v12ProductionChildArtifactCount: 5,
+    });
+  });
+
   it("keeps hosted benchmark proof fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {
