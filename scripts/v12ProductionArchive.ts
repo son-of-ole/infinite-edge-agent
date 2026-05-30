@@ -4,6 +4,7 @@ import {
   runV12ReadinessSuite,
   type V12ReadinessSuiteRunResult,
 } from "./v12ReadinessSuite";
+import { isBackendReadinessProofBoundToHostedBenchmark } from "./backendReadinessMatrix";
 import type { HostedDeploymentProfileEnv } from "./hostedDeploymentProfile";
 
 export interface V12ProductionArchive {
@@ -80,6 +81,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionKernelLabBackendId: suite.kernelLabBackendId,
       v12ProductionHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
+      v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),
       v12ProductionArtifactCount: artifactCount,
       v12ProductionSuiteArtifactCount: suite.totalArtifactCount,
       v12ProductionChildArtifactCount: suite.childArtifactCount,

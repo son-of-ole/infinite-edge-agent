@@ -143,6 +143,10 @@ describe("evaluateBackendReadinessMatrix", () => {
         "hosted_benchmark_artifact_passed",
       ]),
     });
+
+    expect(buildBackendReadinessMatrixArtifact(matrix, "2026-05-30T17:30:00.000Z").summary).toMatchObject({
+      backendReadinessProofBoundToHostedBenchmark: true,
+    });
   });
 
   it("fails the matrix when the hosted profile does not prove the compiled production backend", () => {

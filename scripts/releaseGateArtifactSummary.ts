@@ -140,6 +140,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionKernelLabBackendId",
       "v12ProductionHostedBenchmarkProofRequired",
       "v12ProductionHostedBenchmarkProofPassed",
+      "v12ProductionBackendReadinessProofBound",
       "v12ProductionArtifactCount",
       "v12ProductionSuiteArtifactCount",
       "v12ProductionChildArtifactCount",

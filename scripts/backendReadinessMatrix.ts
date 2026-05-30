@@ -178,9 +178,22 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessResearchBackendCount: researchBackendIds.length,
       backendReadinessKernelLabBackendId: researchBackendIds[0] ?? null,
       backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.deployReady ?? false,
+      backendReadinessProofBoundToHostedBenchmark: isBackendReadinessProofBoundToHostedBenchmark(matrix),
     },
     matrix,
   };
+}
+
+export function isBackendReadinessProofBoundToHostedBenchmark(matrix: BackendReadinessMatrix): boolean {
+  const deployBackend = matrix.backends.find((entry) =>
+    entry.backendId === matrix.deployBackendId
+    && entry.productionRole === "production_candidate"
+    && entry.deployReady);
+  return Boolean(
+    deployBackend
+    && deployBackend.proofSource.includes("hosted_benchmark_proof")
+    && deployBackend.proofRequirements.includes("hosted_benchmark_artifact_passed"),
+  );
 }
 
 export async function writeBackendReadinessMatrixArtifact(

@@ -110,6 +110,7 @@ describe("v12 production archive", () => {
         v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
         v12ProductionHostedBenchmarkProofRequired: true,
         v12ProductionHostedBenchmarkProofPassed: true,
+        v12ProductionBackendReadinessProofBound: true,
         v12ProductionArtifactCount: 7,
         v12ProductionSuiteArtifactCount: 6,
         v12ProductionChildArtifactCount: 5,
