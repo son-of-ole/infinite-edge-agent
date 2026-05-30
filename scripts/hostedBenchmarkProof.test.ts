@@ -152,6 +152,28 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof source commit abc123 does not match expected commit def456.");
   });
 
+  it("fails production proof when source binding is required but no expected source commit is provided", () => {
+    const report = evaluateHostedBenchmarkProof({
+      artifact: makePassingBrowserPreviewArtifact(),
+      requireSourceBound: true,
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.sourceBoundRequired).toBe(true);
+    expect(report.blockers).toContain("Hosted benchmark proof requires an expected source commit when source binding is required.");
+  });
+
+  it("passes source-bound production proof when source binding is required and commits match", () => {
+    const report = evaluateHostedBenchmarkProof({
+      artifact: makePassingBrowserPreviewArtifact(),
+      expectedSourceGitSha: "abc123",
+      requireSourceBound: true,
+    });
+
+    expect(report.passed).toBe(true);
+    expect(report.sourceBoundRequired).toBe(true);
+  });
+
   it("extracts proof fields from a browser-runtime-bench wrapper artifact", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: {
@@ -206,6 +228,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkStrictWebGpuPassed: true,
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
         hostedBenchmarkProofSourceGitSha: "abc123",
+        hostedBenchmarkProofSourceBoundRequired: false,
         hostedBenchmarkBackendBrokerSelectionPassed: true,
         hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
         hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",

@@ -81,6 +81,7 @@ describe("release gate artifact summary", () => {
         hostedBenchmarkStrictWebGpuPassed: true,
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
         hostedBenchmarkProofSourceGitSha: "abc123",
+        hostedBenchmarkProofSourceBoundRequired: true,
       },
     })).toMatchObject({
       hostedBenchmarkProofPassed: true,
@@ -99,6 +100,7 @@ describe("release gate artifact summary", () => {
       hostedBenchmarkStrictWebGpuPassed: true,
       hostedBenchmarkV12ProductionProofSchemaVersion: 2,
       hostedBenchmarkProofSourceGitSha: "abc123",
+      hostedBenchmarkProofSourceBoundRequired: true,
     });
   });
 

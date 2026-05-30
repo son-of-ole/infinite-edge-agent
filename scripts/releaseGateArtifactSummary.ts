@@ -178,6 +178,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "hostedBenchmarkV12ProductionProofSchemaVersion",
       "hostedBenchmarkProofSourceGitSha",
       "hostedBenchmarkExpectedSourceGitSha",
+      "hostedBenchmarkProofSourceBoundRequired",
       "hostedBenchmarkProofSourceBound",
       "hostedBenchmarkRuntimeBackendId",
       "hostedBenchmarkDeployBackendId",

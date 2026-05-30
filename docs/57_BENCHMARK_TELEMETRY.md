@@ -189,6 +189,7 @@ BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
 HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
 HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>
+HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true
 ```
 
 If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the canonical URL from `VITE_DEPLOY_URL`. The generated URL still has to be run in real Chrome or Edge for authoritative proof.
@@ -205,7 +206,7 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:v12-production` is the strict production archive command for telemetry-backed release claims. It requires the saved hosted benchmark artifact, includes hosted benchmark proof, requires proof schema version `2`, requires Backend Broker selection evidence, binds backend readiness to that proof, and writes `.artifacts/evals/v12-production-archive-latest.json`. With `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` requires that archive and validates its backend-specific proof fields before reporting production release proof.
 
-`pnpm verify:hosted-benchmark-proof` validates the saved real Chrome/Edge benchmark artifact itself. Set `HOSTED_BENCHMARK_ARTIFACT_PATH` to the saved `browser-runtime-bench-latest.json` or pass the path after `--`. This is the runtime proof that should sit beside telemetry database exports.
+`pnpm verify:hosted-benchmark-proof` validates the saved real Chrome/Edge benchmark artifact itself. Set `HOSTED_BENCHMARK_ARTIFACT_PATH` to the saved `browser-runtime-bench-latest.json` or pass the path after `--`. For release proof, also set `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` and `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. This is the runtime proof that should sit beside telemetry database exports.
 
 For GitHub-hosted release verification, the manual **V12 Production Proof** workflow accepts `HOSTED_BENCHMARK_ARTIFACT_JSON`, `HOSTED_BENCHMARK_ARTIFACT_BASE64`, or `HOSTED_BENCHMARK_ARTIFACT_URL` through workflow inputs. Internally it runs:
 

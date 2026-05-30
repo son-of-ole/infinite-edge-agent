@@ -220,10 +220,12 @@ export async function runV12ReadinessSuite(options: {
   const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
   const createdAt = options.createdAt ?? new Date().toISOString();
   const env = options.env ?? process.env;
+  const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
   const hostedBenchmarkArtifactPath = options.hostedBenchmarkArtifactPath ?? env.HOSTED_BENCHMARK_ARTIFACT_PATH;
   const hostedBenchmarkProof = hostedBenchmarkArtifactPath
     ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath, {
       expectedSourceGitSha: readExpectedHostedBenchmarkGitSha(env),
+      requireSourceBound: hostedBenchmarkProofRequired,
     })
     : null;
   const suite = evaluateV12ReadinessSuite({ env, hostedBenchmarkProof });

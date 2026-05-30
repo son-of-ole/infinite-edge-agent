@@ -269,12 +269,13 @@ After running the real hosted benchmark in Chrome or Edge, validate the saved br
 ```bash
 HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-latest.json \
 HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-commit-sha> \
+HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
 The proof verifier rejects artifacts that are not proof schema version `2`, are not `compiled-browser-webllm`, are technical-only, lack grounded memory, lack Backend Broker selection evidence, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback. Set `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` to make `release:gate` require that saved browser artifact.
 
-For production releases, the browser artifact must also be source-bound: the hosted app should emit `v12ProductionProofSourceGitSha` from `VITE_GIT_SHA`, and the verifier should run with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` set to the commit being released.
+For production releases, the browser artifact must also be source-bound: the hosted app should emit `v12ProductionProofSourceGitSha` from `VITE_GIT_SHA`, and the verifier should run with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` plus `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`.
 
 GitHub Actions includes a manual **V12 Production Proof** workflow. Trigger it after a real Chrome or Edge hosted benchmark has been saved, pass the hosted deploy URL plus the artifact URL, pasted artifact JSON, or base64-encoded artifact JSON, and configure `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN` as repository secrets. The workflow materializes the browser artifact, verifies the hosted profile, verifies the benchmark proof, builds the v12 production archive, runs `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, and uploads the proof artifacts.
 

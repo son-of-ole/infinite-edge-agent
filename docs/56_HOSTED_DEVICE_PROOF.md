@@ -142,12 +142,13 @@ The saved real-browser benchmark artifact is validated by:
 ```bash
 HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-latest.json \
 HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-commit-sha> \
+HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
 It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove grounded memory, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
-For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA`.
+For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`.
 
 ## GitHub Production Proof Workflow
 

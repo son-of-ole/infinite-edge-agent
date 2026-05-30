@@ -41,6 +41,7 @@ export interface HostedBenchmarkProofReport {
   blockers: string[];
   artifactPath: string | null;
   expectedSourceGitSha: string | null;
+  sourceBoundRequired: boolean;
   proof: HostedBenchmarkProof;
 }
 
@@ -70,6 +71,7 @@ export async function evaluateHostedBenchmarkProofFile(
     expectedResponse?: string | null;
     minTokensPerSecond?: number;
     expectedSourceGitSha?: string | null;
+    requireSourceBound?: boolean;
   } = {},
 ): Promise<HostedBenchmarkProofReport> {
   const artifact = JSON.parse(await readFile(artifactPath, "utf8")) as unknown;
@@ -87,11 +89,13 @@ export function evaluateHostedBenchmarkProof(input: {
   expectedResponse?: string | null;
   minTokensPerSecond?: number;
   expectedSourceGitSha?: string | null;
+  requireSourceBound?: boolean;
 }): HostedBenchmarkProofReport {
   const expectedBackendId = input.expectedBackendId ?? DEFAULT_BACKEND_ID;
   const expectedResponse = input.expectedResponse === undefined ? DEFAULT_EXPECTED_RESPONSE : input.expectedResponse;
   const minTokensPerSecond = input.minTokensPerSecond ?? DEFAULT_SPEED_FLOOR;
   const expectedSourceGitSha = normalizeString(input.expectedSourceGitSha);
+  const sourceBoundRequired = input.requireSourceBound === true;
   const source = extractBenchmarkSource(input.artifact);
   const proof = source
     ? buildProofFromSource(source)
@@ -108,6 +112,9 @@ export function evaluateHostedBenchmarkProof(input: {
   }
   if (expectedSourceGitSha && proof.sourceGitSha !== expectedSourceGitSha) {
     blockers.push(`Hosted benchmark proof source commit ${proof.sourceGitSha ?? "unknown"} does not match expected commit ${expectedSourceGitSha}.`);
+  }
+  if (sourceBoundRequired && !expectedSourceGitSha) {
+    blockers.push("Hosted benchmark proof requires an expected source commit when source binding is required.");
   }
   if (proof.v12ProductionProofSchemaVersion !== REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION) {
     blockers.push(`Hosted benchmark proof requires v12 production proof schema version ${REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION}.`);
@@ -180,6 +187,7 @@ export function evaluateHostedBenchmarkProof(input: {
     blockers,
     artifactPath: input.artifactPath ?? null,
     expectedSourceGitSha,
+    sourceBoundRequired,
     proof,
   };
 }
@@ -199,6 +207,7 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkV12ProductionProofSchemaVersion: report.proof.v12ProductionProofSchemaVersion,
       hostedBenchmarkProofSourceGitSha: report.proof.sourceGitSha,
       hostedBenchmarkExpectedSourceGitSha: report.expectedSourceGitSha,
+      hostedBenchmarkProofSourceBoundRequired: report.sourceBoundRequired,
       hostedBenchmarkProofSourceBound: report.expectedSourceGitSha
         ? report.proof.sourceGitSha === report.expectedSourceGitSha
         : null,
@@ -441,6 +450,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   const report = await evaluateHostedBenchmarkProofFile(artifactPath, {
     expectedSourceGitSha: process.env.HOSTED_BENCHMARK_EXPECTED_GIT_SHA ?? process.env.GITHUB_SHA,
+    requireSourceBound: process.env.HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND === "true",
   });
   await writeHostedBenchmarkProofArtifact(report);
   console.log(JSON.stringify(report, null, 2));
