@@ -175,6 +175,17 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
   return hostedProofs.every((artifact) =>
     artifact.passed === true
     && artifact.summary?.hostedBenchmarkProofPassed === true
+    && artifact.summary?.hostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkDeployBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkCompiledBackendReadyPassed === true
+    && artifact.summary?.hostedBenchmarkProductionDeployReadyPassed === true
+    && artifact.summary?.hostedBenchmarkExpectedExactPassed === true
+    && artifact.summary?.hostedBenchmarkProductionSpeedFloorPassed === true
+    && Number(artifact.summary?.hostedBenchmarkMeanTokensPerSecond ?? 0) >= 2
+    && artifact.summary?.hostedBenchmarkDirectModelFactualProofUsed === false
+    && artifact.summary?.hostedBenchmarkTechnicalProofOnly === false
+    && artifact.summary?.hostedBenchmarkCpuFallbackUsed === false
+    && artifact.summary?.hostedBenchmarkStrictWebGpuPassed === true
     && artifact.summary?.hostedBenchmarkProofSourceBoundRequired === true
     && artifact.summary?.hostedBenchmarkProofSourceBound === true
     && artifact.summary?.hostedBenchmarkProofSourceCommitEvidencePassed === true
@@ -186,6 +197,11 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && Number(artifact.summary?.hostedBenchmarkMemoryIncludedCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemoryExpectedMemoryIdCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemoryExpectedHitMeanRank ?? Number.POSITIVE_INFINITY) <= 1
+    && artifact.summary?.hostedBenchmarkBackendBrokerSelectionPassed === true
+    && Number(artifact.summary?.hostedBenchmarkBackendBrokerTraceCount ?? 0) > 0
+    && artifact.summary?.hostedBenchmarkBrokerSelectedBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkBrokerProductionRole === "production_candidate"
+    && artifact.summary?.hostedBenchmarkBrokerDeployReadyCandidate === true
     && artifact.summary?.hostedBenchmarkBrokerDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkBrokerKernelLabBackendId === "unlocked-browser-transformer"
     && artifact.summary?.hostedBenchmarkBrokerFallbackBackendId === "wasm-small-core"

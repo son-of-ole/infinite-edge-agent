@@ -71,35 +71,59 @@ describe("release gate status", () => {
         {
           name: "hosted-benchmark-proof",
           passed: true,
-          summary: {
-            hostedBenchmarkProofPassed: true,
-            hostedBenchmarkProofSourceGitSha: "abc123",
-            hostedBenchmarkProofSourceCommitEvidencePassed: true,
-            hostedBenchmarkExpectedSourceGitSha: "abc123",
-            hostedBenchmarkProofSourceBound: true,
-            hostedBenchmarkProofSourceBoundRequired: true,
-            hostedBenchmarkGpuLabelEvidencePassed: true,
-            hostedBenchmarkGpuDescription: "Apple M3",
-            hostedBenchmarkConcreteMemoryGroundingPassed: true,
-            hostedBenchmarkMemoryGroundingRunCount: 1,
-            hostedBenchmarkMemorySeededCorpusCount: 16,
-            hostedBenchmarkMemoryRetrievedCount: 1,
-            hostedBenchmarkMemoryIncludedCount: 1,
-            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
-            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
-            hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
-            hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
-            hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
-            hostedBenchmarkBrokerFallbackBackendCount: 1,
-            hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
-            hostedBenchmarkBrokerRoleBoundaryPassed: true,
-            hostedBenchmarkBrokerProofRequirementCount: 4,
-            hostedBenchmarkBrokerRequiresBackendTrace: true,
-            hostedBenchmarkBrokerRequiresMemoryGrounding: true,
-          },
+          summary: makeHostedBenchmarkProofSummary(),
         },
       ],
     })).toBe(true);
+  });
+
+  it("fails standalone hosted benchmark proof when compiled deploy readiness is false", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkCompiledBackendReadyPassed: false,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails standalone hosted benchmark proof when exact output or speed floor is not proven", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkExpectedExactPassed: false,
+            hostedBenchmarkProductionSpeedFloorPassed: false,
+            hostedBenchmarkMeanTokensPerSecond: 1.9,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails standalone hosted benchmark proof when Backend Broker selection is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkBackendBrokerSelectionPassed: false,
+            hostedBenchmarkBackendBrokerTraceCount: 0,
+            hostedBenchmarkBrokerSelectedBackendId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
   });
 
   it("fails standalone hosted benchmark proof without Backend Broker role-boundary evidence", () => {
@@ -1314,6 +1338,54 @@ describe("release gate status", () => {
     })).toBe(true);
   });
 });
+
+function makeHostedBenchmarkProofSummary(
+  overrides: Record<string, number | string | boolean | null> = {},
+): Record<string, number | string | boolean | null> {
+  return {
+    hostedBenchmarkProofPassed: true,
+    hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+    hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+    hostedBenchmarkCompiledBackendReadyPassed: true,
+    hostedBenchmarkProductionDeployReadyPassed: true,
+    hostedBenchmarkExpectedExactPassed: true,
+    hostedBenchmarkProductionSpeedFloorPassed: true,
+    hostedBenchmarkMeanTokensPerSecond: 2.7,
+    hostedBenchmarkDirectModelFactualProofUsed: false,
+    hostedBenchmarkTechnicalProofOnly: false,
+    hostedBenchmarkCpuFallbackUsed: false,
+    hostedBenchmarkStrictWebGpuPassed: true,
+    hostedBenchmarkProofSourceGitSha: "abc123",
+    hostedBenchmarkProofSourceCommitEvidencePassed: true,
+    hostedBenchmarkExpectedSourceGitSha: "abc123",
+    hostedBenchmarkProofSourceBound: true,
+    hostedBenchmarkProofSourceBoundRequired: true,
+    hostedBenchmarkGpuLabelEvidencePassed: true,
+    hostedBenchmarkGpuDescription: "Apple M3",
+    hostedBenchmarkConcreteMemoryGroundingPassed: true,
+    hostedBenchmarkMemoryGroundingRunCount: 1,
+    hostedBenchmarkMemorySeededCorpusCount: 16,
+    hostedBenchmarkMemoryRetrievedCount: 1,
+    hostedBenchmarkMemoryIncludedCount: 1,
+    hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+    hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+    hostedBenchmarkBackendBrokerSelectionPassed: true,
+    hostedBenchmarkBackendBrokerTraceCount: 1,
+    hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
+    hostedBenchmarkBrokerProductionRole: "production_candidate",
+    hostedBenchmarkBrokerDeployReadyCandidate: true,
+    hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+    hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+    hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+    hostedBenchmarkBrokerFallbackBackendCount: 1,
+    hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+    hostedBenchmarkBrokerRoleBoundaryPassed: true,
+    hostedBenchmarkBrokerProofRequirementCount: 4,
+    hostedBenchmarkBrokerRequiresBackendTrace: true,
+    hostedBenchmarkBrokerRequiresMemoryGrounding: true,
+    ...overrides,
+  };
+}
 
 function makeStrictUnlockedArtifacts(
   browserSummaryOverrides: Record<string, number | string | boolean | null> = {},
