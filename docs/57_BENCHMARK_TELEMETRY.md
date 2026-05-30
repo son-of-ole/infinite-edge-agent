@@ -198,7 +198,7 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, which is the combined artifact to archive next to hosted Chrome benchmark and telemetry database evidence.
 
-`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp, including `.artifacts/evals/v12-readiness-suite-latest.json`. This is the preferred archive command when publishing hosted benchmark telemetry results across devices.
+`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp, including `.artifacts/evals/v12-readiness-suite-latest.json`. When `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also includes `hosted-benchmark-proof-latest.json`. This is the preferred archive command when publishing hosted benchmark telemetry results across devices.
 
 `pnpm verify:hosted-benchmark-proof` validates the saved real Chrome/Edge benchmark artifact itself. Set `HOSTED_BENCHMARK_ARTIFACT_PATH` to the saved `browser-runtime-bench-latest.json` or pass the path after `--`. This is the runtime proof that should sit beside telemetry database exports.
 

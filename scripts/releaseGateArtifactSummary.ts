@@ -165,6 +165,8 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12SuiteBackendReadinessPassed",
       "v12SuiteSharedRuntimePassed",
       "v12SuiteReadinessBundlePassed",
+      "v12SuiteHostedBenchmarkProofRequired",
+      "v12SuiteHostedBenchmarkProofPassed",
     ] as const;
     for (const key of v12ReadinessSuiteFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];

@@ -7,6 +7,12 @@ import {
   type BackendReadinessMatrixArtifactWriteResult,
 } from "./backendReadinessMatrix";
 import {
+  evaluateHostedBenchmarkProofFile,
+  writeHostedBenchmarkProofArtifact,
+  type HostedBenchmarkProofArtifactWriteResult,
+  type HostedBenchmarkProofReport,
+} from "./hostedBenchmarkProof";
+import {
   evaluateHostedDeploymentProfile,
   writeHostedDeploymentProfileArtifact,
   type HostedDeploymentProfileEnv,
@@ -37,10 +43,13 @@ export interface V12ReadinessSuite {
   backendReadinessPassed: boolean;
   sharedRuntimePassed: boolean;
   v12ReadinessBundlePassed: boolean;
+  hostedBenchmarkProofRequired: boolean;
+  hostedBenchmarkProofPassed: boolean | null;
   hostedProfile: HostedDeploymentProfileReport;
   backendMatrix: BackendReadinessMatrix;
   sharedRuntime: SharedRuntimeReadinessReport;
   v12Bundle: V12ReadinessBundle;
+  hostedBenchmarkProof: HostedBenchmarkProofReport | null;
 }
 
 export interface V12ReadinessSuiteChildArtifactRef {
@@ -55,6 +64,7 @@ export interface V12ReadinessSuiteChildArtifacts {
   backendReadinessMatrix: V12ReadinessSuiteChildArtifactRef;
   sharedRuntimeReadiness: V12ReadinessSuiteChildArtifactRef;
   v12ReadinessBundle: V12ReadinessSuiteChildArtifactRef;
+  hostedBenchmarkProof?: V12ReadinessSuiteChildArtifactRef;
 }
 
 export interface V12ReadinessSuiteArtifact {
@@ -84,7 +94,9 @@ export function evaluateV12ReadinessSuite(input: {
   backendMatrix?: BackendReadinessMatrix;
   sharedRuntime?: SharedRuntimeReadinessReport;
   v12Bundle?: V12ReadinessBundle;
+  hostedBenchmarkProof?: HostedBenchmarkProofReport | null;
 } = {}): V12ReadinessSuite {
+  const env = input.env ?? process.env;
   const hostedProfile = input.hostedProfile ?? evaluateHostedDeploymentProfile(input.env ?? process.env);
   const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix({ hostedProfile });
   const sharedRuntime = input.sharedRuntime ?? evaluateSharedRuntimeReadiness({ backendMatrix });
@@ -93,28 +105,39 @@ export function evaluateV12ReadinessSuite(input: {
     backendMatrix,
     sharedRuntime,
   });
+  const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
+  const hostedBenchmarkProof = input.hostedBenchmarkProof ?? null;
   const blockers = [
     ...hostedProfile.blockers.map((blocker) => `hosted_deployment_profile: ${blocker}`),
     ...backendMatrix.blockers.map((blocker) => `backend_readiness_matrix: ${blocker}`),
     ...sharedRuntime.blockers.map((blocker) => `shared_runtime_readiness: ${blocker}`),
     ...v12Bundle.blockers.map((blocker) => `v12_readiness_bundle: ${blocker}`),
+    ...(hostedBenchmarkProof
+      ? hostedBenchmarkProof.blockers.map((blocker) => `hosted_benchmark_proof: ${blocker}`)
+      : hostedBenchmarkProofRequired
+        ? ["hosted_benchmark_proof: required but no HOSTED_BENCHMARK_ARTIFACT_PATH or report was provided."]
+        : []),
   ];
+  const childArtifactCount = hostedBenchmarkProof ? 5 : 4;
 
   return {
     passed: blockers.length === 0,
     blockers,
     deployBackendId: v12Bundle.deployBackendId,
     kernelLabBackendId: v12Bundle.kernelLabBackendId,
-    childArtifactCount: 4,
-    totalArtifactCount: 5,
+    childArtifactCount,
+    totalArtifactCount: childArtifactCount + 1,
     hostedProfilePassed: hostedProfile.passed,
     backendReadinessPassed: backendMatrix.passed,
     sharedRuntimePassed: sharedRuntime.passed,
     v12ReadinessBundlePassed: v12Bundle.passed,
+    hostedBenchmarkProofRequired,
+    hostedBenchmarkProofPassed: hostedBenchmarkProof ? hostedBenchmarkProof.passed : hostedBenchmarkProofRequired ? false : null,
     hostedProfile,
     backendMatrix,
     sharedRuntime,
     v12Bundle,
+    hostedBenchmarkProof,
   };
 }
 
@@ -144,6 +167,8 @@ export function buildV12ReadinessSuiteArtifact(
       v12SuiteBackendReadinessPassed: suite.backendReadinessPassed,
       v12SuiteSharedRuntimePassed: suite.sharedRuntimePassed,
       v12SuiteReadinessBundlePassed: suite.v12ReadinessBundlePassed,
+      v12SuiteHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
+      v12SuiteHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
     },
     suite: {
       ...suite,
@@ -186,15 +211,24 @@ export async function runV12ReadinessSuite(options: {
   env?: HostedDeploymentProfileEnv;
   artifactDir?: string;
   createdAt?: string;
+  hostedBenchmarkArtifactPath?: string;
 } = {}): Promise<V12ReadinessSuiteRunResult> {
   const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
   const createdAt = options.createdAt ?? new Date().toISOString();
-  const suite = evaluateV12ReadinessSuite({ env: options.env });
+  const env = options.env ?? process.env;
+  const hostedBenchmarkArtifactPath = options.hostedBenchmarkArtifactPath ?? env.HOSTED_BENCHMARK_ARTIFACT_PATH;
+  const hostedBenchmarkProof = hostedBenchmarkArtifactPath
+    ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath)
+    : null;
+  const suite = evaluateV12ReadinessSuite({ env, hostedBenchmarkProof });
   const hosted = await writeHostedDeploymentProfileArtifact(suite.hostedProfile, { artifactDir, createdAt });
   const backend = await writeBackendReadinessMatrixArtifact(suite.backendMatrix, { artifactDir, createdAt });
   const shared = await writeSharedRuntimeReadinessArtifact(suite.sharedRuntime, { artifactDir, createdAt });
   const bundle = await writeV12ReadinessBundleArtifact(suite.v12Bundle, { artifactDir, createdAt });
-  const childArtifacts = toChildArtifacts({ hosted, backend, shared, bundle });
+  const hostedBenchmark = suite.hostedBenchmarkProof
+    ? await writeHostedBenchmarkProofArtifact(suite.hostedBenchmarkProof, { artifactDir, createdAt })
+    : null;
+  const childArtifacts = toChildArtifacts({ hosted, backend, shared, bundle, hostedBenchmark });
   const written = await writeV12ReadinessSuiteArtifact(suite, {
     artifactDir,
     createdAt,
@@ -213,8 +247,9 @@ function toChildArtifacts(input: {
   backend: BackendReadinessMatrixArtifactWriteResult;
   shared: SharedRuntimeReadinessArtifactWriteResult;
   bundle: V12ReadinessBundleArtifactWriteResult;
+  hostedBenchmark?: HostedBenchmarkProofArtifactWriteResult | null;
 }): V12ReadinessSuiteChildArtifacts {
-  return {
+  const childArtifacts: V12ReadinessSuiteChildArtifacts = {
     hostedDeploymentProfile: {
       name: input.hosted.artifact.name,
       passed: input.hosted.artifact.passed,
@@ -240,6 +275,15 @@ function toChildArtifacts(input: {
       resultPath: input.bundle.resultPath,
     },
   };
+  if (input.hostedBenchmark) {
+    childArtifacts.hostedBenchmarkProof = {
+      name: input.hostedBenchmark.artifact.name,
+      passed: input.hostedBenchmark.artifact.passed,
+      latestPath: input.hostedBenchmark.latestPath,
+      resultPath: input.hostedBenchmark.resultPath,
+    };
+  }
+  return childArtifacts;
 }
 
 function emptyChildArtifacts(): V12ReadinessSuiteChildArtifacts {

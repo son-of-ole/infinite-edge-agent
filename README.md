@@ -255,7 +255,7 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`. Se
 
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile, backend matrix, and shared-runtime proof into one final-state artifact. Use `RELEASE_REQUIRE_V12_READINESS=true` to require that bundle independently.
 
-`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp: hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp: hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json`. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, the suite also validates and writes `hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
 After running the real hosted benchmark in Chrome or Edge, validate the saved browser artifact before making a backend-specific production claim:
 
@@ -263,7 +263,7 @@ After running the real hosted benchmark in Chrome or Edge, validate the saved br
 HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-latest.json pnpm verify:hosted-benchmark-proof
 ```
 
-The proof verifier rejects artifacts that are not `compiled-browser-webllm`, are technical-only, lack grounded memory, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback.
+The proof verifier rejects artifacts that are not `compiled-browser-webllm`, are technical-only, lack grounded memory, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback. Set `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` to make `release:gate` require that saved browser artifact.
 
 For WebGPU and WASM performance, use a secure context and cross-origin isolation headers where your hosting platform supports them.
 

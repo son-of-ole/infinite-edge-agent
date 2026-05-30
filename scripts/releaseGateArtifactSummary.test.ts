@@ -52,6 +52,8 @@ describe("release gate artifact summary", () => {
         v12SuiteBackendReadinessPassed: true,
         v12SuiteSharedRuntimePassed: true,
         v12SuiteReadinessBundlePassed: true,
+        v12SuiteHostedBenchmarkProofRequired: true,
+        v12SuiteHostedBenchmarkProofPassed: true,
       },
     })).toMatchObject({
       v12SuitePassed: true,
@@ -65,6 +67,8 @@ describe("release gate artifact summary", () => {
       v12SuiteBackendReadinessPassed: true,
       v12SuiteSharedRuntimePassed: true,
       v12SuiteReadinessBundlePassed: true,
+      v12SuiteHostedBenchmarkProofRequired: true,
+      v12SuiteHostedBenchmarkProofPassed: true,
     });
   });
 
