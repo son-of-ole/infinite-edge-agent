@@ -119,7 +119,7 @@ VITE_GIT_SHA=<deployment-sha>
 VITE_DEPLOY_URL=https://your-hosted-agent.example
 ```
 
-`pnpm verify:hosted-profile` uses `VITE_DEPLOY_URL` as the canonical hosted origin. If `HOSTED_PRODUCTION_BENCHMARK_URL` is provided, that benchmark URL must still point at the same public HTTPS origin; the verifier reports this as `hostedProfileBenchmarkDeployUrlBound`.
+`pnpm verify:hosted-profile` requires `VITE_DEPLOY_URL` as the canonical hosted origin. If `HOSTED_PRODUCTION_BENCHMARK_URL` is provided, that benchmark URL must still point at the same public HTTPS origin; the verifier reports this as `hostedProfileBenchmarkDeployUrlBound`.
 
 For v12 production proof, the browser benchmark artifact carries this deployment SHA as `v12ProductionProofSourceGitSha` and carries the hosted origin as `deployUrl`. Release verification should set `HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>` so stale hosted artifacts from another build fail instead of being reused. `deployUrl` must be a public HTTPS origin and must match `HOSTED_BENCHMARK_EXPECTED_DEPLOY_URL` or `VITE_DEPLOY_URL`; local, loopback, link-local, private-network, non-HTTPS, and wrong-origin artifacts are rejected by hosted proof gates.
 

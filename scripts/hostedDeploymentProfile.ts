@@ -104,7 +104,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   if (!readString(env.VITE_BENCHMARK_TELEMETRY_URL)) {
     blockers.push("Hosted browser config requires VITE_BENCHMARK_TELEMETRY_URL.");
   }
-  if (rawDeployUrl && !deployUrl) {
+  if (!rawDeployUrl) {
+    blockers.push("Hosted production requires VITE_DEPLOY_URL to identify the canonical public deploy origin.");
+  } else if (!deployUrl) {
     blockers.push("Hosted production deploy URL must use a public HTTPS origin.");
   }
 

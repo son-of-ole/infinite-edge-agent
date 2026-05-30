@@ -96,7 +96,7 @@ For the hosted compiled backend, verify the environment and production benchmark
 pnpm verify:hosted-profile
 ```
 
-This check must pass before the real Chrome hosted benchmark is treated as authoritative. It requires the compiled backend, `VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC`, MTP-off production policy, Postgres-backed benchmark telemetry, admin-protected telemetry review routes, rate limiting, a public HTTPS benchmark origin, the benchmark origin bound to `VITE_DEPLOY_URL` when a deploy URL is provided, and the grounded exact Montana canary URL with `modelId=Qwen3-0.6B-q4f16_1-MLC` plus telemetry opt-in. It writes `.artifacts/evals/hosted-deployment-profile-latest.json`.
+This check must pass before the real Chrome hosted benchmark is treated as authoritative. It requires the compiled backend, `VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC`, MTP-off production policy, Postgres-backed benchmark telemetry, admin-protected telemetry review routes, rate limiting, a public HTTPS `VITE_DEPLOY_URL`, a public HTTPS benchmark origin bound to that deploy origin, and the grounded exact Montana canary URL with `modelId=Qwen3-0.6B-q4f16_1-MLC` plus telemetry opt-in. It writes `.artifacts/evals/hosted-deployment-profile-latest.json`.
 
 To make the full release gate require and summarize this hosted profile artifact, run:
 

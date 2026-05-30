@@ -57,9 +57,20 @@ describe("evaluateHostedDeploymentProfile", () => {
     expect(report.blockers).toEqual(expect.arrayContaining([
       "Hosted production requires VITE_LLM_BACKEND=compiled-browser-webllm.",
       "Hosted production requires VITE_COMPILED_WEBLLM_ENABLED=true.",
+      "Hosted production requires VITE_DEPLOY_URL to identify the canonical public deploy origin.",
       "Hosted benchmark telemetry must be enabled on both browser and collector.",
       "Hosted production requires HOSTED_PRODUCTION_BENCHMARK_URL or BROWSER_RUNTIME_BENCH_PREVIEW_URL.",
     ]));
+  });
+
+  it("rejects explicit benchmark URLs when the canonical deploy URL is missing", () => {
+    const { VITE_DEPLOY_URL: _deployUrl, ...envWithoutDeployUrl } = completeHostedEnv;
+    const report = evaluateHostedDeploymentProfile(envWithoutDeployUrl);
+
+    expect(report.passed).toBe(false);
+    expect(report.profile.deployUrl).toBeNull();
+    expect(report.profile.benchmarkDeployUrlBound).toBeNull();
+    expect(report.blockers).toContain("Hosted production requires VITE_DEPLOY_URL to identify the canonical public deploy origin.");
   });
 
   it("rejects hosted telemetry when storage is local JSONL instead of durable Postgres", () => {

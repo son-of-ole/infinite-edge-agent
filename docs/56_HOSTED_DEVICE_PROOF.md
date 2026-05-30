@@ -91,13 +91,14 @@ The verifier checks the deploy profile, not the model output. It requires:
 - `compiled-browser-webllm` as the hosted production backend,
 - `VITE_COMPILED_WEBLLM_ENABLED=true`,
 - MTP disabled in production,
+- `VITE_DEPLOY_URL` set to the canonical public HTTPS hosted origin,
 - benchmark telemetry enabled on both browser and collector,
 - `BENCHMARK_TELEMETRY_STORAGE=postgres`,
 - admin protection for list, summary, dashboard, and CSV export routes,
 - rate limiting configured,
 - and a public HTTPS benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
 
-When `VITE_DEPLOY_URL` is set, the verifier also requires the benchmark URL origin to match that deploy origin. This prevents an operator from proving one hosted site while configuring or releasing another.
+The verifier also requires the benchmark URL origin to match `VITE_DEPLOY_URL`. This prevents an operator from proving one hosted site while configuring or releasing another.
 
 The verifier does not replace the real Chrome benchmark. It prevents a hosted environment from being called production-ready before the authoritative browser proof can even produce the right artifact.
 
