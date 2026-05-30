@@ -69,6 +69,7 @@ export function buildV12ProductionArchiveArtifact(input: {
   const artifactCount = suite.totalArtifactCount + 1;
   const hostedProof = suite.hostedBenchmarkProof?.proof;
   const expectedSourceGitSha = suite.hostedBenchmarkProof?.expectedSourceGitSha ?? null;
+  const proofSourceBoundRequired = suite.hostedBenchmarkProof?.sourceBoundRequired ?? false;
   const proofSourceGitSha = hostedProof?.sourceGitSha ?? null;
   const proofSourceBound = expectedSourceGitSha
     ? proofSourceGitSha === expectedSourceGitSha
@@ -90,6 +91,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionProofSchemaVersion: hostedProof?.v12ProductionProofSchemaVersion ?? null,
       v12ProductionProofSourceGitSha: proofSourceGitSha,
       v12ProductionExpectedSourceGitSha: expectedSourceGitSha,
+      v12ProductionProofSourceBoundRequired: proofSourceBoundRequired,
       v12ProductionProofSourceBound: proofSourceBound,
       v12ProductionArtifactCount: artifactCount,
       v12ProductionSuiteArtifactCount: suite.totalArtifactCount,

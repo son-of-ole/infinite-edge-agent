@@ -30,6 +30,7 @@ describe("release gate artifact summary", () => {
         v12ProductionProofSchemaVersion: 2,
         v12ProductionProofSourceGitSha: "abc123",
         v12ProductionExpectedSourceGitSha: "abc123",
+        v12ProductionProofSourceBoundRequired: true,
         v12ProductionProofSourceBound: true,
       },
     })).toMatchObject({
@@ -58,6 +59,7 @@ describe("release gate artifact summary", () => {
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
       v12ProductionExpectedSourceGitSha: "abc123",
+      v12ProductionProofSourceBoundRequired: true,
       v12ProductionProofSourceBound: true,
     });
   });

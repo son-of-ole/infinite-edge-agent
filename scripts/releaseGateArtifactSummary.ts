@@ -144,6 +144,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionProofSchemaVersion",
       "v12ProductionProofSourceGitSha",
       "v12ProductionExpectedSourceGitSha",
+      "v12ProductionProofSourceBoundRequired",
       "v12ProductionProofSourceBound",
       "v12ProductionArtifactCount",
       "v12ProductionSuiteArtifactCount",

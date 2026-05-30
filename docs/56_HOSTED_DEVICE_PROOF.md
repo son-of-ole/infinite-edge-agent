@@ -135,7 +135,7 @@ The strict production archive is written by:
 pnpm eval:v12-production
 ```
 
-It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: proof schema version `2`, `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, Backend Broker selection evidence, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound`.
+It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: proof schema version `2`, `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, source-bound-required proof mode, Backend Broker selection evidence, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound`.
 
 The saved real-browser benchmark artifact is validated by:
 
@@ -148,7 +148,7 @@ pnpm verify:hosted-benchmark-proof
 
 It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove grounded memory, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
-For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`.
+For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. The production archive preserves that strict verifier mode as `v12ProductionProofSourceBoundRequired`; the release gate requires it to be true.
 
 ## GitHub Production Proof Workflow
 

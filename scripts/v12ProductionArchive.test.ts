@@ -152,6 +152,7 @@ describe("v12 production archive", () => {
         v12ProductionProofSchemaVersion: 2,
         v12ProductionProofSourceGitSha: "abc123",
         v12ProductionExpectedSourceGitSha: "abc123",
+        v12ProductionProofSourceBoundRequired: true,
         v12ProductionProofSourceBound: true,
         v12ProductionBackendBrokerSelectionPassed: true,
         v12ProductionBackendBrokerTraceCount: 1,

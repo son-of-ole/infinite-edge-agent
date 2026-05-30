@@ -128,7 +128,7 @@ For strict production archive proof, run:
 pnpm eval:v12-production
 ```
 
-This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive. With that flag enabled, the release gate validates the archive's backend-specific proof fields instead of accepting archive presence alone: proof schema version must be `2`, deploy backend must be `compiled-browser-webllm`, Kernel Lab must be `unlocked-browser-transformer`, hosted benchmark proof must be required and passed, Backend Broker selection evidence must be present for the compiled backend, the backend readiness matrix must be proof-bound to that hosted benchmark artifact, and blocker count must be zero.
+This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive. With that flag enabled, the release gate validates the archive's backend-specific proof fields instead of accepting archive presence alone: proof schema version must be `2`, deploy backend must be `compiled-browser-webllm`, Kernel Lab must be `unlocked-browser-transformer`, hosted benchmark proof must be required and passed, source-bound-required proof mode must be preserved, Backend Broker selection evidence must be present for the compiled backend, the backend readiness matrix must be proof-bound to that hosted benchmark artifact, and blocker count must be zero.
 
 After the real Chrome or Edge hosted benchmark is saved, validate the runtime artifact:
 
@@ -141,7 +141,7 @@ pnpm verify:hosted-benchmark-proof
 
 This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` when `pnpm release:gate` should fail unless the saved browser artifact proves proof schema version `2`, the compiled backend, Backend Broker selection, grounded memory, exact output, speed floor, and no CPU fallback.
 
-For production release proof, set `VITE_GIT_SHA=<deployment-commit-sha>` on the hosted build. The benchmark artifact must report that SHA as `v12ProductionProofSourceGitSha`, and the verifier/release gate must compare it with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` so an older hosted artifact cannot pass for a newer commit. The release gate rejects standalone `hosted-benchmark-proof` artifacts when `hostedBenchmarkProofSourceBoundRequired` or `hostedBenchmarkProofSourceBound` is not true.
+For production release proof, set `VITE_GIT_SHA=<deployment-commit-sha>` on the hosted build. The benchmark artifact must report that SHA as `v12ProductionProofSourceGitSha`, and the verifier/release gate must compare it with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` so an older hosted artifact cannot pass for a newer commit. The release gate rejects standalone `hosted-benchmark-proof` artifacts when `hostedBenchmarkProofSourceBoundRequired` or `hostedBenchmarkProofSourceBound` is not true, and rejects v12 production archives when `v12ProductionProofSourceBoundRequired` or `v12ProductionProofSourceBound` is not true.
 
 For remote release verification, use the manual GitHub Actions workflow **V12 Production Proof**. Provide:
 
