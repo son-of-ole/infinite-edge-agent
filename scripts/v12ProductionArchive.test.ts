@@ -196,6 +196,12 @@ describe("v12 production archive", () => {
         v12ProductionBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
         v12ProductionBrokerProductionRole: "production_candidate",
         v12ProductionBrokerDeployReadyCandidate: true,
+        v12ProductionBrokerDeployBackendId: "compiled-browser-webllm",
+        v12ProductionBrokerKernelLabBackendId: "unlocked-browser-transformer",
+        v12ProductionBrokerFallbackBackendId: "wasm-small-core",
+        v12ProductionBrokerFallbackBackendCount: 1,
+        v12ProductionBrokerFallbackDeployReadyCandidate: false,
+        v12ProductionBrokerRoleBoundaryPassed: true,
       },
     });
 

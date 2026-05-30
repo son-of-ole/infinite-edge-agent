@@ -43,6 +43,12 @@ describe("release gate artifact summary", () => {
         v12ProductionExpectedSourceGitSha: "abc123",
         v12ProductionProofSourceBoundRequired: true,
         v12ProductionProofSourceBound: true,
+        v12ProductionBrokerDeployBackendId: "compiled-browser-webllm",
+        v12ProductionBrokerKernelLabBackendId: "unlocked-browser-transformer",
+        v12ProductionBrokerFallbackBackendId: "wasm-small-core",
+        v12ProductionBrokerFallbackBackendCount: 1,
+        v12ProductionBrokerFallbackDeployReadyCandidate: false,
+        v12ProductionBrokerRoleBoundaryPassed: true,
       },
     })).toMatchObject({
       v12ProductionArchivePassed: true,
@@ -83,6 +89,12 @@ describe("release gate artifact summary", () => {
       v12ProductionExpectedSourceGitSha: "abc123",
       v12ProductionProofSourceBoundRequired: true,
       v12ProductionProofSourceBound: true,
+      v12ProductionBrokerDeployBackendId: "compiled-browser-webllm",
+      v12ProductionBrokerKernelLabBackendId: "unlocked-browser-transformer",
+      v12ProductionBrokerFallbackBackendId: "wasm-small-core",
+      v12ProductionBrokerFallbackBackendCount: 1,
+      v12ProductionBrokerFallbackDeployReadyCandidate: false,
+      v12ProductionBrokerRoleBoundaryPassed: true,
     });
   });
 

@@ -126,7 +126,13 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && Number(artifact.summary?.v12ProductionBackendBrokerTraceCount ?? 0) > 0
     && artifact.summary?.v12ProductionBrokerSelectedBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionBrokerProductionRole === "production_candidate"
-    && artifact.summary?.v12ProductionBrokerDeployReadyCandidate === true;
+    && artifact.summary?.v12ProductionBrokerDeployReadyCandidate === true
+    && artifact.summary?.v12ProductionBrokerDeployBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionBrokerKernelLabBackendId === "unlocked-browser-transformer"
+    && artifact.summary?.v12ProductionBrokerFallbackBackendId === "wasm-small-core"
+    && Number(artifact.summary?.v12ProductionBrokerFallbackBackendCount ?? 0) === 1
+    && artifact.summary?.v12ProductionBrokerFallbackDeployReadyCandidate === false
+    && artifact.summary?.v12ProductionBrokerRoleBoundaryPassed === true;
 }
 
 export function computeReleaseGatePassed(input: {

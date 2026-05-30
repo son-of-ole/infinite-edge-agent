@@ -959,6 +959,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when hosted broker role-boundary proof is missing from the archive", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionBrokerRoleBoundaryPassed: false,
+            v12ProductionBrokerFallbackBackendId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when the production proof schema is stale", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1211,6 +1228,12 @@ function makeV12ProductionArchiveSummary(
       v12ProductionBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
       v12ProductionBrokerProductionRole: "production_candidate",
       v12ProductionBrokerDeployReadyCandidate: true,
+      v12ProductionBrokerDeployBackendId: "compiled-browser-webllm",
+      v12ProductionBrokerKernelLabBackendId: "unlocked-browser-transformer",
+      v12ProductionBrokerFallbackBackendId: "wasm-small-core",
+      v12ProductionBrokerFallbackBackendCount: 1,
+      v12ProductionBrokerFallbackDeployReadyCandidate: false,
+      v12ProductionBrokerRoleBoundaryPassed: true,
     });
   }
 

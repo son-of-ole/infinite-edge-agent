@@ -179,6 +179,12 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionBrokerProductionRole",
       "v12ProductionBrokerDeployReadyCandidate",
       "v12ProductionBrokerReason",
+      "v12ProductionBrokerDeployBackendId",
+      "v12ProductionBrokerKernelLabBackendId",
+      "v12ProductionBrokerFallbackBackendId",
+      "v12ProductionBrokerFallbackBackendCount",
+      "v12ProductionBrokerFallbackDeployReadyCandidate",
+      "v12ProductionBrokerRoleBoundaryPassed",
     ] as const;
     for (const key of v12ProductionArchiveFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];
