@@ -166,9 +166,10 @@ describe("v12 production archive", () => {
         v12ProductionPublicModelOptionCount: 2,
         v12ProductionPublicDeployOptionCount: 1,
         v12ProductionPublicKernelLabOptionCount: 1,
-        v12ProductionArtifactCount: 7,
-        v12ProductionSuiteArtifactCount: 6,
-        v12ProductionChildArtifactCount: 5,
+        v12ProductionArtifactCount: 8,
+        v12ProductionSuiteArtifactCount: 7,
+        v12ProductionChildArtifactCount: 6,
+        v12ProductionWorkflowPreflightPassed: true,
         v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
         v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
         v12ProductionCompiledBackendReadyPassed: true,
@@ -213,6 +214,7 @@ describe("v12 production archive", () => {
     const latest = JSON.parse(await readFile(result.latestPath, "utf8")) as ReturnType<typeof buildV12ProductionArchiveArtifact>;
 
     expect(latest.archive.suiteResult.childArtifacts.hostedBenchmarkProof?.passed).toBe(true);
+    expect(latest.archive.suiteResult.childArtifacts.v12ProductionWorkflowPreflight.passed).toBe(true);
     expect(latest.archive.suiteLatestPath).toBe(join(artifactDir, "v12-readiness-suite-latest.json"));
   });
 });

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -42,6 +43,22 @@ export async function evaluateV12ProductionWorkflowPreflight(
   const rootDir = input.rootDir ?? process.cwd();
   const workflow = await readTextFile(join(rootDir, WORKFLOW_PATH));
   const packageJson = await readJsonFile<PackageJson>(join(rootDir, PACKAGE_PATH));
+  return buildV12ProductionWorkflowPreflightReport(workflow, packageJson);
+}
+
+export function evaluateV12ProductionWorkflowPreflightSync(
+  input: { rootDir?: string } = {},
+): V12ProductionWorkflowPreflightReport {
+  const rootDir = input.rootDir ?? process.cwd();
+  const workflow = readTextFileSync(join(rootDir, WORKFLOW_PATH));
+  const packageJson = readJsonFileSync<PackageJson>(join(rootDir, PACKAGE_PATH));
+  return buildV12ProductionWorkflowPreflightReport(workflow, packageJson);
+}
+
+function buildV12ProductionWorkflowPreflightReport(
+  workflow: string,
+  packageJson: PackageJson | null,
+): V12ProductionWorkflowPreflightReport {
   const checks = [
     checkWorkflowInputs(workflow),
     checkCompiledBackendProfile(workflow),
@@ -254,6 +271,22 @@ async function readJsonFile<T>(path: string): Promise<T | null> {
 async function readTextFile(path: string): Promise<string> {
   try {
     return await readFile(path, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+function readJsonFileSync<T>(path: string): T | null {
+  try {
+    return JSON.parse(readFileSync(path, "utf8")) as T;
+  } catch {
+    return null;
+  }
+}
+
+function readTextFileSync(path: string): string {
+  try {
+    return readFileSync(path, "utf8");
   } catch {
     return "";
   }

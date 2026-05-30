@@ -151,6 +151,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionBackendRoleBoundaryPassed",
       "v12ProductionHostedBenchmarkProofRequired",
       "v12ProductionHostedBenchmarkProofPassed",
+      "v12ProductionWorkflowPreflightPassed",
       "v12ProductionBackendReadinessProofBound",
       "v12ProductionModelRegistryAligned",
       "v12ProductionModelRegistryModelCount",

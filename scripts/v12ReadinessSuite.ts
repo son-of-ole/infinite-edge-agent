@@ -31,6 +31,12 @@ import {
   type V12ReadinessBundle,
   type V12ReadinessBundleArtifactWriteResult,
 } from "./v12ReadinessBundle";
+import {
+  evaluateV12ProductionWorkflowPreflightSync,
+  writeV12ProductionWorkflowPreflightArtifact,
+  type V12ProductionWorkflowPreflightReport,
+  type V12ProductionWorkflowPreflightWriteResult,
+} from "./v12ProductionWorkflowPreflight";
 
 export interface V12ReadinessSuite {
   passed: boolean;
@@ -43,6 +49,7 @@ export interface V12ReadinessSuite {
   backendReadinessPassed: boolean;
   sharedRuntimePassed: boolean;
   v12ReadinessBundlePassed: boolean;
+  v12ProductionWorkflowPreflightPassed: boolean;
   hostedBenchmarkProofRequired: boolean;
   hostedBenchmarkProofSourceBoundRequired: boolean;
   hostedBenchmarkProofPassed: boolean | null;
@@ -50,6 +57,7 @@ export interface V12ReadinessSuite {
   backendMatrix: BackendReadinessMatrix;
   sharedRuntime: SharedRuntimeReadinessReport;
   v12Bundle: V12ReadinessBundle;
+  v12ProductionWorkflowPreflight: V12ProductionWorkflowPreflightReport;
   hostedBenchmarkProof: HostedBenchmarkProofReport | null;
 }
 
@@ -65,6 +73,7 @@ export interface V12ReadinessSuiteChildArtifacts {
   backendReadinessMatrix: V12ReadinessSuiteChildArtifactRef;
   sharedRuntimeReadiness: V12ReadinessSuiteChildArtifactRef;
   v12ReadinessBundle: V12ReadinessSuiteChildArtifactRef;
+  v12ProductionWorkflowPreflight: V12ReadinessSuiteChildArtifactRef;
   hostedBenchmarkProof?: V12ReadinessSuiteChildArtifactRef;
 }
 
@@ -95,6 +104,7 @@ export function evaluateV12ReadinessSuite(input: {
   backendMatrix?: BackendReadinessMatrix;
   sharedRuntime?: SharedRuntimeReadinessReport;
   v12Bundle?: V12ReadinessBundle;
+  v12ProductionWorkflowPreflight?: V12ProductionWorkflowPreflightReport;
   hostedBenchmarkProof?: HostedBenchmarkProofReport | null;
 } = {}): V12ReadinessSuite {
   const env = input.env ?? process.env;
@@ -116,11 +126,14 @@ export function evaluateV12ReadinessSuite(input: {
     backendMatrix,
     sharedRuntime,
   });
+  const v12ProductionWorkflowPreflight = input.v12ProductionWorkflowPreflight
+    ?? evaluateV12ProductionWorkflowPreflightSync();
   const blockers = [
     ...hostedProfile.blockers.map((blocker) => `hosted_deployment_profile: ${blocker}`),
     ...backendMatrix.blockers.map((blocker) => `backend_readiness_matrix: ${blocker}`),
     ...sharedRuntime.blockers.map((blocker) => `shared_runtime_readiness: ${blocker}`),
     ...v12Bundle.blockers.map((blocker) => `v12_readiness_bundle: ${blocker}`),
+    ...v12ProductionWorkflowPreflight.blockers.map((blocker) => `v12_production_workflow_preflight: ${blocker}`),
     ...(hostedBenchmarkProof
       ? hostedBenchmarkProof.blockers.map((blocker) => `hosted_benchmark_proof: ${blocker}`)
       : hostedBenchmarkProofRequired
@@ -130,7 +143,7 @@ export function evaluateV12ReadinessSuite(input: {
       ? ["hosted_benchmark_proof: source-bound proof mode was required but the proof report was not generated with source binding required."]
       : []),
   ];
-  const childArtifactCount = hostedBenchmarkProof ? 5 : 4;
+  const childArtifactCount = hostedBenchmarkProof ? 6 : 5;
 
   return {
     passed: blockers.length === 0,
@@ -143,6 +156,7 @@ export function evaluateV12ReadinessSuite(input: {
     backendReadinessPassed: backendMatrix.passed,
     sharedRuntimePassed: sharedRuntime.passed,
     v12ReadinessBundlePassed: v12Bundle.passed,
+    v12ProductionWorkflowPreflightPassed: v12ProductionWorkflowPreflight.passed,
     hostedBenchmarkProofRequired,
     hostedBenchmarkProofSourceBoundRequired,
     hostedBenchmarkProofPassed: hostedBenchmarkProof ? hostedBenchmarkProof.passed : hostedBenchmarkProofRequired ? false : null,
@@ -150,6 +164,7 @@ export function evaluateV12ReadinessSuite(input: {
     backendMatrix,
     sharedRuntime,
     v12Bundle,
+    v12ProductionWorkflowPreflight,
     hostedBenchmarkProof,
   };
 }
@@ -182,6 +197,7 @@ export function buildV12ReadinessSuiteArtifact(
       v12SuiteBackendReadinessPassed: suite.backendReadinessPassed,
       v12SuiteSharedRuntimePassed: suite.sharedRuntimePassed,
       v12SuiteReadinessBundlePassed: suite.v12ReadinessBundlePassed,
+      v12SuiteProductionWorkflowPreflightPassed: suite.v12ProductionWorkflowPreflightPassed,
       v12SuiteHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12SuiteHostedBenchmarkProofSourceBoundRequired: suite.hostedBenchmarkProofSourceBoundRequired,
       v12SuiteHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
@@ -249,10 +265,14 @@ export async function runV12ReadinessSuite(options: {
   const backend = await writeBackendReadinessMatrixArtifact(suite.backendMatrix, { artifactDir, createdAt });
   const shared = await writeSharedRuntimeReadinessArtifact(suite.sharedRuntime, { artifactDir, createdAt });
   const bundle = await writeV12ReadinessBundleArtifact(suite.v12Bundle, { artifactDir, createdAt });
+  const workflowPreflight = await writeV12ProductionWorkflowPreflightArtifact(suite.v12ProductionWorkflowPreflight, {
+    artifactDir,
+    createdAt,
+  });
   const hostedBenchmark = suite.hostedBenchmarkProof
     ? await writeHostedBenchmarkProofArtifact(suite.hostedBenchmarkProof, { artifactDir, createdAt })
     : null;
-  const childArtifacts = toChildArtifacts({ hosted, backend, shared, bundle, hostedBenchmark });
+  const childArtifacts = toChildArtifacts({ hosted, backend, shared, bundle, workflowPreflight, hostedBenchmark });
   const written = await writeV12ReadinessSuiteArtifact(suite, {
     artifactDir,
     createdAt,
@@ -284,6 +304,7 @@ function toChildArtifacts(input: {
   backend: BackendReadinessMatrixArtifactWriteResult;
   shared: SharedRuntimeReadinessArtifactWriteResult;
   bundle: V12ReadinessBundleArtifactWriteResult;
+  workflowPreflight: V12ProductionWorkflowPreflightWriteResult;
   hostedBenchmark?: HostedBenchmarkProofArtifactWriteResult | null;
 }): V12ReadinessSuiteChildArtifacts {
   const childArtifacts: V12ReadinessSuiteChildArtifacts = {
@@ -310,6 +331,12 @@ function toChildArtifacts(input: {
       passed: input.bundle.artifact.passed,
       latestPath: input.bundle.latestPath,
       resultPath: input.bundle.resultPath,
+    },
+    v12ProductionWorkflowPreflight: {
+      name: input.workflowPreflight.artifact.name,
+      passed: input.workflowPreflight.artifact.passed,
+      latestPath: input.workflowPreflight.latestPath,
+      resultPath: input.workflowPreflight.resultPath,
     },
   };
   if (input.hostedBenchmark) {
@@ -345,6 +372,12 @@ function emptyChildArtifacts(): V12ReadinessSuiteChildArtifacts {
     },
     v12ReadinessBundle: {
       name: "v12-readiness-bundle",
+      passed: false,
+      latestPath: "",
+      resultPath: "",
+    },
+    v12ProductionWorkflowPreflight: {
+      name: "v12-production-workflow-preflight",
       passed: false,
       latestPath: "",
       resultPath: "",

@@ -383,6 +383,33 @@ describe("release gate status", () => {
     });
   });
 
+  it("does not classify v12 production archives without workflow preflight proof", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      requireV12ProductionArchive: true,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: null,
+      manifestSha256: null,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionWorkflowPreflightPassed: false,
+          }),
+        },
+      ],
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      backendSpecificProductionProof: false,
+      v12ProductionArchiveProof: false,
+    });
+  });
+
   it("does not classify incomplete v12 production archives as production proof", () => {
     expect(classifyReleaseGateProof({
       passed: true,
@@ -1216,14 +1243,15 @@ function makeV12ProductionArchiveSummary(
     v12ProductionBackendRoleBoundaryPassed: true,
     v12ProductionHostedBenchmarkProofRequired: true,
     v12ProductionHostedBenchmarkProofPassed: true,
+    v12ProductionWorkflowPreflightPassed: true,
     v12ProductionModelRegistryAligned: true,
     v12ProductionModelRegistryModelCount: 3,
     v12ProductionPublicModelOptionCount: 2,
     v12ProductionPublicDeployOptionCount: 1,
     v12ProductionPublicKernelLabOptionCount: 1,
-    v12ProductionArtifactCount: 7,
-    v12ProductionSuiteArtifactCount: 6,
-    v12ProductionChildArtifactCount: 5,
+    v12ProductionArtifactCount: 8,
+    v12ProductionSuiteArtifactCount: 7,
+    v12ProductionChildArtifactCount: 6,
   };
 
   if (options.includeHostedRuntimeProof !== false) {

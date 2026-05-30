@@ -124,12 +124,13 @@ describe("v12 readiness suite", () => {
       blockers: [],
       deployBackendId: "compiled-browser-webllm",
       kernelLabBackendId: "unlocked-browser-transformer",
-      childArtifactCount: 4,
-      totalArtifactCount: 5,
+      childArtifactCount: 5,
+      totalArtifactCount: 6,
       hostedProfilePassed: true,
       backendReadinessPassed: true,
       sharedRuntimePassed: true,
       v12ReadinessBundlePassed: true,
+      v12ProductionWorkflowPreflightPassed: true,
       hostedBenchmarkProofRequired: false,
       hostedBenchmarkProofPassed: null,
     });
@@ -207,6 +208,12 @@ describe("v12 readiness suite", () => {
             latestPath: ".artifacts/evals/v12-readiness-bundle-latest.json",
             resultPath: ".artifacts/evals/v12-readiness-bundle/2026-05-30T20-00-00-000Z.json",
           },
+          v12ProductionWorkflowPreflight: {
+            name: "v12-production-workflow-preflight",
+            passed: true,
+            latestPath: ".artifacts/evals/v12-production-workflow-preflight-latest.json",
+            resultPath: ".artifacts/evals/v12-production-workflow-preflight/2026-05-30T20-00-00-000Z.json",
+          },
         },
       },
     );
@@ -217,8 +224,8 @@ describe("v12 readiness suite", () => {
       passed: true,
       summary: {
         v12SuitePassed: true,
-        v12SuiteArtifactCount: 5,
-        v12SuiteChildArtifactCount: 4,
+        v12SuiteArtifactCount: 6,
+        v12SuiteChildArtifactCount: 5,
         v12SuiteDeployBackendId: "compiled-browser-webllm",
         v12SuiteKernelLabBackendId: "unlocked-browser-transformer",
         v12SuiteRequirementCount: 6,
@@ -227,6 +234,7 @@ describe("v12 readiness suite", () => {
         v12SuiteBackendReadinessPassed: true,
         v12SuiteSharedRuntimePassed: true,
         v12SuiteReadinessBundlePassed: true,
+        v12SuiteProductionWorkflowPreflightPassed: true,
         v12SuiteHostedBenchmarkProofRequired: false,
         v12SuiteHostedBenchmarkProofSourceBoundRequired: false,
         v12SuiteHostedBenchmarkProofPassed: null,
@@ -249,12 +257,14 @@ describe("v12 readiness suite", () => {
     expect(result.childArtifacts.backendReadinessMatrix.resultPath).toBe(join(artifactDir, "backend-readiness-matrix", "2026-05-30T20-00-00-000Z.json"));
     expect(result.childArtifacts.sharedRuntimeReadiness.resultPath).toBe(join(artifactDir, "shared-runtime-readiness", "2026-05-30T20-00-00-000Z.json"));
     expect(result.childArtifacts.v12ReadinessBundle.resultPath).toBe(join(artifactDir, "v12-readiness-bundle", "2026-05-30T20-00-00-000Z.json"));
+    expect(result.childArtifacts.v12ProductionWorkflowPreflight.resultPath).toBe(join(artifactDir, "v12-production-workflow-preflight", "2026-05-30T20-00-00-000Z.json"));
 
     const latest = JSON.parse(await readFile(result.latestPath, "utf8")) as ReturnType<typeof buildV12ReadinessSuiteArtifact>;
 
     expect(latest.passed).toBe(true);
-    expect(latest.summary.v12SuiteArtifactCount).toBe(5);
+    expect(latest.summary.v12SuiteArtifactCount).toBe(6);
     expect(latest.suite.childArtifacts.v12ReadinessBundle.latestPath).toBe(join(artifactDir, "v12-readiness-bundle-latest.json"));
+    expect(latest.suite.childArtifacts.v12ProductionWorkflowPreflight.latestPath).toBe(join(artifactDir, "v12-production-workflow-preflight-latest.json"));
   });
 
   it("writes hosted benchmark proof as part of the suite when a saved browser artifact path is provided", async () => {
@@ -272,16 +282,17 @@ describe("v12 readiness suite", () => {
     });
 
     expect(result.suite.passed).toBe(true);
-    expect(result.suite.childArtifactCount).toBe(5);
-    expect(result.suite.totalArtifactCount).toBe(6);
+    expect(result.suite.childArtifactCount).toBe(6);
+    expect(result.suite.totalArtifactCount).toBe(7);
     expect(result.suite.hostedBenchmarkProofPassed).toBe(true);
     expect(result.childArtifacts.hostedBenchmarkProof?.resultPath).toBe(join(artifactDir, "hosted-benchmark-proof", "2026-05-30T20-30-00-000Z.json"));
 
     const latest = JSON.parse(await readFile(result.latestPath, "utf8")) as ReturnType<typeof buildV12ReadinessSuiteArtifact>;
 
     expect(latest.summary).toMatchObject({
-      v12SuiteArtifactCount: 6,
-      v12SuiteChildArtifactCount: 5,
+      v12SuiteArtifactCount: 7,
+      v12SuiteChildArtifactCount: 6,
+      v12SuiteProductionWorkflowPreflightPassed: true,
       v12SuiteHostedBenchmarkProofRequired: false,
       v12SuiteHostedBenchmarkProofSourceBoundRequired: false,
       v12SuiteHostedBenchmarkProofPassed: true,

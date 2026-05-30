@@ -93,6 +93,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionBackendRoleBoundaryPassed: suite.v12Bundle.backendRoleBoundaryPassed,
       v12ProductionHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
+      v12ProductionWorkflowPreflightPassed: suite.v12ProductionWorkflowPreflightPassed,
       v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),
       v12ProductionModelRegistryAligned: modelRegistry.aligned,
       v12ProductionModelRegistryModelCount: modelRegistry.modelCount,

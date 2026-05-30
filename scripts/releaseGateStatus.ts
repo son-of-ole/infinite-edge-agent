@@ -93,12 +93,13 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionBackendRoleBoundaryPassed === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofRequired === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
+    && artifact.summary?.v12ProductionWorkflowPreflightPassed === true
     && artifact.summary?.v12ProductionModelRegistryAligned === true
     && Number(artifact.summary?.v12ProductionModelRegistryModelCount ?? 0) >= 3
     && Number(artifact.summary?.v12ProductionPublicModelOptionCount ?? 0) >= 2
     && Number(artifact.summary?.v12ProductionPublicDeployOptionCount ?? 0) === 1
     && Number(artifact.summary?.v12ProductionPublicKernelLabOptionCount ?? 0) === 1
-    && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7
+    && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 8
     && artifact.summary?.v12ProductionProofSchemaVersion === 2
     && typeof artifact.summary?.v12ProductionProofSourceGitSha === "string"
     && artifact.summary.v12ProductionProofSourceGitSha.trim().length > 0
@@ -106,8 +107,8 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary.v12ProductionExpectedSourceGitSha.trim().length > 0
     && artifact.summary?.v12ProductionProofSourceBoundRequired === true
     && artifact.summary?.v12ProductionProofSourceBound === true
-    && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 6
-    && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 5
+    && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 7
+    && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 6
     && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionHostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
