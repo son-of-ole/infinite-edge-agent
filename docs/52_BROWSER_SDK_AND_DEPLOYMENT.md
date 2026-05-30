@@ -134,7 +134,7 @@ Backend-specific readiness is captured separately:
 pnpm eval:backend-readiness
 ```
 
-That writes `.artifacts/evals/backend-readiness-matrix-latest.json`, marking `compiled-browser-webllm` as the deploy candidate only when hosted profile proof passes, keeping `unlocked-browser-transformer` recorded as the research Kernel Lab, and keeping `wasm-small-core` bounded to fallback-only. Its release summary includes role-boundary proof so fallback or Kernel Lab capability cannot be counted as deploy readiness. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this matrix automatically; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it without the full hosted profile flag.
+That writes `.artifacts/evals/backend-readiness-matrix-latest.json`, marking `compiled-browser-webllm` as the deploy candidate only when hosted profile proof passes, keeping `unlocked-browser-transformer` recorded as the research Kernel Lab, and keeping `wasm-small-core` bounded to fallback-only. Its release summary includes role-boundary proof and model-registry alignment proof so fallback, Kernel Lab capability, or stale model options cannot be counted as deploy readiness. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this matrix automatically; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it without the full hosted profile flag.
 
 Shared memory/context runtime proof is captured by:
 
@@ -142,7 +142,7 @@ Shared memory/context runtime proof is captured by:
 pnpm eval:shared-runtime
 ```
 
-That writes `.artifacts/evals/shared-runtime-readiness-latest.json`, recording that retrieval, context rebuild, context-pack traces, runtime traces, and backend profile routing are above the backend boundary for the compiled deploy backend, Kernel Lab, and bounded fallback. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this proof automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
+That writes `.artifacts/evals/shared-runtime-readiness-latest.json`, recording that retrieval, context rebuild, context-pack traces, runtime traces, and backend profile routing are above the backend boundary for the compiled deploy backend, Kernel Lab, and bounded fallback. It also records that the public model options expose exactly one deploy model option and one Kernel Lab option aligned to Backend Broker roles. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this proof automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
 
 The combined v12 final-state bundle is:
 
@@ -150,7 +150,7 @@ The combined v12 final-state bundle is:
 pnpm eval:v12-readiness
 ```
 
-That writes `.artifacts/evals/v12-readiness-bundle-latest.json`, requiring hosted compiled profile proof, backend-specific deploy/research/fallback roles, role-boundary proof, and the shared memory/context runtime proof to pass together.
+That writes `.artifacts/evals/v12-readiness-bundle-latest.json`, requiring hosted compiled profile proof, backend-specific deploy/research/fallback roles, role-boundary proof, model-registry alignment, and the shared memory/context runtime proof to pass together. The bundle has an explicit `model_registry_alignment` requirement and exposes `v12ModelRegistryAligned`, `v12PublicDeployOptionCount`, and `v12PublicKernelLabOptionCount` in its summary.
 
 Before shipping a hosted embed, verify app and model URLs behave like assets instead of falling back to HTML:
 

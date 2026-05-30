@@ -104,7 +104,7 @@ The backend-specific matrix is written by:
 pnpm eval:backend-readiness
 ```
 
-It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, records `unlocked-browser-transformer` as `research_only`, and records `wasm-small-core` as `fallback_only`. In strict production archive mode, the matrix also requires the saved hosted browser benchmark proof before `compiled-browser-webllm` can be marked deploy-ready. That proof must be source-bound to the expected deployment commit. The summary distinguishes `backendReadinessCompiledHostedProfilePassed` from `backendReadinessCompiledDeployReady`, and exposes `backendReadinessRoleBoundaryPassed`. This prevents Kernel Lab proof, fallback capability, or stale hosted proof from being mixed into the compiled backend deploy claim.
+It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, records `unlocked-browser-transformer` as `research_only`, and records `wasm-small-core` as `fallback_only`. In strict production archive mode, the matrix also requires the saved hosted browser benchmark proof before `compiled-browser-webllm` can be marked deploy-ready. That proof must be source-bound to the expected deployment commit. The summary distinguishes `backendReadinessCompiledHostedProfilePassed` from `backendReadinessCompiledDeployReady`, and exposes `backendReadinessRoleBoundaryPassed` plus `backendReadinessModelRegistryAligned`. This prevents Kernel Lab proof, fallback capability, stale hosted proof, or stale model options from being mixed into the compiled backend deploy claim.
 
 The shared runtime proof is written by:
 
@@ -112,7 +112,7 @@ The shared runtime proof is written by:
 pnpm eval:shared-runtime
 ```
 
-It records that memory providers, retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the backend boundary for the compiled deploy backend, Kernel Lab, and bounded fallback. This is the artifact that prevents the compiled backend, Kernel Lab, and fallback from becoming separate product runtimes.
+It records that memory providers, retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the backend boundary for the compiled deploy backend, Kernel Lab, and bounded fallback. It also carries model-registry alignment proof so shared runtime readiness cannot pass if public model options drift away from Backend Broker roles. This is the artifact that prevents the compiled backend, Kernel Lab, and fallback from becoming separate product runtimes.
 
 The combined v12 readiness bundle is written by:
 
@@ -120,7 +120,7 @@ The combined v12 readiness bundle is written by:
 pnpm eval:v12-readiness
 ```
 
-It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, and shared runtime proof into one final-state deploy readiness artifact.
+It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, model-registry alignment, and shared runtime proof into one final-state deploy readiness artifact. The bundle includes six requirements, including the explicit `model_registry_alignment` requirement.
 
 The full v12 readiness suite is written by:
 
@@ -136,7 +136,7 @@ The strict production archive is written by:
 pnpm eval:v12-production
 ```
 
-It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: proof schema version `2`, `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, `wasm-small-core` fallback backend, backend role-boundary proof, hosted benchmark proof required and passed, source-bound-required proof mode, Backend Broker selection evidence, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound`.
+It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: proof schema version `2`, `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, `wasm-small-core` fallback backend, backend role-boundary proof, model registry alignment proof, hosted benchmark proof required and passed, source-bound-required proof mode, Backend Broker selection evidence, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound` and the registry proof as `v12ProductionModelRegistryAligned`.
 
 The saved real-browser benchmark artifact is validated by:
 
