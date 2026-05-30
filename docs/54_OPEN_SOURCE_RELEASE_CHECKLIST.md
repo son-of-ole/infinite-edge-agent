@@ -41,6 +41,7 @@ The GitHub Actions workflow uses fixture/browser-only settings and must not requ
 | Browser-only production eval | `PRODUCTION_EVAL_SIDECAR_MODE=skip pnpm eval:production` | `.artifacts/evals/ci/production-latest.json` |
 | Browser runtime benchmark | `VITE_UNLOCKED_RUNTIME_PROFILE=ci pnpm bench:browser-runtime` | `.artifacts/evals/ci/browser-runtime-bench-latest.json` |
 | v12 readiness invariants | `pnpm verify:hosted-profile && pnpm eval:backend-readiness && pnpm eval:shared-runtime && pnpm eval:v12-readiness` with compiled-backend CI env | `.artifacts/evals/ci/v12-readiness-bundle-latest.json` proves Backend Broker roles, model-registry alignment, and shared runtime separation |
+| Repository readiness | `pnpm verify:repository` | `.artifacts/evals/ci/repository-readiness-latest.json` proves public metadata, release files, README v12 story, and workflow wiring |
 | Build | `pnpm build` | Workspace build outputs |
 | Dist size | `pnpm check:web-dist` | Passes without bundled local weights |
 

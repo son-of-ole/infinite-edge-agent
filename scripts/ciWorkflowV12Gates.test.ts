@@ -20,6 +20,7 @@ describe("CI v12 readiness gates", () => {
     expect(workflow).toContain("pnpm eval:backend-readiness");
     expect(workflow).toContain("pnpm eval:shared-runtime");
     expect(workflow).toContain("pnpm eval:v12-readiness");
+    expect(workflow).toContain("pnpm verify:repository");
   });
 });
 

@@ -101,6 +101,7 @@ jobs:
           pnpm eval:backend-readiness
           pnpm eval:shared-runtime
           pnpm eval:v12-readiness
+          pnpm verify:repository
 
       - name: Headless real-browser WebGPU parity
         env:

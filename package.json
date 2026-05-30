@@ -33,6 +33,7 @@
     "test:converter": "vitest run scripts/*.test.ts",
     "convert:unlocked": "node --import tsx scripts/convert-unlocked-model.ts",
     "verify:unlocked": "node --import tsx scripts/verify-unlocked-asset.ts",
+    "verify:repository": "node --import tsx scripts/repositoryReadiness.ts",
     "smoke:core": "node --import tsx scripts/smoke-test-core.ts",
     "smoke:sdk": "pnpm --filter @infinite-edge-agent/browser-sdk build && node scripts/smoke-test-sdk-package.mjs && node --import tsx scripts/smoke-test-sdk.ts",
     "check:web-dist": "node --import tsx scripts/check-web-dist-size.ts",

@@ -157,6 +157,7 @@ pnpm eval:v12-production    # Write strict production archive requiring hosted b
 pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
 pnpm materialize:hosted-benchmark # Save pasted or URL-hosted browser proof JSON for CI/release gates
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
+pnpm verify:repository      # Check public repo metadata, docs, assets, and v12 workflows
 pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
 pnpm verify:hosted-benchmark-proof # Validate a saved real browser benchmark artifact
 pnpm smoke:sdk              # Validate embeddable browser SDK package
