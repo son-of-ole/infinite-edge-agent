@@ -120,7 +120,7 @@ The combined v12 readiness bundle is written by:
 pnpm eval:v12-readiness
 ```
 
-It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, model-registry alignment, and shared runtime proof into one final-state deploy readiness artifact. The bundle includes six requirements, including the explicit `model_registry_alignment` requirement.
+It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, model-registry alignment, shared runtime proof, and production workflow preflight proof into one final-state deploy readiness artifact. The bundle includes seven requirements, including the explicit `model_registry_alignment` and `production_proof_workflow` requirements.
 
 The full v12 readiness suite is written by:
 

@@ -251,11 +251,12 @@ describe("release gate artifact summary", () => {
         v12PublicModelOptionCount: 2,
         v12PublicDeployOptionCount: 1,
         v12PublicKernelLabOptionCount: 1,
-        v12RequirementCount: 6,
-        v12PassedRequirementCount: 6,
+        v12RequirementCount: 7,
+        v12PassedRequirementCount: 7,
         v12HostedProfilePassed: true,
         v12BackendReadinessPassed: true,
         v12SharedRuntimePassed: true,
+        v12ProductionWorkflowPreflightPassed: true,
       },
     })).toMatchObject({
       v12ReadinessPassed: true,
@@ -268,11 +269,12 @@ describe("release gate artifact summary", () => {
       v12PublicModelOptionCount: 2,
       v12PublicDeployOptionCount: 1,
       v12PublicKernelLabOptionCount: 1,
-      v12RequirementCount: 6,
-      v12PassedRequirementCount: 6,
+      v12RequirementCount: 7,
+      v12PassedRequirementCount: 7,
       v12HostedProfilePassed: true,
       v12BackendReadinessPassed: true,
       v12SharedRuntimePassed: true,
+      v12ProductionWorkflowPreflightPassed: true,
     });
   });
 

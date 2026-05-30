@@ -200,7 +200,7 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`. That proof keeps benchmark telemetry tied to the shared memory/context runtime across the compiled deploy backend, Kernel Lab, and bounded fallback instead of treating each backend as a separate product lane. It also carries `sharedRuntimeModelRegistryAligned`, `sharedRuntimePublicDeployOptionCount`, and `sharedRuntimePublicKernelLabOptionCount`.
 
-`pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, which is the combined artifact to archive next to hosted Chrome benchmark and telemetry database evidence. The bundle requires deploy/Kernel Lab/fallback role-boundary proof and the explicit `model_registry_alignment` requirement.
+`pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, which is the combined artifact to archive next to hosted Chrome benchmark and telemetry database evidence. The bundle requires deploy/Kernel Lab/fallback role-boundary proof plus explicit `model_registry_alignment` and `production_proof_workflow` requirements.
 
 `pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp, including `.artifacts/evals/v12-readiness-suite-latest.json`. The suite includes the hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and v12 production workflow preflight. When `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also includes `hosted-benchmark-proof-latest.json`. This is the preferred archive command when publishing hosted benchmark telemetry results across devices.
 

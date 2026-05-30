@@ -10,6 +10,7 @@ import {
 import { evaluateHostedDeploymentProfile } from "./hostedDeploymentProfile";
 import { evaluateBackendReadinessMatrix } from "./backendReadinessMatrix";
 import { evaluateSharedRuntimeReadiness } from "./sharedRuntimeReadiness";
+import { evaluateV12ProductionWorkflowPreflightSync } from "./v12ProductionWorkflowPreflight";
 
 const completeHostedEnv = {
   VITE_LLM_BACKEND: "compiled-browser-webllm",
@@ -33,7 +34,8 @@ function makePassingInputs() {
   const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
   const backendMatrix = evaluateBackendReadinessMatrix({ hostedProfile });
   const sharedRuntime = evaluateSharedRuntimeReadiness({ backendMatrix });
-  return { hostedProfile, backendMatrix, sharedRuntime };
+  const v12ProductionWorkflowPreflight = evaluateV12ProductionWorkflowPreflightSync({ rootDir: process.cwd() });
+  return { hostedProfile, backendMatrix, sharedRuntime, v12ProductionWorkflowPreflight };
 }
 
 describe("evaluateV12ReadinessBundle", () => {
@@ -53,6 +55,24 @@ describe("evaluateV12ReadinessBundle", () => {
       expect.objectContaining({ id: "model_registry_alignment", passed: true }),
       expect.objectContaining({ id: "shared_memory_context_runtime", passed: true }),
       expect.objectContaining({ id: "backend_specific_readiness", passed: true }),
+      expect.objectContaining({ id: "production_proof_workflow", passed: true }),
+    ]));
+  });
+
+  it("fails when the production proof workflow preflight is missing", () => {
+    const bundle = evaluateV12ReadinessBundle({
+      ...makePassingInputs(),
+      v12ProductionWorkflowPreflight: {
+        passed: false,
+        blockers: ["source_bound_proof: production proof workflow must set HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND to true."],
+        checks: [],
+      },
+    });
+
+    expect(bundle.passed).toBe(false);
+    expect(bundle.blockers).toContain("production_proof_workflow: source_bound_proof: production proof workflow must set HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND to true.");
+    expect(bundle.requirements).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "production_proof_workflow", passed: false }),
     ]));
   });
 
@@ -94,11 +114,12 @@ describe("evaluateV12ReadinessBundle", () => {
         v12PublicModelOptionCount: 2,
         v12PublicDeployOptionCount: 1,
         v12PublicKernelLabOptionCount: 1,
-        v12RequirementCount: 6,
-        v12PassedRequirementCount: 6,
+        v12RequirementCount: 7,
+        v12PassedRequirementCount: 7,
         v12HostedProfilePassed: true,
         v12BackendReadinessPassed: true,
         v12SharedRuntimePassed: true,
+        v12ProductionWorkflowPreflightPassed: true,
       },
     });
   });

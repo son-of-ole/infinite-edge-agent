@@ -40,7 +40,7 @@ The GitHub Actions workflow uses fixture/browser-only settings and must not requ
 | Qwen parity fixtures | `pnpm eval:qwen-parity` | `.artifacts/evals/ci/qwen-parity-accuracy-latest.json` |
 | Browser-only production eval | `PRODUCTION_EVAL_SIDECAR_MODE=skip pnpm eval:production` | `.artifacts/evals/ci/production-latest.json` |
 | Browser runtime benchmark | `VITE_UNLOCKED_RUNTIME_PROFILE=ci pnpm bench:browser-runtime` | `.artifacts/evals/ci/browser-runtime-bench-latest.json` |
-| v12 readiness invariants | `pnpm verify:hosted-profile && pnpm eval:backend-readiness && pnpm eval:shared-runtime && pnpm eval:v12-readiness` with compiled-backend CI env | `.artifacts/evals/ci/v12-readiness-bundle-latest.json` proves Backend Broker roles, model-registry alignment, and shared runtime separation |
+| v12 readiness invariants | `pnpm verify:hosted-profile && pnpm eval:backend-readiness && pnpm eval:shared-runtime && pnpm eval:v12-readiness` with compiled-backend CI env | `.artifacts/evals/ci/v12-readiness-bundle-latest.json` proves Backend Broker roles, model-registry alignment, shared runtime separation, and production workflow preflight |
 | Repository readiness | `pnpm verify:repository` | `.artifacts/evals/ci/repository-readiness-latest.json` proves public metadata, release files, README v12 story, and workflow wiring |
 | Build | `pnpm build` | Workspace build outputs |
 | Dist size | `pnpm check:web-dist` | Passes without bundled local weights |
@@ -114,7 +114,7 @@ For a single final-state artifact, run:
 pnpm eval:v12-readiness
 ```
 
-This writes `.artifacts/evals/v12-readiness-bundle-latest.json`. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+This writes `.artifacts/evals/v12-readiness-bundle-latest.json`, including the `production_proof_workflow` requirement and `v12ProductionWorkflowPreflightPassed` summary field. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
 For the full final-state artifact set, run:
 

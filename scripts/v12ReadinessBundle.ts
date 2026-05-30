@@ -12,6 +12,10 @@ import {
   evaluateSharedRuntimeReadiness,
   type SharedRuntimeReadinessReport,
 } from "./sharedRuntimeReadiness";
+import {
+  evaluateV12ProductionWorkflowPreflightSync,
+  type V12ProductionWorkflowPreflightReport,
+} from "./v12ProductionWorkflowPreflight";
 
 export interface V12ReadinessRequirement {
   id: string;
@@ -32,6 +36,7 @@ export interface V12ReadinessBundle {
   hostedProfile: HostedDeploymentProfileReport;
   backendMatrix: BackendReadinessMatrix;
   sharedRuntime: SharedRuntimeReadinessReport;
+  v12ProductionWorkflowPreflight: V12ProductionWorkflowPreflightReport;
 }
 
 export interface V12ReadinessBundleArtifact {
@@ -52,10 +57,13 @@ export function evaluateV12ReadinessBundle(input: {
   hostedProfile?: HostedDeploymentProfileReport;
   backendMatrix?: BackendReadinessMatrix;
   sharedRuntime?: SharedRuntimeReadinessReport;
+  v12ProductionWorkflowPreflight?: V12ProductionWorkflowPreflightReport;
 } = {}): V12ReadinessBundle {
   const hostedProfile = input.hostedProfile ?? evaluateHostedDeploymentProfile(process.env);
   const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix({ hostedProfile });
   const sharedRuntime = input.sharedRuntime ?? evaluateSharedRuntimeReadiness({ backendMatrix });
+  const v12ProductionWorkflowPreflight = input.v12ProductionWorkflowPreflight
+    ?? evaluateV12ProductionWorkflowPreflightSync();
   const deployBackendId = backendMatrix.deployBackendId;
   const kernelLabBackendId = backendMatrix.researchBackendIds[0] ?? sharedRuntime.kernelLabBackendId;
   const fallbackBackendId = sharedRuntime.fallbackBackendId
@@ -130,6 +138,13 @@ export function evaluateV12ReadinessBundle(input: {
       evidence: "v12-readiness-bundle",
       blockers: backendMatrix.passed ? [] : ["Backend readiness matrix did not pass."],
     },
+    {
+      id: "production_proof_workflow",
+      label: "GitHub production proof workflow is preflighted for hosted source-bound release evidence.",
+      passed: v12ProductionWorkflowPreflight.passed,
+      evidence: "v12-production-workflow-preflight",
+      blockers: v12ProductionWorkflowPreflight.blockers,
+    },
   ].map((requirement) => ({
     ...requirement,
     blockers: requirement.passed ? [] : requirement.blockers,
@@ -153,6 +168,7 @@ export function evaluateV12ReadinessBundle(input: {
     hostedProfile,
     backendMatrix,
     sharedRuntime,
+    v12ProductionWorkflowPreflight,
   };
 }
 
@@ -181,6 +197,7 @@ export function buildV12ReadinessBundleArtifact(
       v12HostedProfilePassed: bundle.hostedProfile.passed,
       v12BackendReadinessPassed: bundle.backendMatrix.passed,
       v12SharedRuntimePassed: bundle.sharedRuntime.passed,
+      v12ProductionWorkflowPreflightPassed: bundle.v12ProductionWorkflowPreflight.passed,
     },
     bundle,
   };
