@@ -132,6 +132,15 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const repositoryReadinessFields = [
+      "repositoryReadinessPassed",
+      "repositoryReadinessBlockerCount",
+      "repositoryReadinessCheckCount",
+      "repositoryReadinessPassedCheckCount",
+    ] as const;
+    for (const key of repositoryReadinessFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const v12ProductionArchiveFields = [
       "v12ProductionArchivePassed",
       "v12ProductionBlockerCount",

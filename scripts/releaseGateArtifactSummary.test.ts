@@ -2,6 +2,22 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps repository readiness fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        repositoryReadinessPassed: true,
+        repositoryReadinessBlockerCount: 0,
+        repositoryReadinessCheckCount: 4,
+        repositoryReadinessPassedCheckCount: 4,
+      },
+    })).toMatchObject({
+      repositoryReadinessPassed: true,
+      repositoryReadinessBlockerCount: 0,
+      repositoryReadinessCheckCount: 4,
+      repositoryReadinessPassedCheckCount: 4,
+    });
+  });
+
   it("keeps v12 production archive fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {

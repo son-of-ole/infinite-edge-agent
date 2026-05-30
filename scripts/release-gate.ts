@@ -72,6 +72,7 @@ await runGate(
 );
 await runGate("Qwen parity accuracy", ["run", "eval:qwen-parity"], undefined, isolateDeployRuntimeEnvIfUnconfigured(qwenParityEnv));
 await runGate("production eval", ["run", "eval:production"], undefined, makeProductionEvalEnvOverrides(releaseGateEnv));
+await runGate("repository readiness", ["run", "verify:repository"]);
 if (requireHostedProfile) {
   await runGate("hosted deployment profile", ["run", "verify:hosted-profile"]);
 }
@@ -203,6 +204,7 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
     ["qwen-parity-accuracy", join(childArtifactRoot, "qwen-parity-accuracy-latest.json")],
     ["unlocked-verify", join(childArtifactRoot, "unlocked-verify-latest.json")],
     ["production-readiness", join(childArtifactRoot, "production-latest.json")],
+    ["repository-readiness", join(childArtifactRoot, "repository-readiness-latest.json")],
     ...(requireHostedProfile
       ? [["hosted-deployment-profile", join(childArtifactRoot, "hosted-deployment-profile-latest.json")] as const]
       : []),
