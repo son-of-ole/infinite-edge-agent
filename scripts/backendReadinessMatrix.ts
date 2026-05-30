@@ -190,7 +190,7 @@ export function buildBackendReadinessMatrixArtifact(
   matrix: BackendReadinessMatrix,
   createdAt = new Date().toISOString(),
 ): BackendReadinessMatrixArtifact {
-  const modelRegistry = summarizeModelRegistryAlignment(matrix);
+  const modelRegistry = summarizeBackendModelRegistryAlignment(matrix);
   const productionCandidateCount = matrix.backends.filter((entry) => entry.productionRole === "production_candidate").length;
   const deployReadyCount = matrix.backends.filter((entry) => entry.deployReady).length;
   const researchBackendIds = matrix.backends
@@ -242,7 +242,7 @@ export function buildBackendReadinessMatrixArtifact(
   };
 }
 
-function summarizeModelRegistryAlignment(matrix: BackendReadinessMatrix) {
+export function summarizeBackendModelRegistryAlignment(matrix: BackendReadinessMatrix) {
   const options = listLocalModelOptionsFromRegistry();
   const aligned = MODEL_REGISTRY.models.every((model) => {
     const backend = matrix.backends.find((entry) => entry.backendId === model.backendId);

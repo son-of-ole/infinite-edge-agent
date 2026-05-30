@@ -93,6 +93,11 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionBackendRoleBoundaryPassed === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofRequired === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
+    && artifact.summary?.v12ProductionModelRegistryAligned === true
+    && Number(artifact.summary?.v12ProductionModelRegistryModelCount ?? 0) >= 3
+    && Number(artifact.summary?.v12ProductionPublicModelOptionCount ?? 0) >= 2
+    && Number(artifact.summary?.v12ProductionPublicDeployOptionCount ?? 0) === 1
+    && Number(artifact.summary?.v12ProductionPublicKernelLabOptionCount ?? 0) === 1
     && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7
     && artifact.summary?.v12ProductionProofSchemaVersion === 2
     && typeof artifact.summary?.v12ProductionProofSourceGitSha === "string"

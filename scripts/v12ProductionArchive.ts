@@ -4,7 +4,10 @@ import {
   runV12ReadinessSuite,
   type V12ReadinessSuiteRunResult,
 } from "./v12ReadinessSuite";
-import { isBackendReadinessProofBoundToHostedBenchmark } from "./backendReadinessMatrix";
+import {
+  isBackendReadinessProofBoundToHostedBenchmark,
+  summarizeBackendModelRegistryAlignment,
+} from "./backendReadinessMatrix";
 import type { HostedDeploymentProfileEnv } from "./hostedDeploymentProfile";
 
 export interface V12ProductionArchive {
@@ -74,6 +77,7 @@ export function buildV12ProductionArchiveArtifact(input: {
   const proofSourceBound = expectedSourceGitSha
     ? proofSourceGitSha === expectedSourceGitSha
     : false;
+  const modelRegistry = summarizeBackendModelRegistryAlignment(suite.backendMatrix);
 
   return {
     name: "v12-production-archive",
@@ -90,6 +94,11 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
       v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),
+      v12ProductionModelRegistryAligned: modelRegistry.aligned,
+      v12ProductionModelRegistryModelCount: modelRegistry.modelCount,
+      v12ProductionPublicModelOptionCount: modelRegistry.publicOptionCount,
+      v12ProductionPublicDeployOptionCount: modelRegistry.publicDeployOptionCount,
+      v12ProductionPublicKernelLabOptionCount: modelRegistry.publicKernelLabOptionCount,
       v12ProductionProofSchemaVersion: hostedProof?.v12ProductionProofSchemaVersion ?? null,
       v12ProductionProofSourceGitSha: proofSourceGitSha,
       v12ProductionExpectedSourceGitSha: expectedSourceGitSha,
