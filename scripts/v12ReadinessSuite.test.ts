@@ -28,6 +28,16 @@ const completeHostedEnv = {
 };
 
 function makePassingHostedBenchmarkArtifact() {
+  const brokerSelection = {
+    backendId: "compiled-browser-webllm",
+    modelId: "Qwen3-0.6B-q4f16_1-MLC",
+    productionRole: "production_candidate",
+    deployReadyCandidate: true,
+    reason: "compiled_first_grounded_answer",
+    fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+    proofRequirements: ["memory_grounding", "quality_canaries", "speed_floor", "backend_trace"],
+  };
+
   return {
     name: "browser-preview-benchmark",
     createdAt: "2026-05-30T21:00:00.000Z",
@@ -55,12 +65,21 @@ function makePassingHostedBenchmarkArtifact() {
       meanTokensPerSecond: 2.7,
       strictWebGpuPassed: true,
       cpuFallbackUsed: false,
+      backendBrokerTraceCount: 1,
+      backendBrokerSelectionPassed: true,
+      backendBrokerSelectedBackendId: brokerSelection.backendId,
+      backendBrokerSelectedModelId: brokerSelection.modelId,
+      backendBrokerProductionRole: brokerSelection.productionRole,
+      backendBrokerDeployReadyCandidate: brokerSelection.deployReadyCandidate,
+      backendBrokerReason: brokerSelection.reason,
+      backendBrokerProofRequirements: brokerSelection.proofRequirements,
     },
     runs: [
       {
         response: "Helena",
         runtimeTrace: {
           backend: "compiled-browser-webllm",
+          brokerSelection,
         },
       },
     ],

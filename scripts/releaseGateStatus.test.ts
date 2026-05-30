@@ -823,6 +823,24 @@ describe("release gate status", () => {
     })).toBe(true);
   });
 
+  it("fails v12-production-required releases when Backend Broker proof is missing from the archive", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionBackendBrokerSelectionPassed: false,
+            v12ProductionBackendBrokerTraceCount: 0,
+            v12ProductionBrokerSelectedBackendId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -971,6 +989,12 @@ function makeV12ProductionArchiveSummary(
       v12ProductionTechnicalProofOnly: false,
       v12ProductionCpuFallbackUsed: false,
       v12ProductionStrictWebGpuPassed: true,
+      v12ProductionBackendBrokerSelectionPassed: true,
+      v12ProductionBackendBrokerTraceCount: 1,
+      v12ProductionBrokerSelectedBackendId: "compiled-browser-webllm",
+      v12ProductionBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
+      v12ProductionBrokerProductionRole: "production_candidate",
+      v12ProductionBrokerDeployReadyCandidate: true,
     });
   }
 

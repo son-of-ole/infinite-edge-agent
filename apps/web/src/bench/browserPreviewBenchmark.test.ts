@@ -1854,6 +1854,115 @@ describe("browser preview benchmark payload", () => {
   });
 
   it("passes deploy readiness for compiled browser backends with grounded exact quality and backend trace", () => {
+    const brokerSelection = {
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate" as const,
+      deployReadyCandidate: true,
+      reason: "compiled_first_grounded_answer",
+      fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+      proofRequirements: ["memory_grounding", "quality_canaries", "speed_floor", "backend_trace"],
+    };
+    const compiledRun = makeRun({
+      response: "Helena",
+      expectedSubstrings: ["Helena"],
+      expectedSubstringMatches: ["Helena"],
+      expectedExact: ["Helena"],
+      expectedExactMatches: [{ expected: "Helena", matched: true }],
+      expectedAnswerOnlyPassed: true,
+      runtimeTrace: {
+        backend: "compiled-browser-webllm",
+        brokerSelection,
+        tensorControl: false,
+        tspSteps: [],
+        kvPagingEvents: 0,
+        selectedBlockIds: [],
+      },
+      predictive: {
+        promptTokenCount: 0,
+        generatedTokenCount: 1,
+        selectedBlockCount: 0,
+        kvPagingEventCount: 0,
+        tspStepCount: 0,
+      },
+      webGpu: {
+        available: true,
+        requestedBackendPreference: "compiled-browser",
+        logitProjectionBackend: "backend_native",
+        cpuFallbackUsed: false,
+        noCpuFallback: true,
+        requestedGates: [],
+        passedGates: [],
+        failedGates: [],
+        positiveKernelProof: true,
+      },
+      mtp: {
+        mode: "none",
+      },
+      kvPersistence: {
+        enabled: false,
+        mode: "backend_native",
+        eventCount: 0,
+        persistEvents: 0,
+        hydrateEvents: 0,
+        reuseEvents: 0,
+      },
+      metrics: {
+        initLoadMs: 100,
+        prefillMs: 100,
+        timeToFirstTokenMs: 100,
+        decodeLatencyMs: 300,
+        tokensPerSecond: 3.33,
+        generatedTokens: 1,
+      },
+      memoryGrounding: {
+        mode: "seeded_browser_vector_context_rebuild",
+        caseId: "montana_capital",
+        corpusCount: 16,
+        retrievedMemoryIds: ["bench_memory_montana_capital"],
+        includedMemoryIds: ["bench_memory_montana_capital"],
+        expectedMemoryIds: ["bench_memory_montana_capital"],
+        expectedMemoryHitPassed: true,
+        contextRebuildPassed: true,
+        answerOnlyExpected: true,
+        answerOnlyPassed: true,
+        contextEstimatedTokens: 90,
+        retrievalMs: 2,
+        contextRebuildMs: 1,
+      },
+    });
+
+    const payload = buildBrowserPreviewBenchmarkPayload({
+      createdAt: "2026-05-24T00:00:00.000Z",
+      profile: "full",
+      strictWebGpuRequested: false,
+      minGeneratedTokens: 1,
+      runs: [compiledRun],
+    });
+
+    expect(payload.passed).toBe(true);
+    expect(payload.summary).toMatchObject({
+      runtimeBackendId: "compiled-browser-webllm",
+      runtimeBackendRole: "production_candidate",
+      backendBrokerTraceCount: 1,
+      backendBrokerSelectionPassed: true,
+      backendBrokerSelectedBackendId: "compiled-browser-webllm",
+      backendBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
+      backendBrokerProductionRole: "production_candidate",
+      backendBrokerDeployReadyCandidate: true,
+      compiledBackendReadyPassed: true,
+      groundedProductionReadyPassed: true,
+      customKernelLabReadyPassed: false,
+      deployBackendId: "compiled-browser-webllm",
+      researchBackendId: null,
+      productionDeployReadyPassed: true,
+      strictWebGpuRequested: false,
+      kvReusePassed: true,
+      v11CommandBatchingPassed: true,
+    });
+  });
+
+  it("does not pass compiled deploy readiness without Backend Broker selection proof", () => {
     const compiledRun = makeRun({
       response: "Helena",
       expectedSubstrings: ["Helena"],
@@ -1930,19 +2039,11 @@ describe("browser preview benchmark payload", () => {
       runs: [compiledRun],
     });
 
-    expect(payload.passed).toBe(true);
     expect(payload.summary).toMatchObject({
-      runtimeBackendId: "compiled-browser-webllm",
-      runtimeBackendRole: "production_candidate",
-      compiledBackendReadyPassed: true,
-      groundedProductionReadyPassed: true,
-      customKernelLabReadyPassed: false,
-      deployBackendId: "compiled-browser-webllm",
-      researchBackendId: null,
-      productionDeployReadyPassed: true,
-      strictWebGpuRequested: false,
-      kvReusePassed: true,
-      v11CommandBatchingPassed: true,
+      backendBrokerTraceCount: 0,
+      backendBrokerSelectionPassed: false,
+      compiledBackendReadyPassed: false,
+      productionDeployReadyPassed: false,
     });
   });
 

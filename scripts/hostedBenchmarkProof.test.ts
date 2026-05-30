@@ -10,6 +10,16 @@ import {
 } from "./hostedBenchmarkProof";
 
 function makePassingBrowserPreviewArtifact() {
+  const brokerSelection = {
+    backendId: "compiled-browser-webllm",
+    modelId: "Qwen3-0.6B-q4f16_1-MLC",
+    productionRole: "production_candidate",
+    deployReadyCandidate: true,
+    reason: "compiled_first_grounded_answer",
+    fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+    proofRequirements: ["memory_grounding", "quality_canaries", "speed_floor", "backend_trace"],
+  };
+
   return {
     name: "browser-preview-benchmark",
     createdAt: "2026-05-30T21:00:00.000Z",
@@ -37,12 +47,20 @@ function makePassingBrowserPreviewArtifact() {
       meanTokensPerSecond: 2.7,
       strictWebGpuPassed: true,
       cpuFallbackUsed: false,
+      backendBrokerTraceCount: 1,
+      backendBrokerSelectionPassed: true,
+      backendBrokerSelectedBackendId: brokerSelection.backendId,
+      backendBrokerSelectedModelId: brokerSelection.modelId,
+      backendBrokerProductionRole: brokerSelection.productionRole,
+      backendBrokerDeployReadyCandidate: brokerSelection.deployReadyCandidate,
+      backendBrokerReason: brokerSelection.reason,
     },
     runs: [
       {
         response: "Helena",
         runtimeTrace: {
           backend: "compiled-browser-webllm",
+          brokerSelection,
         },
       },
     ],
@@ -98,6 +116,18 @@ describe("hosted benchmark proof verifier", () => {
     ]));
   });
 
+  it("fails production proof when the hosted artifact lacks Backend Broker selection evidence", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    delete (artifact.summary as Record<string, unknown>).backendBrokerTraceCount;
+    delete (artifact.summary as Record<string, unknown>).backendBrokerSelectionPassed;
+    delete (artifact.runs[0]?.runtimeTrace as Record<string, unknown>).brokerSelection;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker selection evidence for compiled-browser-webllm.");
+  });
+
   it("extracts proof fields from a browser-runtime-bench wrapper artifact", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: {
@@ -150,6 +180,11 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkTechnicalProofOnly: false,
         hostedBenchmarkCpuFallbackUsed: false,
         hostedBenchmarkStrictWebGpuPassed: true,
+        hostedBenchmarkBackendBrokerSelectionPassed: true,
+        hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
+        hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
+        hostedBenchmarkBrokerProductionRole: "production_candidate",
+        hostedBenchmarkBrokerDeployReadyCandidate: true,
       },
     });
   });

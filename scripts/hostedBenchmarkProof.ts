@@ -24,6 +24,14 @@ export interface HostedBenchmarkProof {
   technicalProofOnly: boolean;
   strictWebGpuPassed: boolean;
   cpuFallbackUsed: boolean;
+  backendBrokerTraceCount: number;
+  backendBrokerSelectionPassed: boolean;
+  brokerSelectedBackendId: string | null;
+  brokerSelectedModelId: string | null;
+  brokerProductionRole: string | null;
+  brokerDeployReadyCandidate: boolean;
+  brokerReason: string | null;
+  brokerProofRequirements: string[];
 }
 
 export interface HostedBenchmarkProofReport {
@@ -139,6 +147,17 @@ export function evaluateHostedBenchmarkProof(input: {
   if (proof.cpuFallbackUsed !== false) {
     blockers.push("Hosted benchmark proof requires cpuFallbackUsed=false.");
   }
+  if (
+    proof.backendBrokerSelectionPassed !== true
+    || proof.backendBrokerTraceCount <= 0
+    || proof.brokerSelectedBackendId !== expectedBackendId
+    || proof.brokerProductionRole !== "production_candidate"
+    || proof.brokerDeployReadyCandidate !== true
+    || !proof.brokerProofRequirements.includes("backend_trace")
+    || !proof.brokerProofRequirements.includes("memory_grounding")
+  ) {
+    blockers.push(`Hosted benchmark proof requires Backend Broker selection evidence for ${expectedBackendId}.`);
+  }
   if (expectedResponse && proof.response !== null && proof.response.trim() !== expectedResponse) {
     blockers.push(`Hosted benchmark proof expected response ${expectedResponse}.`);
   }
@@ -175,6 +194,13 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkTechnicalProofOnly: report.proof.technicalProofOnly,
       hostedBenchmarkCpuFallbackUsed: report.proof.cpuFallbackUsed,
       hostedBenchmarkStrictWebGpuPassed: report.proof.strictWebGpuPassed,
+      hostedBenchmarkBackendBrokerSelectionPassed: report.proof.backendBrokerSelectionPassed,
+      hostedBenchmarkBackendBrokerTraceCount: report.proof.backendBrokerTraceCount,
+      hostedBenchmarkBrokerSelectedBackendId: report.proof.brokerSelectedBackendId,
+      hostedBenchmarkBrokerSelectedModelId: report.proof.brokerSelectedModelId,
+      hostedBenchmarkBrokerProductionRole: report.proof.brokerProductionRole,
+      hostedBenchmarkBrokerDeployReadyCandidate: report.proof.brokerDeployReadyCandidate,
+      hostedBenchmarkBrokerReason: report.proof.brokerReason,
     },
     report,
   };
@@ -236,6 +262,26 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
   const firstRun = isRecord(source.runs[0]) ? source.runs[0] : {};
   const runtimeTrace = isRecord(firstRun.runtimeTrace) ? firstRun.runtimeTrace : {};
   const runtimeBackendId = readString(source.summary.runtimeBackendId) ?? readString(runtimeTrace.backend);
+  const brokerSelection = readBrokerSelection(runtimeTrace.brokerSelection);
+  const brokerSelectedBackendId = readString(source.summary.backendBrokerSelectedBackendId) ?? brokerSelection?.backendId ?? null;
+  const brokerSelectedModelId = readString(source.summary.backendBrokerSelectedModelId) ?? brokerSelection?.modelId ?? null;
+  const brokerProductionRole = readString(source.summary.backendBrokerProductionRole) ?? brokerSelection?.productionRole ?? null;
+  const brokerDeployReadyCandidate = readBoolean(source.summary.backendBrokerDeployReadyCandidate)
+    || brokerSelection?.deployReadyCandidate === true;
+  const brokerReason = readString(source.summary.backendBrokerReason) ?? brokerSelection?.reason ?? null;
+  const brokerProofRequirements = readStringList(source.summary.backendBrokerProofRequirements)
+    ?? brokerSelection?.proofRequirements
+    ?? [];
+  const backendBrokerTraceCount = readNumber(source.summary.backendBrokerTraceCount)
+    ?? (brokerSelection ? 1 : 0);
+  const backendBrokerSelectionPassed = readBoolean(source.summary.backendBrokerSelectionPassed)
+    || (
+      brokerSelectedBackendId === runtimeBackendId
+      && brokerProductionRole === "production_candidate"
+      && brokerDeployReadyCandidate
+      && brokerProofRequirements.includes("backend_trace")
+      && brokerProofRequirements.includes("memory_grounding")
+    );
   return {
     sourceName: source.sourceName,
     runtimeBackendId,
@@ -259,6 +305,14 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     technicalProofOnly: readBoolean(source.summary.technicalProofOnly),
     strictWebGpuPassed: readBoolean(source.summary.strictWebGpuPassed),
     cpuFallbackUsed: readBoolean(source.summary.cpuFallbackUsed),
+    backendBrokerTraceCount,
+    backendBrokerSelectionPassed,
+    brokerSelectedBackendId,
+    brokerSelectedModelId,
+    brokerProductionRole,
+    brokerDeployReadyCandidate,
+    brokerReason,
+    brokerProofRequirements,
   };
 }
 
@@ -286,6 +340,14 @@ function buildEmptyProof(): HostedBenchmarkProof {
     technicalProofOnly: true,
     strictWebGpuPassed: false,
     cpuFallbackUsed: true,
+    backendBrokerTraceCount: 0,
+    backendBrokerSelectionPassed: false,
+    brokerSelectedBackendId: null,
+    brokerSelectedModelId: null,
+    brokerProductionRole: null,
+    brokerDeployReadyCandidate: false,
+    brokerReason: null,
+    brokerProofRequirements: [],
   };
 }
 
@@ -303,6 +365,36 @@ function readBoolean(value: unknown): boolean {
 
 function readNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function readStringList(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function readBrokerSelection(value: unknown): {
+  backendId: string;
+  modelId: string;
+  productionRole: string;
+  deployReadyCandidate: boolean;
+  reason: string;
+  proofRequirements: string[];
+} | null {
+  if (!isRecord(value)) return null;
+  const backendId = readString(value.backendId);
+  const modelId = readString(value.modelId);
+  const productionRole = readString(value.productionRole);
+  const reason = readString(value.reason);
+  const proofRequirements = readStringList(value.proofRequirements);
+  if (!backendId || !modelId || !productionRole || !reason || !proofRequirements) return null;
+  return {
+    backendId,
+    modelId,
+    productionRole,
+    deployReadyCandidate: value.deployReadyCandidate === true,
+    reason,
+    proofRequirements,
+  };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

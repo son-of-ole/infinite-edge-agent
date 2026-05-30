@@ -50,6 +50,8 @@ The local production artifact for the compiled backend reported:
 ```json
 {
   "runtimeBackendId": "compiled-browser-webllm",
+  "backendBrokerSelectionPassed": true,
+  "backendBrokerSelectedBackendId": "compiled-browser-webllm",
   "productionDeployReadyPassed": true,
   "compiledBackendReadyPassed": true,
   "memoryGroundingPassed": true,
@@ -133,7 +135,7 @@ The strict production archive is written by:
 pnpm eval:v12-production
 ```
 
-It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound`.
+It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, Backend Broker selection evidence, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers. The release summary exposes the binding as `v12ProductionBackendReadinessProofBound`.
 
 The saved real-browser benchmark artifact is validated by:
 

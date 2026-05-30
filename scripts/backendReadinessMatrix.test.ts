@@ -29,6 +29,16 @@ const completeHostedEnv = {
 };
 
 function makePassingHostedBenchmarkProofReport() {
+  const brokerSelection = {
+    backendId: "compiled-browser-webllm",
+    modelId: "Qwen3-0.6B-q4f16_1-MLC",
+    productionRole: "production_candidate",
+    deployReadyCandidate: true,
+    reason: "compiled_first_grounded_answer",
+    fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+    proofRequirements: ["memory_grounding", "quality_canaries", "speed_floor", "backend_trace"],
+  };
+
   return evaluateHostedBenchmarkProof({
     artifact: {
       name: "browser-preview-benchmark",
@@ -57,12 +67,21 @@ function makePassingHostedBenchmarkProofReport() {
         meanTokensPerSecond: 2.7,
         strictWebGpuPassed: true,
         cpuFallbackUsed: false,
+        backendBrokerTraceCount: 1,
+        backendBrokerSelectionPassed: true,
+        backendBrokerSelectedBackendId: brokerSelection.backendId,
+        backendBrokerSelectedModelId: brokerSelection.modelId,
+        backendBrokerProductionRole: brokerSelection.productionRole,
+        backendBrokerDeployReadyCandidate: brokerSelection.deployReadyCandidate,
+        backendBrokerReason: brokerSelection.reason,
+        backendBrokerProofRequirements: brokerSelection.proofRequirements,
       },
       runs: [
         {
           response: "Helena",
           runtimeTrace: {
             backend: "compiled-browser-webllm",
+            brokerSelection,
           },
         },
       ],

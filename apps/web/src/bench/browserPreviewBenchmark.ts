@@ -1,4 +1,7 @@
-import { getBrowserBackendRegistryEntry } from "../lib/runtime/backendBroker";
+import {
+  getBrowserBackendRegistryEntry,
+  type BrowserBackendSelection,
+} from "../lib/runtime/backendBroker";
 
 export interface BrowserPreviewBenchmarkMetrics {
   initLoadMs: number;
@@ -125,6 +128,7 @@ export interface BrowserPreviewBenchmarkRun {
   maxDispatchEstimatedMs?: number;
   runtimeTrace: {
     backend: string;
+    brokerSelection?: BrowserBackendSelection;
     tensorControl: boolean;
     tspSteps: string[];
     kvPagingEvents: number;
@@ -407,6 +411,21 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const runtimeBackendId = summarizeStringField(input.runs.map((run) => run.runtimeTrace.backend)) ?? "unknown";
   const runtimeBackendEntry = getBrowserBackendRegistryEntry(runtimeBackendId);
   const runtimeBackendRole = runtimeBackendEntry?.productionRole ?? "unknown";
+  const brokerSelections = input.runs
+    .map((run) => run.runtimeTrace.brokerSelection)
+    .filter((selection): selection is BrowserBackendSelection => Boolean(selection));
+  const backendBrokerTraceCount = brokerSelections.length;
+  const backendBrokerSelectedBackendId = summarizeStringField(brokerSelections.map((selection) => selection.backendId));
+  const backendBrokerSelectedModelId = summarizeStringField(brokerSelections.map((selection) => selection.modelId));
+  const backendBrokerProductionRole = summarizeStringField(brokerSelections.map((selection) => selection.productionRole));
+  const backendBrokerDeployReadyCandidate = brokerSelections.length > 0
+    ? brokerSelections.every((selection) => selection.deployReadyCandidate === true)
+    : false;
+  const backendBrokerReason = summarizeStringField(brokerSelections.map((selection) => selection.reason));
+  const backendBrokerProofRequirements = uniqueSorted(brokerSelections.flatMap((selection) => selection.proofRequirements));
+  const backendBrokerSelectionPassed = input.runs.length > 0
+    && backendBrokerTraceCount === input.runs.length
+    && input.runs.every((run) => brokerSelectionMatchesRuntime(run.runtimeTrace.brokerSelection, run.runtimeTrace.backend));
   const kernelLabBackend = runtimeBackendEntry?.productionRole === "research_kernel_lab";
   const productionCandidateBackend = runtimeBackendEntry?.productionRole === "production_candidate";
   const kernelLabCommandBatchingPassed = generatedTokenCount > 0
@@ -446,6 +465,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
     && decodeHotPathPassed;
   const compiledBackendReadyPassed = sharedProductionQualityPassed
     && productionCandidateBackend
+    && backendBrokerSelectionPassed
     && productionSpeedFloorPassed
     && memoryGroundingRequired
     && memoryGroundingPassed
@@ -574,6 +594,14 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       customKernelLabReadyPassed,
       runtimeBackendId,
       runtimeBackendRole,
+      backendBrokerTraceCount,
+      backendBrokerSelectionPassed,
+      backendBrokerSelectedBackendId,
+      backendBrokerSelectedModelId,
+      backendBrokerProductionRole,
+      backendBrokerDeployReadyCandidate,
+      backendBrokerReason,
+      backendBrokerProofRequirements,
       deployBackendId: productionDeployReadyPassed ? runtimeBackendId : null,
       researchBackendId: runtimeBackendEntry?.productionRole === "research_kernel_lab" ? runtimeBackendId : null,
       productionDeployReadyPassed,
@@ -996,6 +1024,23 @@ function summarizeStringField(values: Array<string | undefined>): string | undef
   if (unique.length === 0) return undefined;
   if (unique.length === 1) return unique[0];
   return "mixed";
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
+}
+
+function brokerSelectionMatchesRuntime(
+  selection: BrowserBackendSelection | undefined,
+  runtimeBackendId: string,
+): boolean {
+  if (!selection) return false;
+  const registryEntry = getBrowserBackendRegistryEntry(runtimeBackendId);
+  if (!registryEntry) return false;
+  return selection.backendId === runtimeBackendId
+    && selection.productionRole === registryEntry?.productionRole
+    && selection.deployReadyCandidate === (registryEntry.productionRole === "production_candidate")
+    && selection.proofRequirements.includes("backend_trace");
 }
 
 function isFiniteNumber(value: unknown): value is number {

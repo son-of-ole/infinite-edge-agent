@@ -50,6 +50,11 @@ import {
   resolveUnlockedRuntimeProfile,
   type UnlockedRuntimeProfileResolution,
 } from "../lib/runtime/unlockedRuntimeProfile";
+import {
+  selectBrowserBackend,
+  type BrowserBackendSelection,
+  type BrowserBackendTask,
+} from "../lib/runtime/backendBroker";
 import { IndexedDbMemoryStore } from "../lib/storage/indexedDbMemoryStore";
 import {
   buildDeterministicLongPrompt,
@@ -1598,6 +1603,7 @@ async function runPrompt(
   const proof = client.lastDecodeProof;
   const compiledProof = isCompiledWebLlmProof(proof) ? proof : null;
   const unlockedProof = compiledProof ? null : proof as UnlockedBrowserDecodeProof | null;
+  const brokerSelection = resolveBenchmarkBrokerSelection(request, grounded !== null);
   const generatedTokens = readGeneratedTokenCount(client, compiledProof);
   const response = chunks.join("");
   const timing = calculateBrowserPreviewRunTiming({
@@ -1645,6 +1651,7 @@ async function runPrompt(
     ...readPrefillChunkMetadata(unlockedProof),
     runtimeTrace: {
       backend: client.backendId,
+      brokerSelection,
       tensorControl: unlockedProof?.tensorControl === true,
       tspSteps: unlockedProof?.tspSteps ?? [],
       kvPagingEvents: unlockedProof?.kvPagingEvents ?? 0,
@@ -1667,6 +1674,27 @@ async function runPrompt(
       answerOnlyPassed: isExpectedAnswerOnlyResponse(response, prompt.expectedSubstrings),
     } } : {}),
   };
+}
+
+function resolveBenchmarkBrokerSelection(
+  request: BrowserPreviewBenchmarkRequest,
+  grounded: boolean,
+): BrowserBackendSelection {
+  return selectBrowserBackend({
+    task: resolveBenchmarkBrokerTask(request, grounded),
+    preferredBackendId: request.backendId,
+    preferredModelId: request.modelId,
+  });
+}
+
+function resolveBenchmarkBrokerTask(
+  request: BrowserPreviewBenchmarkRequest,
+  grounded: boolean,
+): BrowserBackendTask {
+  if (request.backendId === "unlocked-browser-transformer") {
+    return request.strictWebGpuRequested ? "strict_custom_proof" : "kernel_research";
+  }
+  return grounded ? "grounded_answer" : "final_answer";
 }
 
 export function buildStopAfterSequences(

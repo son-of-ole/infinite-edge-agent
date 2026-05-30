@@ -156,6 +156,13 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionTechnicalProofOnly",
       "v12ProductionCpuFallbackUsed",
       "v12ProductionStrictWebGpuPassed",
+      "v12ProductionBackendBrokerSelectionPassed",
+      "v12ProductionBackendBrokerTraceCount",
+      "v12ProductionBrokerSelectedBackendId",
+      "v12ProductionBrokerSelectedModelId",
+      "v12ProductionBrokerProductionRole",
+      "v12ProductionBrokerDeployReadyCandidate",
+      "v12ProductionBrokerReason",
     ] as const;
     for (const key of v12ProductionArchiveFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];
@@ -176,6 +183,13 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "hostedBenchmarkTechnicalProofOnly",
       "hostedBenchmarkCpuFallbackUsed",
       "hostedBenchmarkStrictWebGpuPassed",
+      "hostedBenchmarkBackendBrokerSelectionPassed",
+      "hostedBenchmarkBackendBrokerTraceCount",
+      "hostedBenchmarkBrokerSelectedBackendId",
+      "hostedBenchmarkBrokerSelectedModelId",
+      "hostedBenchmarkBrokerProductionRole",
+      "hostedBenchmarkBrokerDeployReadyCandidate",
+      "hostedBenchmarkBrokerReason",
     ] as const;
     for (const key of hostedBenchmarkProofFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];

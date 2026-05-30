@@ -97,6 +97,13 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionTechnicalProofOnly: hostedProof?.technicalProofOnly ?? null,
       v12ProductionCpuFallbackUsed: hostedProof?.cpuFallbackUsed ?? null,
       v12ProductionStrictWebGpuPassed: hostedProof?.strictWebGpuPassed ?? false,
+      v12ProductionBackendBrokerSelectionPassed: hostedProof?.backendBrokerSelectionPassed ?? false,
+      v12ProductionBackendBrokerTraceCount: hostedProof?.backendBrokerTraceCount ?? 0,
+      v12ProductionBrokerSelectedBackendId: hostedProof?.brokerSelectedBackendId ?? null,
+      v12ProductionBrokerSelectedModelId: hostedProof?.brokerSelectedModelId ?? null,
+      v12ProductionBrokerProductionRole: hostedProof?.brokerProductionRole ?? null,
+      v12ProductionBrokerDeployReadyCandidate: hostedProof?.brokerDeployReadyCandidate ?? false,
+      v12ProductionBrokerReason: hostedProof?.brokerReason ?? null,
     },
     archive: {
       passed: suite.passed,
