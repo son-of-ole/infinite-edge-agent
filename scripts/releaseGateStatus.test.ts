@@ -199,6 +199,22 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails standalone hosted benchmark proof when hosted deploy origin is not bound to the expected deploy URL", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkExpectedDeployUrl: "https://other-agent.example.com",
+            hostedBenchmarkDeployUrlBound: false,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails standalone hosted benchmark proof without Backend Broker role-boundary evidence", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1338,6 +1354,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when hosted deploy origin is not bound to the expected deploy URL", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionExpectedDeployUrl: "https://other-agent.example.com",
+            v12ProductionDeployUrlBound: false,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when hosted broker role-boundary proof is missing from the archive", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1553,6 +1586,8 @@ function makeHostedBenchmarkProofSummary(
     hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
     hostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
     hostedBenchmarkDeployUrl: "https://agent.example.com",
+    hostedBenchmarkExpectedDeployUrl: "https://agent.example.com",
+    hostedBenchmarkDeployUrlBound: true,
     hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
     hostedBenchmarkCompiledBackendReadyPassed: true,
     hostedBenchmarkProductionDeployReadyPassed: true,
@@ -1706,6 +1741,8 @@ function makeV12ProductionArchiveSummary(
       v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
       v12ProductionHostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
       v12ProductionHostedBenchmarkDeployUrl: "https://agent.example.com",
+      v12ProductionExpectedDeployUrl: "https://agent.example.com",
+      v12ProductionDeployUrlBound: true,
       v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
       v12ProductionCompiledBackendReadyPassed: true,
       v12ProductionDeployReadyPassed: true,

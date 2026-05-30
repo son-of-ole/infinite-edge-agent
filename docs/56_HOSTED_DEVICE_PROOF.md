@@ -66,7 +66,7 @@ The local production artifact for the compiled backend reported:
 A hosted run counts only when it proves all of this:
 
 - the app loads from HTTPS or an equivalent hosted secure context,
-- the saved benchmark summary records the public HTTPS `deployUrl` for the hosted origin,
+- the saved benchmark summary records the public HTTPS `deployUrl` for the hosted origin and it matches the expected deploy URL,
 - WebGPU or the compiled browser runtime initializes,
 - the benchmark artifact includes GPU label evidence from WebGPU adapter info or WebGL renderer data,
 - memory grounding is required for the factual canary,
@@ -150,7 +150,7 @@ HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
-It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove `modelId=Qwen3-0.6B-q4f16_1-MLC`, does not record a public HTTPS `deployUrl`, does not prove Backend Broker selection with the same selected model plus deploy/Kernel Lab/fallback role boundaries, does not prove grounded memory with concrete run-level retrieved/included/expected memory ids and retrieval rank, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
+It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove `modelId=Qwen3-0.6B-q4f16_1-MLC`, does not record a public HTTPS `deployUrl` matching the expected deploy URL, does not prove Backend Broker selection with the same selected model plus deploy/Kernel Lab/fallback role boundaries, does not prove grounded memory with concrete run-level retrieved/included/expected memory ids and retrieval rank, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
 For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. The production archive preserves that strict verifier mode as `v12ProductionProofSourceBoundRequired`; the release gate requires it to be true.
 
@@ -184,7 +184,7 @@ Required repository secrets:
 - `BENCHMARK_TELEMETRY_DATABASE_URL`
 - `BENCHMARK_TELEMETRY_ADMIN_TOKEN`
 
-The workflow materializes the saved browser artifact, verifies the hosted deploy profile, verifies the benchmark proof, writes the v12 production archive, runs the v12 production release gate, and uploads the proof artifact directory. The workflow preflight also checks that the `deploy_url` input is wired into `VITE_DEPLOY_URL`, so hosted proof cannot pass from a benchmark artifact disconnected from the requested public deploy origin.
+The workflow materializes the saved browser artifact, verifies the hosted deploy profile, verifies the benchmark proof, writes the v12 production archive, runs the v12 production release gate, and uploads the proof artifact directory. The workflow preflight also checks that the `deploy_url` input is wired into `VITE_DEPLOY_URL`, and the hosted benchmark verifier compares the saved artifact `deployUrl` against that expected deploy origin. Hosted proof cannot pass from a benchmark artifact disconnected from the requested public deploy origin.
 
 ## What Still Needs Automation
 

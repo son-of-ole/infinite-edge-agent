@@ -264,6 +264,31 @@ describe("hosted benchmark proof verifier", () => {
     expect(localReport.blockers).toContain("Hosted benchmark proof requires a public HTTPS deployUrl.");
   });
 
+  it("binds the hosted artifact deploy origin to the expected deploy URL", () => {
+    const report = evaluateHostedBenchmarkProof({
+      artifact: makePassingBrowserPreviewArtifact(),
+      expectedDeployUrl: "https://agent.example.com/",
+    });
+
+    expect(report.passed).toBe(true);
+    expect(report.expectedDeployUrl).toBe("https://agent.example.com");
+    expect(report.deployUrlBound).toBe(true);
+  });
+
+  it("fails production proof when the hosted artifact deploy origin differs from the expected deploy URL", () => {
+    const report = evaluateHostedBenchmarkProof({
+      artifact: makePassingBrowserPreviewArtifact(),
+      expectedDeployUrl: "https://other-agent.example.com",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.expectedDeployUrl).toBe("https://other-agent.example.com");
+    expect(report.deployUrlBound).toBe(false);
+    expect(report.blockers).toContain(
+      "Hosted benchmark proof deployUrl https://agent.example.com does not match expected deployUrl https://other-agent.example.com.",
+    );
+  });
+
   it("fails production proof when the hosted artifact does not match the expected source commit", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: makePassingBrowserPreviewArtifact(),
@@ -339,6 +364,8 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
         hostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
         hostedBenchmarkDeployUrl: "https://agent.example.com",
+        hostedBenchmarkExpectedDeployUrl: null,
+        hostedBenchmarkDeployUrlBound: null,
         hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
         hostedBenchmarkCompiledBackendReadyPassed: true,
         hostedBenchmarkProductionDeployReadyPassed: true,

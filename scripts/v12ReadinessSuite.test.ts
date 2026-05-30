@@ -15,6 +15,7 @@ const completeHostedEnv = {
   VITE_COMPILED_WEBLLM_ENABLED: "true",
   VITE_REQUIRE_UNLOCKED_RUNTIME: "false",
   VITE_MTP_ENABLED: "false",
+  VITE_DEPLOY_URL: "https://agent.example.com",
   VITE_BENCHMARK_TELEMETRY_ENABLED: "true",
   VITE_BENCHMARK_TELEMETRY_URL: "/api/benchmark-runs",
   BENCHMARK_TELEMETRY_ENABLED: "true",
@@ -328,6 +329,8 @@ describe("v12 readiness suite", () => {
 
     expect(result.suite.hostedBenchmarkProof?.sourceBoundRequired).toBe(true);
     expect(result.suite.hostedBenchmarkProof?.expectedSourceGitSha).toBe("abc123");
+    expect(result.suite.hostedBenchmarkProof?.expectedDeployUrl).toBe("https://agent.example.com");
+    expect(result.suite.hostedBenchmarkProof?.deployUrlBound).toBe(true);
 
     const latest = JSON.parse(await readFile(result.latestPath, "utf8")) as ReturnType<typeof buildV12ReadinessSuiteArtifact>;
 

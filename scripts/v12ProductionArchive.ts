@@ -72,6 +72,8 @@ export function buildV12ProductionArchiveArtifact(input: {
   const artifactCount = suite.totalArtifactCount + 1;
   const hostedProof = suite.hostedBenchmarkProof?.proof;
   const expectedSourceGitSha = suite.hostedBenchmarkProof?.expectedSourceGitSha ?? null;
+  const expectedDeployUrl = suite.hostedBenchmarkProof?.expectedDeployUrl ?? null;
+  const deployUrlBound = suite.hostedBenchmarkProof?.deployUrlBound ?? null;
   const proofSourceBoundRequired = suite.hostedBenchmarkProof?.sourceBoundRequired ?? false;
   const proofSourceGitSha = hostedProof?.sourceGitSha ?? null;
   const proofSourceBound = expectedSourceGitSha
@@ -112,6 +114,8 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionHostedBenchmarkRuntimeBackendId: hostedProof?.runtimeBackendId ?? null,
       v12ProductionHostedBenchmarkModelId: hostedProof?.modelId ?? null,
       v12ProductionHostedBenchmarkDeployUrl: hostedProof?.deployUrl ?? null,
+      v12ProductionExpectedDeployUrl: expectedDeployUrl,
+      v12ProductionDeployUrlBound: deployUrlBound,
       v12ProductionHostedBenchmarkDeployBackendId: hostedProof?.deployBackendId ?? null,
       v12ProductionCompiledBackendReadyPassed: hostedProof?.compiledBackendReadyPassed ?? false,
       v12ProductionDeployReadyPassed: hostedProof?.productionDeployReadyPassed ?? false,

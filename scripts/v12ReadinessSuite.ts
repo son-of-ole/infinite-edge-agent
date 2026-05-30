@@ -257,6 +257,7 @@ export async function runV12ReadinessSuite(options: {
   const hostedBenchmarkProof = hostedBenchmarkArtifactPath
     ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath, {
       expectedSourceGitSha: readExpectedHostedBenchmarkGitSha(env),
+      expectedDeployUrl: readExpectedHostedBenchmarkDeployUrl(env),
       requireSourceBound: hostedBenchmarkProofSourceBoundRequired,
     })
     : null;
@@ -289,6 +290,12 @@ export async function runV12ReadinessSuite(options: {
 function readExpectedHostedBenchmarkGitSha(env: HostedDeploymentProfileEnv): string | null {
   return env.HOSTED_BENCHMARK_EXPECTED_GIT_SHA?.trim()
     || env.GITHUB_SHA?.trim()
+    || null;
+}
+
+function readExpectedHostedBenchmarkDeployUrl(env: HostedDeploymentProfileEnv): string | null {
+  return env.HOSTED_BENCHMARK_EXPECTED_DEPLOY_URL?.trim()
+    || env.VITE_DEPLOY_URL?.trim()
     || null;
 }
 

@@ -116,6 +116,8 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionHostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
     && hasPublicHttpsUrl(artifact.summary?.v12ProductionHostedBenchmarkDeployUrl)
+    && hasPublicHttpsUrl(artifact.summary?.v12ProductionExpectedDeployUrl)
+    && artifact.summary?.v12ProductionDeployUrlBound === true
     && artifact.summary?.v12ProductionHostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
     && artifact.summary?.v12ProductionDeployReadyPassed === true
@@ -187,6 +189,8 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
     && hasPublicHttpsUrl(artifact.summary?.hostedBenchmarkDeployUrl)
+    && hasPublicHttpsUrl(artifact.summary?.hostedBenchmarkExpectedDeployUrl)
+    && artifact.summary?.hostedBenchmarkDeployUrlBound === true
     && artifact.summary?.hostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkCompiledBackendReadyPassed === true
     && artifact.summary?.hostedBenchmarkProductionDeployReadyPassed === true

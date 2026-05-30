@@ -69,6 +69,8 @@ export interface HostedBenchmarkProofReport {
   blockers: string[];
   artifactPath: string | null;
   expectedSourceGitSha: string | null;
+  expectedDeployUrl: string | null;
+  deployUrlBound: boolean | null;
   sourceBoundRequired: boolean;
   proof: HostedBenchmarkProof;
 }
@@ -101,6 +103,7 @@ export async function evaluateHostedBenchmarkProofFile(
     expectedResponse?: string | null;
     minTokensPerSecond?: number;
     expectedSourceGitSha?: string | null;
+    expectedDeployUrl?: string | null;
     requireSourceBound?: boolean;
   } = {},
 ): Promise<HostedBenchmarkProofReport> {
@@ -120,6 +123,7 @@ export function evaluateHostedBenchmarkProof(input: {
   expectedResponse?: string | null;
   minTokensPerSecond?: number;
   expectedSourceGitSha?: string | null;
+  expectedDeployUrl?: string | null;
   requireSourceBound?: boolean;
 }): HostedBenchmarkProofReport {
   const expectedBackendId = input.expectedBackendId ?? DEFAULT_BACKEND_ID;
@@ -127,6 +131,8 @@ export function evaluateHostedBenchmarkProof(input: {
   const expectedResponse = input.expectedResponse === undefined ? DEFAULT_EXPECTED_RESPONSE : input.expectedResponse;
   const minTokensPerSecond = input.minTokensPerSecond ?? DEFAULT_SPEED_FLOOR;
   const expectedSourceGitSha = normalizeString(input.expectedSourceGitSha);
+  const rawExpectedDeployUrl = normalizeString(input.expectedDeployUrl);
+  const expectedDeployUrl = rawExpectedDeployUrl ? normalizePublicHttpsOrigin(rawExpectedDeployUrl) : null;
   const sourceBoundRequired = input.requireSourceBound === true;
   const source = extractBenchmarkSource(input.artifact);
   const proof = source
@@ -147,6 +153,12 @@ export function evaluateHostedBenchmarkProof(input: {
   }
   if (!isPublicHttpsUrlString(proof.deployUrl)) {
     blockers.push("Hosted benchmark proof requires a public HTTPS deployUrl.");
+  }
+  const deployUrlBound = expectedDeployUrl ? normalizePublicHttpsOrigin(proof.deployUrl) === expectedDeployUrl : null;
+  if (rawExpectedDeployUrl && !expectedDeployUrl) {
+    blockers.push("Hosted benchmark proof expected deployUrl must be a public HTTPS origin.");
+  } else if (expectedDeployUrl && deployUrlBound !== true) {
+    blockers.push(`Hosted benchmark proof deployUrl ${proof.deployUrl ?? "unknown"} does not match expected deployUrl ${expectedDeployUrl}.`);
   }
   if (expectedSourceGitSha && proof.sourceGitSha !== expectedSourceGitSha) {
     blockers.push(`Hosted benchmark proof source commit ${proof.sourceGitSha ?? "unknown"} does not match expected commit ${expectedSourceGitSha}.`);
@@ -253,6 +265,8 @@ export function evaluateHostedBenchmarkProof(input: {
     blockers,
     artifactPath: input.artifactPath ?? null,
     expectedSourceGitSha,
+    expectedDeployUrl,
+    deployUrlBound,
     sourceBoundRequired,
     proof,
   };
@@ -281,6 +295,8 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkRuntimeBackendId: report.proof.runtimeBackendId,
       hostedBenchmarkModelId: report.proof.modelId,
       hostedBenchmarkDeployUrl: report.proof.deployUrl,
+      hostedBenchmarkExpectedDeployUrl: report.expectedDeployUrl,
+      hostedBenchmarkDeployUrlBound: report.deployUrlBound,
       hostedBenchmarkDeployBackendId: report.proof.deployBackendId,
       hostedBenchmarkCompiledBackendReadyPassed: report.proof.compiledBackendReadyPassed,
       hostedBenchmarkProductionDeployReadyPassed: report.proof.productionDeployReadyPassed,
@@ -594,6 +610,16 @@ function isPublicHttpsUrlString(value: string | null): boolean {
   }
 }
 
+function normalizePublicHttpsOrigin(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return isPublicHttpsUrl(url) ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 function isPublicHttpsUrl(url: URL): boolean {
   if (url.protocol !== "https:") return false;
   const hostname = normalizeUrlHostname(url.hostname);
@@ -829,6 +855,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   const report = await evaluateHostedBenchmarkProofFile(artifactPath, {
     expectedSourceGitSha: process.env.HOSTED_BENCHMARK_EXPECTED_GIT_SHA ?? process.env.GITHUB_SHA,
+    expectedDeployUrl: process.env.HOSTED_BENCHMARK_EXPECTED_DEPLOY_URL ?? process.env.VITE_DEPLOY_URL,
     requireSourceBound: process.env.HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND === "true",
   });
   await writeHostedBenchmarkProofArtifact(report);
