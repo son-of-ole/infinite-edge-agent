@@ -171,7 +171,7 @@ For remote release verification, use the manual GitHub Actions workflow **V12 Pr
 
 The URL source is intentionally public-hosted only. Localhost, loopback, link-local, and private-network artifact URLs are rejected; use pasted JSON or base64 for local/private saved artifacts.
 
-The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`. The materialized source benchmark is stored inside that uploaded proof bundle at `hosted/browser-runtime-bench-latest.json` so the archive contains both the source browser artifact and the derived v12 production proof.
+The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, `pnpm eval:v12-final-state`, and `RELEASE_REQUIRE_V12_FINAL_STATE=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`. The materialized source benchmark is stored inside that uploaded proof bundle at `hosted/browser-runtime-bench-latest.json` so the archive contains both the source browser artifact and the derived v12 production proof.
 
 To generate the base64 input from a saved artifact:
 

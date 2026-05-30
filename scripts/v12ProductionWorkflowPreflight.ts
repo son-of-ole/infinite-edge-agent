@@ -65,6 +65,7 @@ function buildV12ProductionWorkflowPreflightReport(
     checkCompiledBackendProfile(workflow),
     checkSourceBoundProof(workflow),
     checkTelemetryProfile(workflow),
+    checkFinalStateGate(workflow, packageJson),
     checkProofSteps(workflow),
     checkArtifactRetention(workflow),
     checkPackageScript(packageJson),
@@ -162,6 +163,7 @@ function checkCompiledBackendProfile(workflow: string): V12ProductionWorkflowPre
     ["VITE_MEMORY_PROVIDER: browser-vector", "production proof workflow must use browser-vector memory."],
     ["VITE_QWEN_THINKING_MODE: disabled", "production proof workflow must disable thinking mode for exact canaries."],
     ["RELEASE_REQUIRE_V12_PRODUCTION: \"true\"", "production proof workflow must require the v12 production archive gate."],
+    ["RELEASE_REQUIRE_V12_FINAL_STATE: \"true\"", "production proof workflow must require the v12 final-state gate."],
     ["RELEASE_REQUIRE_UNLOCKED_MODEL: \"false\"", "production proof workflow must keep unlocked Kernel Lab release requirement off."],
   ]);
 
@@ -206,6 +208,26 @@ function checkTelemetryProfile(workflow: string): V12ProductionWorkflowPreflight
   });
 }
 
+function checkFinalStateGate(
+  workflow: string,
+  packageJson: PackageJson | null,
+): V12ProductionWorkflowPreflightCheck {
+  const blockers = collectMissing(workflow, [
+    ["RELEASE_REQUIRE_V12_FINAL_STATE: \"true\"", "production proof workflow must set RELEASE_REQUIRE_V12_FINAL_STATE to true."],
+    ["pnpm eval:v12-final-state", "production proof workflow must run pnpm eval:v12-final-state before artifact upload."],
+  ]);
+  if (packageJson?.scripts?.["eval:v12-final-state"] !== "node --import tsx scripts/v12FinalStateStatus.ts") {
+    blockers.push("package.json must expose eval:v12-final-state.");
+  }
+
+  return makeCheck({
+    id: "final_state_gate",
+    label: "Workflow requires the final source-published and hosted-proof-backed v12 status gate.",
+    evidence: [WORKFLOW_PATH, PACKAGE_PATH],
+    blockers,
+  });
+}
+
 function checkProofSteps(workflow: string): V12ProductionWorkflowPreflightCheck {
   const blockers = collectMissing(workflow, [
     ["pnpm materialize:hosted-benchmark", "production proof workflow must materialize the hosted benchmark artifact."],
@@ -213,6 +235,7 @@ function checkProofSteps(workflow: string): V12ProductionWorkflowPreflightCheck 
     ["pnpm verify:hosted-benchmark-proof", "production proof workflow must verify the saved hosted benchmark proof."],
     ["HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}", "production proof workflow must pass the materialized artifact path into proof steps."],
     ["pnpm eval:v12-production", "production proof workflow must build the v12 production archive."],
+    ["pnpm eval:v12-final-state", "production proof workflow must build the v12 final-state status."],
     ["pnpm release:gate", "production proof workflow must run the release gate with v12 production env."],
   ]);
 

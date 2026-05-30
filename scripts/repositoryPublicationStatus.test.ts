@@ -48,6 +48,65 @@ describe("repository publication status", () => {
     });
   });
 
+  it("passes as published in GitHub Actions detached checkout when github.sha is running on main", () => {
+    const headSha = "1".repeat(40);
+    const report = evaluateRepositoryPublicationSnapshot({
+      expectedRemoteUrl,
+      githubActions: {
+        isActions: true,
+        refName: "main",
+        sha: headSha,
+      },
+      snapshot: {
+        branch: "HEAD",
+        headSha,
+        upstream: null,
+        remoteUrl: expectedRemoteUrl,
+        aheadCount: null,
+        behindCount: null,
+        dirty: false,
+        bundles: [],
+      },
+    });
+
+    expect(report.passed).toBe(true);
+    expect(report.published).toBe(true);
+    expect(report.bundleHandoffReady).toBe(false);
+    expect(report.blockers).toEqual([]);
+    expect(report.summary).toMatchObject({
+      repositoryPublicationPublished: true,
+      repositoryPublicationGithubActionsPublished: true,
+      repositoryPublicationBranch: "HEAD",
+      repositoryPublicationHeadSha: headSha,
+    });
+  });
+
+  it("does not treat a detached GitHub Actions checkout from a non-main ref as published", () => {
+    const headSha = "2".repeat(40);
+    const report = evaluateRepositoryPublicationSnapshot({
+      expectedRemoteUrl,
+      githubActions: {
+        isActions: true,
+        refName: "feature/test",
+        sha: headSha,
+      },
+      snapshot: {
+        branch: "HEAD",
+        headSha,
+        upstream: null,
+        remoteUrl: expectedRemoteUrl,
+        aheadCount: null,
+        behindCount: null,
+        dirty: false,
+        bundles: [],
+      },
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.published).toBe(false);
+    expect(report.blockers).toContain("Repository publication status must be evaluated from main.");
+  });
+
   it("passes as exact-history handoff when local history is ahead but verified bundles contain the current head", () => {
     const headSha = "b".repeat(40);
     const report = evaluateRepositoryPublicationSnapshot({

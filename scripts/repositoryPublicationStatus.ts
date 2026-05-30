@@ -32,6 +32,12 @@ export interface RepositoryPublicationSnapshot {
   bundles: RepositoryPublicationBundleStatus[];
 }
 
+export interface RepositoryPublicationGithubActionsContext {
+  isActions: boolean;
+  refName: string | null;
+  sha: string | null;
+}
+
 export interface RepositoryPublicationStatusReport {
   passed: boolean;
   published: boolean;
@@ -75,21 +81,30 @@ export interface RepositoryPublicationHandoffWriteResult {
 export function evaluateRepositoryPublicationSnapshot(input: {
   snapshot: RepositoryPublicationSnapshot;
   expectedRemoteUrl?: string;
+  githubActions?: RepositoryPublicationGithubActionsContext;
 }): RepositoryPublicationStatusReport {
   const expectedRemoteUrl = input.expectedRemoteUrl ?? EXPECTED_REMOTE_URL;
   const snapshot = input.snapshot;
+  const githubActions = input.githubActions;
   const remoteMatches = snapshot.remoteUrl === expectedRemoteUrl;
-  const onMain = snapshot.branch === "main";
+  const githubActionsPublished = githubActions?.isActions === true
+    && githubActions.refName === "main"
+    && Boolean(snapshot.headSha)
+    && githubActions.sha === snapshot.headSha
+    && remoteMatches
+    && snapshot.dirty === false;
+  const onMain = snapshot.branch === "main" || githubActionsPublished;
   const clean = snapshot.dirty === false;
-  const hasUpstream = Boolean(snapshot.upstream);
+  const hasUpstream = Boolean(snapshot.upstream) || githubActionsPublished;
   const behindCount = snapshot.behindCount ?? Number.POSITIVE_INFINITY;
   const aheadCount = snapshot.aheadCount ?? Number.POSITIVE_INFINITY;
-  const published = onMain
+  const locallyPublished = snapshot.branch === "main"
     && clean
     && remoteMatches
-    && hasUpstream
+    && Boolean(snapshot.upstream)
     && aheadCount === 0
     && behindCount === 0;
+  const published = locallyPublished || githubActionsPublished;
   const matchingBundles = snapshot.bundles.filter((bundle) =>
     bundle.verified === true
     && Boolean(snapshot.headSha)
@@ -109,7 +124,7 @@ export function evaluateRepositoryPublicationSnapshot(input: {
   if (!clean) blockers.push("Repository has uncommitted changes.");
   if (!remoteMatches) blockers.push(`Repository origin remote must be ${expectedRemoteUrl}.`);
   if (!hasUpstream) blockers.push("Repository main branch must track an upstream branch.");
-  if (behindCount > 0) blockers.push("Repository is behind its upstream branch.");
+  if (!githubActionsPublished && behindCount > 0) blockers.push("Repository is behind its upstream branch.");
   if (!published && !bundleHandoffReady && aheadCount > 0 && behindCount === 0) {
     blockers.push("Repository has unpublished commits and no verified exact-history bundle contains the current head.");
   }
@@ -129,6 +144,8 @@ export function evaluateRepositoryPublicationSnapshot(input: {
       repositoryPublicationRemoteUrl: snapshot.remoteUrl,
       repositoryPublicationExpectedRemoteUrl: expectedRemoteUrl,
       repositoryPublicationRemoteMatches: remoteMatches,
+      repositoryPublicationGithubActionsPublished: githubActionsPublished,
+      repositoryPublicationGithubActionsRefName: githubActions?.refName ?? null,
       repositoryPublicationAheadCount: Number.isFinite(aheadCount) ? aheadCount : null,
       repositoryPublicationBehindCount: Number.isFinite(behindCount) ? behindCount : null,
       repositoryPublicationDirty: snapshot.dirty,
@@ -144,12 +161,14 @@ export function evaluateRepositoryPublicationSnapshot(input: {
 export async function evaluateRepositoryPublicationStatus(input: {
   rootDir?: string;
   expectedRemoteUrl?: string;
+  githubActions?: RepositoryPublicationGithubActionsContext;
 } = {}): Promise<RepositoryPublicationStatusReport> {
   const rootDir = input.rootDir ?? process.cwd();
   const snapshot = await collectRepositoryPublicationSnapshot(rootDir);
   return evaluateRepositoryPublicationSnapshot({
     snapshot,
     expectedRemoteUrl: input.expectedRemoteUrl,
+    githubActions: input.githubActions ?? readGithubActionsContext(process.env),
   });
 }
 
@@ -325,6 +344,14 @@ async function collectRepositoryPublicationSnapshot(rootDir: string): Promise<Re
     behindCount,
     dirty: Boolean(status?.trim()),
     bundles,
+  };
+}
+
+function readGithubActionsContext(env: NodeJS.ProcessEnv): RepositoryPublicationGithubActionsContext {
+  return {
+    isActions: env.GITHUB_ACTIONS === "true",
+    refName: env.GITHUB_REF_NAME ?? null,
+    sha: env.GITHUB_SHA ?? null,
   };
 }
 

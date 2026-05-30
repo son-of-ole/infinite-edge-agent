@@ -64,6 +64,7 @@ jobs:
       BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60"
       BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000"
       RELEASE_REQUIRE_V12_PRODUCTION: "true"
+      RELEASE_REQUIRE_V12_FINAL_STATE: "true"
       RELEASE_REQUIRE_UNLOCKED_MODEL: "false"
       PRODUCTION_EVAL_SIDECAR_MODE: skip
     steps:
@@ -100,6 +101,11 @@ jobs:
         env:
           HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}
         run: pnpm eval:v12-production
+
+      - name: Build v12 final-state status
+        env:
+          HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}
+        run: pnpm eval:v12-final-state
 
       - name: Run v12 production release gate
         env:
