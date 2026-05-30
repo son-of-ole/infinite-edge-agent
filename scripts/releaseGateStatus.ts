@@ -135,12 +135,28 @@ export function computeReleaseGatePassed(input: {
       if (artifact.passed === null && optionalArtifacts.has(artifact.name)) return true;
       return false;
     })
+    && hostedBenchmarkProofArtifactsPassed(input.latestArtifacts)
     && (!input.strictUnlockedModel || strictUnlockedArtifactsPassed(input.latestArtifacts))
     && (!input.requireBrowserPreviewProof || browserPreviewProofPassed(input.latestArtifacts))
     && (!input.requireMtpAcceleration || mtpAccelerationProofPassed(input.latestArtifacts))
     && (!input.requireV12ProductionArchive || v12ProductionArchiveProofPassed(
       input.latestArtifacts.find((artifact) => artifact.name === "v12-production-archive"),
     ));
+}
+
+function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifactStatusInput[]): boolean {
+  const hostedProofs = artifacts.filter((artifact) => artifact.name === "hosted-benchmark-proof");
+  if (hostedProofs.length === 0) return true;
+  return hostedProofs.every((artifact) =>
+    artifact.passed === true
+    && artifact.summary?.hostedBenchmarkProofPassed === true
+    && artifact.summary?.hostedBenchmarkProofSourceBoundRequired === true
+    && artifact.summary?.hostedBenchmarkProofSourceBound === true
+    && typeof artifact.summary?.hostedBenchmarkProofSourceGitSha === "string"
+    && artifact.summary.hostedBenchmarkProofSourceGitSha.trim().length > 0
+    && typeof artifact.summary?.hostedBenchmarkExpectedSourceGitSha === "string"
+    && artifact.summary.hostedBenchmarkExpectedSourceGitSha.trim().length > 0
+  );
 }
 
 function strictUnlockedArtifactsPassed(artifacts: ReleaseGateLatestArtifactStatusInput[]): boolean {

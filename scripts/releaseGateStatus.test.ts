@@ -25,6 +25,63 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails when hosted benchmark proof is present but source binding was not required", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: false,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails when hosted benchmark proof is present but not source-bound", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkExpectedSourceGitSha: "def456",
+            hostedBenchmarkProofSourceBound: false,
+            hostedBenchmarkProofSourceBoundRequired: true,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("accepts a standalone hosted benchmark proof only when it is source-bound", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+          },
+        },
+      ],
+    })).toBe(true);
+  });
+
   it("fails strict unlocked model releases when real parity or benchmark mode is still fixture", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
