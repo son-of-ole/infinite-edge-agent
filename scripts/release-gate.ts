@@ -99,6 +99,7 @@ const passed = computeReleaseGatePassed({
   strictUnlockedModel: releaseGateEnv.RELEASE_REQUIRE_UNLOCKED_MODEL === "true",
   requireBrowserPreviewProof: releaseGateEnv.RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF === "true",
   requireMtpAcceleration: releaseGateEnv.RELEASE_REQUIRE_MTP_ACCELERATION === "true",
+  requireV12ProductionArchive,
 });
 const proofClassification = classifyReleaseGateProof({
   passed,

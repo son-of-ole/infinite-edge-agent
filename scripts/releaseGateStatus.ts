@@ -101,6 +101,7 @@ export function computeReleaseGatePassed(input: {
   strictUnlockedModel?: boolean;
   requireBrowserPreviewProof?: boolean;
   requireMtpAcceleration?: boolean;
+  requireV12ProductionArchive?: boolean;
 }): boolean {
   const optionalArtifacts = new Set(input.optionalArtifactNames ?? []);
   return input.steps.every((step) => step.status !== "failed")
@@ -111,7 +112,10 @@ export function computeReleaseGatePassed(input: {
     })
     && (!input.strictUnlockedModel || strictUnlockedArtifactsPassed(input.latestArtifacts))
     && (!input.requireBrowserPreviewProof || browserPreviewProofPassed(input.latestArtifacts))
-    && (!input.requireMtpAcceleration || mtpAccelerationProofPassed(input.latestArtifacts));
+    && (!input.requireMtpAcceleration || mtpAccelerationProofPassed(input.latestArtifacts))
+    && (!input.requireV12ProductionArchive || v12ProductionArchiveProofPassed(
+      input.latestArtifacts.find((artifact) => artifact.name === "v12-production-archive"),
+    ));
 }
 
 function strictUnlockedArtifactsPassed(artifacts: ReleaseGateLatestArtifactStatusInput[]): boolean {

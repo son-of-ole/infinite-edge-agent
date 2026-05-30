@@ -763,6 +763,56 @@ describe("release gate status", () => {
     })).toBe(true);
   });
 
+  it("fails v12-production-required releases when archive proof fields are incomplete", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: {
+            v12ProductionArchivePassed: true,
+            v12ProductionBlockerCount: 0,
+            v12ProductionSuitePassed: true,
+            v12ProductionDeployBackendId: "compiled-browser-webllm",
+            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+            v12ProductionHostedBenchmarkProofRequired: false,
+            v12ProductionHostedBenchmarkProofPassed: true,
+            v12ProductionArtifactCount: 7,
+            v12ProductionSuiteArtifactCount: 6,
+            v12ProductionChildArtifactCount: 5,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("passes v12-production-required releases only with backend-specific archive proof", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: {
+            v12ProductionArchivePassed: true,
+            v12ProductionBlockerCount: 0,
+            v12ProductionSuitePassed: true,
+            v12ProductionDeployBackendId: "compiled-browser-webllm",
+            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+            v12ProductionHostedBenchmarkProofRequired: true,
+            v12ProductionHostedBenchmarkProofPassed: true,
+            v12ProductionArtifactCount: 7,
+            v12ProductionSuiteArtifactCount: 6,
+            v12ProductionChildArtifactCount: 5,
+          },
+        },
+      ],
+    })).toBe(true);
+  });
+
   it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
