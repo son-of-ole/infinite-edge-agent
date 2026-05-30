@@ -162,6 +162,9 @@ describe("release gate artifact summary", () => {
         hostedBenchmarkBrokerFallbackBackendCount: 1,
         hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
         hostedBenchmarkBrokerRoleBoundaryPassed: true,
+        hostedBenchmarkBrokerProofRequirementCount: 4,
+        hostedBenchmarkBrokerRequiresBackendTrace: true,
+        hostedBenchmarkBrokerRequiresMemoryGrounding: true,
       },
     })).toMatchObject({
       hostedBenchmarkProofPassed: true,
@@ -197,6 +200,9 @@ describe("release gate artifact summary", () => {
       hostedBenchmarkBrokerFallbackBackendCount: 1,
       hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
       hostedBenchmarkBrokerRoleBoundaryPassed: true,
+      hostedBenchmarkBrokerProofRequirementCount: 4,
+      hostedBenchmarkBrokerRequiresBackendTrace: true,
+      hostedBenchmarkBrokerRequiresMemoryGrounding: true,
     });
   });
 

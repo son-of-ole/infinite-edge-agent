@@ -135,6 +135,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionBrokerSelectedBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionBrokerProductionRole === "production_candidate"
     && artifact.summary?.v12ProductionBrokerDeployReadyCandidate === true
+    && hasBrokerProofRequirements(artifact.summary, "v12Production")
     && artifact.summary?.v12ProductionBrokerDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionBrokerKernelLabBackendId === "unlocked-browser-transformer"
     && artifact.summary?.v12ProductionBrokerFallbackBackendId === "wasm-small-core"
@@ -191,11 +192,22 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && Number(artifact.summary?.hostedBenchmarkBrokerFallbackBackendCount ?? 0) === 1
     && artifact.summary?.hostedBenchmarkBrokerFallbackDeployReadyCandidate === false
     && artifact.summary?.hostedBenchmarkBrokerRoleBoundaryPassed === true
+    && hasBrokerProofRequirements(artifact.summary, "hostedBenchmark")
     && typeof artifact.summary?.hostedBenchmarkProofSourceGitSha === "string"
     && artifact.summary.hostedBenchmarkProofSourceGitSha.trim().length > 0
     && typeof artifact.summary?.hostedBenchmarkExpectedSourceGitSha === "string"
     && artifact.summary.hostedBenchmarkExpectedSourceGitSha.trim().length > 0
   );
+}
+
+function hasBrokerProofRequirements(
+  summary: Record<string, number | string | boolean | null> | undefined,
+  prefix: "hostedBenchmark" | "v12Production",
+): boolean {
+  return Boolean(summary)
+    && Number(summary?.[`${prefix}BrokerProofRequirementCount`] ?? 0) >= 2
+    && summary?.[`${prefix}BrokerRequiresBackendTrace`] === true
+    && summary?.[`${prefix}BrokerRequiresMemoryGrounding`] === true;
 }
 
 function hasGpuLabelEvidence(

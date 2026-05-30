@@ -93,6 +93,9 @@ describe("release gate status", () => {
             hostedBenchmarkBrokerFallbackBackendCount: 1,
             hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
             hostedBenchmarkBrokerRoleBoundaryPassed: true,
+            hostedBenchmarkBrokerProofRequirementCount: 4,
+            hostedBenchmarkBrokerRequiresBackendTrace: true,
+            hostedBenchmarkBrokerRequiresMemoryGrounding: true,
           },
         },
       ],
@@ -120,6 +123,43 @@ describe("release gate status", () => {
             hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
             hostedBenchmarkMemoryExpectedHitMeanRank: 1,
             hostedBenchmarkBrokerRoleBoundaryPassed: false,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails standalone hosted benchmark proof without Backend Broker proof requirements", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceCommitEvidencePassed: true,
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkGpuLabelEvidencePassed: true,
+            hostedBenchmarkGpuDescription: "Apple M3",
+            hostedBenchmarkConcreteMemoryGroundingPassed: true,
+            hostedBenchmarkMemoryGroundingRunCount: 1,
+            hostedBenchmarkMemorySeededCorpusCount: 16,
+            hostedBenchmarkMemoryRetrievedCount: 1,
+            hostedBenchmarkMemoryIncludedCount: 1,
+            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+            hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+            hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+            hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+            hostedBenchmarkBrokerFallbackBackendCount: 1,
+            hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+            hostedBenchmarkBrokerRoleBoundaryPassed: true,
+            hostedBenchmarkBrokerRequiresBackendTrace: false,
+            hostedBenchmarkBrokerRequiresMemoryGrounding: true,
           },
         },
       ],
@@ -1183,6 +1223,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when Backend Broker proof requirements are missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionBrokerRequiresBackendTrace: true,
+            v12ProductionBrokerRequiresMemoryGrounding: false,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when concrete memory grounding evidence is missing", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1402,6 +1459,9 @@ function makeV12ProductionArchiveSummary(
       v12ProductionBrokerFallbackBackendCount: 1,
       v12ProductionBrokerFallbackDeployReadyCandidate: false,
       v12ProductionBrokerRoleBoundaryPassed: true,
+      v12ProductionBrokerProofRequirementCount: 4,
+      v12ProductionBrokerRequiresBackendTrace: true,
+      v12ProductionBrokerRequiresMemoryGrounding: true,
     });
   }
 
