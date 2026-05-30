@@ -4,6 +4,7 @@ import {
   rebuildStartupContextSnapshot,
   type ChatMessage,
   type ContextPackTraceRecord,
+  type InferenceBackendBrokerSelection,
   type MemoryDeleteOptions,
   type MemoryChunk,
   type MemoryProviderMode,
@@ -242,16 +243,17 @@ export function App() {
           + `${startupSnapshot.contextPackTraceCount} context trace${startupSnapshot.contextPackTraceCount === 1 ? "" : "s"}.`
         );
 
+        const brokerSelection = resolveBrowserAnswerBackendSelection({ backend: llmBackend, modelId });
         setStatus("Loading local language model...");
-        const llm = await timed("model_load_ms", { addMetric }, () => createChatClient(modelId, llmBackend, (progress) => setLoadProgress(progress), {
+        const llm = await timed("model_load_ms", { addMetric }, () => createChatClient(brokerSelection.modelId, brokerSelection.backendId, (progress) => setLoadProgress(progress), {
           tenantId,
           cellId,
           sessionId,
         }));
         llmRef.current = llm;
         setKvPersistenceHealth(readKvPersistenceHealth(llm) ?? kvPersistenceHealth);
-        const backendProfile = makeBackendProfile(llm.backendId);
-        const modelProfile = makeModelProfile(modelId);
+        const backendProfile = makeBackendProfile(llm.backendId, toInferenceBackendBrokerSelection(brokerSelection));
+        const modelProfile = makeModelProfile(brokerSelection.modelId);
         setRuntimeFeatures(buildRuntimeFeatureCapabilitySnapshot({
           backend: backendProfile,
           model: modelProfile,
@@ -267,7 +269,7 @@ export function App() {
           cellId,
           sessionId,
           systemPrompt: SYSTEM_PROMPT,
-          config: { ...AGENT_CONFIG, modelId },
+          config: { ...AGENT_CONFIG, modelId: brokerSelection.modelId },
           modelProfile,
           deviceProfile: DEFAULT_DEVICE_PROFILE,
           backendProfile,
@@ -768,6 +770,20 @@ async function createChatClient(
     await client.dispose();
     throw error;
   }
+}
+
+function toInferenceBackendBrokerSelection(
+  selection: BrowserBackendSelection,
+): InferenceBackendBrokerSelection {
+  return {
+    backendId: selection.backendId,
+    modelId: selection.modelId,
+    productionRole: selection.productionRole,
+    deployReadyCandidate: selection.deployReadyCandidate,
+    reason: selection.reason,
+    fallbackChain: selection.fallbackChain,
+    proofRequirements: selection.proofRequirements,
+  };
 }
 
 export interface BrowserAnswerBackendSelectionInput {

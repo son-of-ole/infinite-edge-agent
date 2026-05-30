@@ -39,6 +39,17 @@ export interface InferenceBackendProfile {
   label: string;
   mode: "custom" | "opaque";
   capabilities?: InferenceBackendCapabilities;
+  brokerSelection?: InferenceBackendBrokerSelection;
+}
+
+export interface InferenceBackendBrokerSelection {
+  backendId: string;
+  modelId: string;
+  productionRole: string;
+  deployReadyCandidate: boolean;
+  reason: string;
+  fallbackChain: string[];
+  proofRequirements: string[];
 }
 
 export interface InferenceBackendCapabilities {

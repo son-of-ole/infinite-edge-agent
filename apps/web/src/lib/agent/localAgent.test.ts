@@ -165,6 +165,59 @@ describe("LocalAgent scoped transcript deletion", () => {
     });
   });
 
+  it("persists Backend Broker selection evidence in runtime traces", async () => {
+    const runtimeWrites: unknown[] = [];
+    const memory = {
+      ...makeContextTraceMemoryStore(),
+      writeRuntimeTrace: vi.fn(async (trace) => {
+        runtimeWrites.push(trace);
+      }),
+    };
+    const llm = {
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      streamChat: vi.fn(async function* () {
+        yield "ok";
+      }),
+    } as unknown as ChatClient;
+    const brokerSelection = {
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate",
+      deployReadyCandidate: true,
+      reason: "compiled_first_grounded_answer",
+      fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+      proofRequirements: ["memory_grounding", "backend_trace"],
+    };
+    const agent = makeAgent("session_1", {
+      memory,
+      llm,
+      backendProfile: {
+        id: "compiled-browser-webllm",
+        label: "Compiled Browser WebLLM Backend",
+        mode: "custom",
+        brokerSelection,
+      },
+    });
+
+    const message = await agent.submitUserMessage("hello");
+
+    expect(message.metadata?.runtime).toMatchObject({
+      backend: {
+        brokerSelection,
+      },
+    });
+    expect(runtimeWrites).toEqual([
+      expect.objectContaining({
+        runtime: expect.objectContaining({
+          backend: expect.objectContaining({
+            brokerSelection,
+          }),
+        }),
+      }),
+    ]);
+  });
+
   it("attaches generation decode proof to assistant metadata and persisted runtime trace after streaming", async () => {
     const runtimeWrites: unknown[] = [];
     const decodeProof = {
@@ -637,9 +690,10 @@ function makeAgent(sessionId: string, overrides: Partial<LocalAgentDepsForTest> 
       ramBudgetBytes: 1024
     },
     backendProfile: {
-      id: "test",
-      label: "Test",
-      mode: "custom"
+      id: overrides.backendProfile?.id ?? "test",
+      label: overrides.backendProfile?.label ?? "Test",
+      mode: overrides.backendProfile?.mode ?? "custom",
+      ...(overrides.backendProfile?.brokerSelection ? { brokerSelection: overrides.backendProfile.brokerSelection } : {}),
     },
     memoryMode: "indexeddb"
   });
@@ -651,6 +705,7 @@ interface LocalAgentDepsForTest {
   memory: MemoryStore;
   tenantId: string;
   cellId: string;
+  backendProfile: ConstructorParameters<typeof LocalAgent>[0]["backendProfile"];
 }
 
 function setTranscript(agent: LocalAgent, messages: ReturnType<typeof makeMessage>[]): void {

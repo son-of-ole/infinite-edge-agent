@@ -4,7 +4,12 @@ import {
   type AgentRuntimeConfig,
   type MemoryProviderMode
 } from "@infinite-edge-agent/core";
-import type { AdvancedRuntimeModelProfile, DeviceProfile, InferenceBackendProfile } from "@infinite-edge-agent/core";
+import type {
+  AdvancedRuntimeModelProfile,
+  DeviceProfile,
+  InferenceBackendBrokerSelection,
+  InferenceBackendProfile,
+} from "@infinite-edge-agent/core";
 import {
   resolveUnlockedRuntimeProfile,
   type UnlockedRuntimeCaps,
@@ -413,12 +418,16 @@ export function makeModelProfile(modelId: string): AdvancedRuntimeModelProfile {
   return { ...QWEN3_0_6B_PROFILE, modelId };
 }
 
-export function makeBackendProfile(backend: string): InferenceBackendProfile {
+export function makeBackendProfile(
+  backend: string,
+  brokerSelection?: InferenceBackendBrokerSelection,
+): InferenceBackendProfile {
   if (backend === "compiled-browser-webllm") {
     return {
       id: "compiled-browser-webllm",
       label: "Compiled Browser WebLLM Backend",
       mode: "custom",
+      ...(brokerSelection ? { brokerSelection } : {}),
       capabilities: {
         qkvAccess: false,
         layerSparseRouting: false,
@@ -434,6 +443,7 @@ export function makeBackendProfile(backend: string): InferenceBackendProfile {
       id: "unlocked-browser-transformer",
       label: "Custom WebGPU Kernel Lab",
       mode: "custom",
+      ...(brokerSelection ? { brokerSelection } : {}),
       capabilities: {
         qkvAccess: true,
         layerSparseRouting: true,
@@ -448,6 +458,7 @@ export function makeBackendProfile(backend: string): InferenceBackendProfile {
     id: backend,
     label: "Unsupported opaque inference backend",
     mode: "custom",
+    ...(brokerSelection ? { brokerSelection } : {}),
     capabilities: {
       qkvAccess: false,
       layerSparseRouting: false,

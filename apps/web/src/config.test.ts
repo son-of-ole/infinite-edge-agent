@@ -77,6 +77,23 @@ describe("backend profile resolution", () => {
       }),
     });
   });
+
+  it("records the Backend Broker selection inside the backend profile for runtime traces", () => {
+    const brokerSelection = {
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate",
+      deployReadyCandidate: true,
+      reason: "compiled_first_grounded_answer",
+      fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+      proofRequirements: ["memory_grounding", "backend_trace"],
+    };
+
+    expect(makeBackendProfile("compiled-browser-webllm", brokerSelection)).toMatchObject({
+      id: "compiled-browser-webllm",
+      brokerSelection,
+    });
+  });
 });
 
 describe("compiled WebLLM adapter config", () => {
