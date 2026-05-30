@@ -132,6 +132,8 @@ pnpm eval:repository-publication
 
 This writes `.artifacts/evals/repository-publication-status-latest.json`. It passes when the local `main` is either published to `origin/main` or, if local commits are still ahead because network publishing is unavailable, a verified exact-history Git bundle contains the current head. This is a handoff/status artifact only; a bundle-ready state is not the same as the GitHub repository being published.
 
+Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should require and summarize that source publication status artifact.
+
 For strict production archive proof, run:
 
 ```bash

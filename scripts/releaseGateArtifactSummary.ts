@@ -141,6 +141,27 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     for (const key of repositoryReadinessFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];
     }
+    const repositoryPublicationFields = [
+      "repositoryPublicationPassed",
+      "repositoryPublicationPublished",
+      "repositoryPublicationBundleHandoffReady",
+      "repositoryPublicationBranch",
+      "repositoryPublicationHeadSha",
+      "repositoryPublicationUpstream",
+      "repositoryPublicationRemoteUrl",
+      "repositoryPublicationExpectedRemoteUrl",
+      "repositoryPublicationRemoteMatches",
+      "repositoryPublicationAheadCount",
+      "repositoryPublicationBehindCount",
+      "repositoryPublicationDirty",
+      "repositoryPublicationBundleCount",
+      "repositoryPublicationAheadBundleVerified",
+      "repositoryPublicationFullBundleVerified",
+      "repositoryPublicationBlockerCount",
+    ] as const;
+    for (const key of repositoryPublicationFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const v12ProductionArchiveFields = [
       "v12ProductionArchivePassed",
       "v12ProductionBlockerCount",

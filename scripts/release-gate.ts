@@ -47,6 +47,7 @@ const requireV12ReadinessBundle = requireHostedProfile || releaseGateEnv.RELEASE
 const requireV12ReadinessSuite = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_SUITE === "true";
 const requireHostedBenchmarkProof = releaseGateEnv.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
 const requireV12ProductionArchive = releaseGateEnv.RELEASE_REQUIRE_V12_PRODUCTION === "true";
+const requireRepositoryPublication = releaseGateEnv.RELEASE_REQUIRE_REPOSITORY_PUBLICATION === "true";
 
 const steps: GateStep[] = [];
 
@@ -73,6 +74,9 @@ await runGate(
 await runGate("Qwen parity accuracy", ["run", "eval:qwen-parity"], undefined, isolateDeployRuntimeEnvIfUnconfigured(qwenParityEnv));
 await runGate("production eval", ["run", "eval:production"], undefined, makeProductionEvalEnvOverrides(releaseGateEnv));
 await runGate("repository readiness", ["run", "verify:repository"]);
+if (requireRepositoryPublication) {
+  await runGate("repository publication status", ["run", "eval:repository-publication"]);
+}
 if (requireHostedProfile) {
   await runGate("hosted deployment profile", ["run", "verify:hosted-profile"]);
 }
@@ -205,6 +209,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
     ["unlocked-verify", join(childArtifactRoot, "unlocked-verify-latest.json")],
     ["production-readiness", join(childArtifactRoot, "production-latest.json")],
     ["repository-readiness", join(childArtifactRoot, "repository-readiness-latest.json")],
+    ...(requireRepositoryPublication
+      ? [["repository-publication-status", join(childArtifactRoot, "repository-publication-status-latest.json")] as const]
+      : []),
     ...(requireHostedProfile
       ? [["hosted-deployment-profile", join(childArtifactRoot, "hosted-deployment-profile-latest.json")] as const]
       : []),

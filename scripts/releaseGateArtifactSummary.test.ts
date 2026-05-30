@@ -450,6 +450,32 @@ describe("release gate artifact summary", () => {
     });
   });
 
+  it("keeps repository publication status visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        repositoryPublicationPassed: true,
+        repositoryPublicationPublished: false,
+        repositoryPublicationBundleHandoffReady: true,
+        repositoryPublicationHeadSha: "abc123",
+        repositoryPublicationAheadCount: 79,
+        repositoryPublicationBehindCount: 0,
+        repositoryPublicationDirty: false,
+        repositoryPublicationAheadBundleVerified: true,
+        repositoryPublicationFullBundleVerified: true,
+      },
+    })).toMatchObject({
+      repositoryPublicationPassed: true,
+      repositoryPublicationPublished: false,
+      repositoryPublicationBundleHandoffReady: true,
+      repositoryPublicationHeadSha: "abc123",
+      repositoryPublicationAheadCount: 79,
+      repositoryPublicationBehindCount: 0,
+      repositoryPublicationDirty: false,
+      repositoryPublicationAheadBundleVerified: true,
+      repositoryPublicationFullBundleVerified: true,
+    });
+  });
+
   it("keeps unlocked WebGPU coverage visible in release gate latest summaries", () => {
     expect(summarizeReleaseGateArtifact({
       requestedBackendPreference: "webgpu",
