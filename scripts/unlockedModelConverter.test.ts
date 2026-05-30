@@ -639,7 +639,10 @@ function runCli(command: string[], extraEnv: Record<string, string> = {}): Promi
     delete env.VITE_UNLOCKED_MODEL_ALLOW_FIXTURE;
     env.EVAL_ARTIFACT_DIR = mkdtempSync(resolve(tmpdir(), "unlocked-verify-test-artifacts-"));
     Object.assign(env, extraEnv);
-    const child = spawn(command[0], command.slice(1), {
+    const childCommand = command[0].endsWith("/node_modules/.bin/tsx")
+      ? [process.execPath, "--import", "tsx", ...command.slice(1)]
+      : command;
+    const child = spawn(childCommand[0], childCommand.slice(1), {
       cwd: resolve(fileURLToPath(new URL("..", import.meta.url))),
       env,
       stdio: ["ignore", "pipe", "pipe"],

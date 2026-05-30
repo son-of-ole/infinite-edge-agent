@@ -10,7 +10,10 @@ export interface ReleaseGateLatestArtifactStatusInput {
   summary?: Record<string, number | string | boolean | null>;
 }
 
-export type ReleaseGateProofMode = "production-strict-browser-runtime" | "development-fixture-or-unconfigured";
+export type ReleaseGateProofMode =
+  | "production-strict-browser-runtime"
+  | "production-v12-compiled-browser-runtime"
+  | "development-fixture-or-unconfigured";
 
 export function classifyReleaseGateProof(input: {
   passed: boolean;
@@ -24,9 +27,11 @@ export function classifyReleaseGateProof(input: {
 }): {
   proofMode: ReleaseGateProofMode;
   productionReleaseProof: boolean;
+  backendSpecificProductionProof: boolean;
   groundedAnswerQualityBrowserProof: boolean;
   cappedTechnicalSpeedProof: boolean;
   deployReadySpeedQualityProof: boolean;
+  v12ProductionArchiveProof: boolean;
   strictEnv: Record<string, boolean | string | null>;
 } {
   const strictUnlockedModel = input.strictUnlockedModel === true;
@@ -48,12 +53,22 @@ export function classifyReleaseGateProof(input: {
   const deployReadySpeedQualityProof = productionConfigured
     && input.passed
     && (!hasArtifactContext || strictUnlockedArtifactsPassed(input.latestArtifacts ?? []));
+  const v12ProductionArchive = input.latestArtifacts?.find((artifact) => artifact.name === "v12-production-archive");
+  const v12ProductionArchiveProof = input.passed && v12ProductionArchiveProofPassed(v12ProductionArchive);
+  const backendSpecificProductionProof = deployReadySpeedQualityProof || v12ProductionArchiveProof;
+  const proofMode: ReleaseGateProofMode = v12ProductionArchiveProof
+    ? "production-v12-compiled-browser-runtime"
+    : productionConfigured
+      ? "production-strict-browser-runtime"
+      : "development-fixture-or-unconfigured";
   return {
-    proofMode: productionConfigured ? "production-strict-browser-runtime" : "development-fixture-or-unconfigured",
-    productionReleaseProof: deployReadySpeedQualityProof,
+    proofMode,
+    productionReleaseProof: backendSpecificProductionProof,
+    backendSpecificProductionProof,
     groundedAnswerQualityBrowserProof,
-    cappedTechnicalSpeedProof: technicalSpeedProof && !deployReadySpeedQualityProof,
+    cappedTechnicalSpeedProof: technicalSpeedProof && !backendSpecificProductionProof,
     deployReadySpeedQualityProof,
+    v12ProductionArchiveProof,
     strictEnv: {
       RELEASE_REQUIRE_UNLOCKED_MODEL: strictUnlockedModel,
       RELEASE_REQUIRE_BROWSER_PREVIEW_PROOF: requireBrowserPreviewProof,
@@ -63,6 +78,20 @@ export function classifyReleaseGateProof(input: {
       VITE_UNLOCKED_MODEL_MANIFEST_SHA256: input.manifestSha256 ? "present" : null,
     },
   };
+}
+
+function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStatusInput | undefined): boolean {
+  return artifact?.passed === true
+    && artifact.summary?.v12ProductionArchivePassed === true
+    && Number(artifact.summary?.v12ProductionBlockerCount ?? 1) === 0
+    && artifact.summary?.v12ProductionSuitePassed === true
+    && artifact.summary?.v12ProductionDeployBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionKernelLabBackendId === "unlocked-browser-transformer"
+    && artifact.summary?.v12ProductionHostedBenchmarkProofRequired === true
+    && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
+    && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7
+    && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 6
+    && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 5;
 }
 
 export function computeReleaseGatePassed(input: {

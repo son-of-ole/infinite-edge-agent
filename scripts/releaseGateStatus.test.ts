@@ -184,6 +184,77 @@ describe("release gate status", () => {
     });
   });
 
+  it("classifies strict v12 production archives as backend-specific production proof", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: null,
+      manifestSha256: null,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: {
+            v12ProductionArchivePassed: true,
+            v12ProductionBlockerCount: 0,
+            v12ProductionSuitePassed: true,
+            v12ProductionDeployBackendId: "compiled-browser-webllm",
+            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+            v12ProductionHostedBenchmarkProofRequired: true,
+            v12ProductionHostedBenchmarkProofPassed: true,
+            v12ProductionArtifactCount: 7,
+            v12ProductionSuiteArtifactCount: 6,
+            v12ProductionChildArtifactCount: 5,
+          },
+        },
+      ],
+    })).toMatchObject({
+      proofMode: "production-v12-compiled-browser-runtime",
+      productionReleaseProof: true,
+      backendSpecificProductionProof: true,
+      v12ProductionArchiveProof: true,
+      deployReadySpeedQualityProof: false,
+    });
+  });
+
+  it("does not classify incomplete v12 production archives as production proof", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: null,
+      manifestSha256: null,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: {
+            v12ProductionArchivePassed: true,
+            v12ProductionBlockerCount: 0,
+            v12ProductionSuitePassed: true,
+            v12ProductionDeployBackendId: "compiled-browser-webllm",
+            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+            v12ProductionHostedBenchmarkProofRequired: false,
+            v12ProductionHostedBenchmarkProofPassed: true,
+            v12ProductionArtifactCount: 7,
+            v12ProductionSuiteArtifactCount: 6,
+            v12ProductionChildArtifactCount: 5,
+          },
+        },
+      ],
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      backendSpecificProductionProof: false,
+      v12ProductionArchiveProof: false,
+    });
+  });
+
   it("fails strict unlocked model releases when installed parity still uses candidate logits", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],

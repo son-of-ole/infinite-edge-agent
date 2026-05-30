@@ -239,9 +239,11 @@ function buildSummary(results: typeof release): string {
 - Passed: ${results.passed}
 - Proof mode: ${results.proofMode}
 - Production release proof: ${results.productionReleaseProof}
+- Backend-specific production proof: ${results.backendSpecificProductionProof}
 - Grounded answer quality browser proof: ${results.groundedAnswerQualityBrowserProof}
 - Capped technical speed proof: ${results.cappedTechnicalSpeedProof}
 - Deploy-ready speed+quality proof: ${results.deployReadySpeedQualityProof}
+- V12 production archive proof: ${results.v12ProductionArchiveProof}
 - Invocation: \`${results.invocation}\`
 
 ## Steps
