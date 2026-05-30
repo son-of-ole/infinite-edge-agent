@@ -136,6 +136,14 @@ pnpm eval:backend-readiness
 
 That writes `.artifacts/evals/backend-readiness-matrix-latest.json`, marking `compiled-browser-webllm` as the deploy candidate only when hosted profile proof passes and keeping `unlocked-browser-transformer` recorded as the research Kernel Lab. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this matrix automatically; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it without the full hosted profile flag.
 
+Shared memory/context runtime proof is captured by:
+
+```bash
+pnpm eval:shared-runtime
+```
+
+That writes `.artifacts/evals/shared-runtime-readiness-latest.json`, recording that retrieval, context rebuild, context-pack traces, runtime traces, and backend profile routing are above the backend boundary. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this proof automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
+
 Before shipping a hosted embed, verify app and model URLs behave like assets instead of falling back to HTML:
 
 ```bash

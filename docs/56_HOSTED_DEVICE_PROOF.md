@@ -103,6 +103,14 @@ pnpm eval:backend-readiness
 
 It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. This is the artifact that prevents Kernel Lab proof from being mixed into the compiled backend deploy claim.
 
+The shared runtime proof is written by:
+
+```bash
+pnpm eval:shared-runtime
+```
+
+It records that memory providers, retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the backend boundary. This is the artifact that prevents the compiled backend and Kernel Lab from becoming separate product runtimes.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

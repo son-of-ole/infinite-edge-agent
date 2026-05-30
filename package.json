@@ -33,6 +33,7 @@
     "eval:qwen-parity": "tsx scripts/qwenParityAccuracy.ts",
     "eval:production": "tsx scripts/eval-production.ts",
     "eval:backend-readiness": "node --import tsx scripts/backendReadinessMatrix.ts",
+    "eval:shared-runtime": "node --import tsx scripts/sharedRuntimeReadiness.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",
     "release:gate": "tsx scripts/release-gate.ts"
   },

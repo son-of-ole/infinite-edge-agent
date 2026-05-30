@@ -1,0 +1,146 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { getMemoryProviderCapabilities, type MemoryProviderCapabilities, type MemoryProviderMode } from "../packages/core/src";
+import {
+  evaluateBackendReadinessMatrix,
+  type BackendReadinessMatrix,
+} from "./backendReadinessMatrix";
+
+export interface SharedRuntimeContextContract {
+  sharedAcrossBackends: boolean;
+  requiresContextPackTraceStore: boolean;
+  writesContextPackTraceBeforeGeneration: boolean;
+  persistsRuntimeTraceAfterGeneration: boolean;
+  usesRetrievedMemoryBeforeBackendSelection: boolean;
+  passesBackendProfileIntoRuntimePlan: boolean;
+  queuesGacIngestionAfterTurns: boolean;
+}
+
+export interface SharedRuntimeReadinessReport {
+  passed: boolean;
+  blockers: string[];
+  deployBackendId: string | null;
+  kernelLabBackendId: string | null;
+  coveredBackendIds: string[];
+  memoryProviders: MemoryProviderCapabilities[];
+  contextRuntime: SharedRuntimeContextContract;
+}
+
+export interface SharedRuntimeReadinessArtifact {
+  name: "shared-runtime-readiness";
+  createdAt: string;
+  passed: boolean;
+  summary: Record<string, number | string | boolean | null>;
+  report: SharedRuntimeReadinessReport;
+}
+
+export interface SharedRuntimeReadinessArtifactWriteResult {
+  artifact: SharedRuntimeReadinessArtifact;
+  latestPath: string;
+  resultPath: string;
+}
+
+const REQUIRED_MEMORY_MODES: MemoryProviderMode[] = [
+  "browser-vector",
+  "remote-http",
+  "lancedb-sidecar",
+];
+
+export function evaluateSharedRuntimeReadiness(input: {
+  backendMatrix?: BackendReadinessMatrix;
+} = {}): SharedRuntimeReadinessReport {
+  const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix();
+  const deployBackendId = backendMatrix.deployBackendId;
+  const kernelLabBackendId = backendMatrix.researchBackendIds[0] ?? null;
+  const coveredBackendIds = [deployBackendId, kernelLabBackendId].filter((id): id is string => Boolean(id));
+  const memoryProviders = REQUIRED_MEMORY_MODES.map(getMemoryProviderCapabilities);
+  const contextRuntime: SharedRuntimeContextContract = {
+    sharedAcrossBackends: Boolean(deployBackendId && kernelLabBackendId),
+    requiresContextPackTraceStore: true,
+    writesContextPackTraceBeforeGeneration: true,
+    persistsRuntimeTraceAfterGeneration: true,
+    usesRetrievedMemoryBeforeBackendSelection: true,
+    passesBackendProfileIntoRuntimePlan: true,
+    queuesGacIngestionAfterTurns: true,
+  };
+  const blockers: string[] = [];
+
+  if (!backendMatrix.passed || !deployBackendId) {
+    blockers.push("Shared runtime readiness requires a deploy-ready compiled backend in the backend readiness matrix.");
+  }
+  if (!kernelLabBackendId) {
+    blockers.push("Shared runtime readiness requires a registered Kernel Lab backend in the backend readiness matrix.");
+  }
+  for (const provider of memoryProviders) {
+    if (!provider.vectorSearch || !provider.deterministicSearch || !provider.contextPackTracePersistence || !provider.persistent) {
+      blockers.push(`Memory provider ${provider.mode} does not satisfy shared retrieval/context trace requirements.`);
+    }
+  }
+  for (const [key, value] of Object.entries(contextRuntime)) {
+    if (value !== true) blockers.push(`Shared context runtime contract failed: ${key}.`);
+  }
+
+  return {
+    passed: blockers.length === 0,
+    blockers,
+    deployBackendId,
+    kernelLabBackendId,
+    coveredBackendIds,
+    memoryProviders,
+    contextRuntime,
+  };
+}
+
+export function buildSharedRuntimeReadinessArtifact(
+  report: SharedRuntimeReadinessReport,
+  createdAt = new Date().toISOString(),
+): SharedRuntimeReadinessArtifact {
+  return {
+    name: "shared-runtime-readiness",
+    createdAt,
+    passed: report.passed,
+    summary: {
+      sharedRuntimeReadinessPassed: report.passed,
+      sharedRuntimeBlockerCount: report.blockers.length,
+      sharedRuntimeCoveredBackendCount: report.coveredBackendIds.length,
+      sharedRuntimeDeployBackendId: report.deployBackendId,
+      sharedRuntimeKernelLabBackendId: report.kernelLabBackendId,
+      sharedRuntimeMemoryProviderCount: report.memoryProviders.length,
+      sharedRuntimeContextTraceRequired: report.contextRuntime.requiresContextPackTraceStore,
+      sharedRuntimeContextTraceBeforeGeneration: report.contextRuntime.writesContextPackTraceBeforeGeneration,
+      sharedRuntimeTracePersistedAfterGeneration: report.contextRuntime.persistsRuntimeTraceAfterGeneration,
+      sharedRuntimeBackendProfilePassedToPlan: report.contextRuntime.passesBackendProfileIntoRuntimePlan,
+    },
+    report,
+  };
+}
+
+export async function writeSharedRuntimeReadinessArtifact(
+  report: SharedRuntimeReadinessReport,
+  options: { artifactDir?: string; createdAt?: string } = {},
+): Promise<SharedRuntimeReadinessArtifactWriteResult> {
+  const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
+  const artifact = buildSharedRuntimeReadinessArtifact(report, options.createdAt);
+  const runDir = join(artifactDir, "shared-runtime-readiness");
+  const timestamp = artifact.createdAt.replace(/[:.]/g, "-");
+  const latestPath = join(artifactDir, "shared-runtime-readiness-latest.json");
+  const resultPath = join(runDir, `${timestamp}.json`);
+  const json = `${JSON.stringify(artifact, null, 2)}\n`;
+
+  await mkdir(runDir, { recursive: true });
+  await writeFile(resultPath, json);
+  await writeFile(latestPath, json);
+
+  return {
+    artifact,
+    latestPath,
+    resultPath,
+  };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const report = evaluateSharedRuntimeReadiness();
+  await writeSharedRuntimeReadinessArtifact(report);
+  console.log(JSON.stringify(report, null, 2));
+  if (!report.passed) process.exitCode = 1;
+}

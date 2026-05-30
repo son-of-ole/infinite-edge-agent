@@ -132,6 +132,21 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const sharedRuntimeFields = [
+      "sharedRuntimeReadinessPassed",
+      "sharedRuntimeBlockerCount",
+      "sharedRuntimeCoveredBackendCount",
+      "sharedRuntimeDeployBackendId",
+      "sharedRuntimeKernelLabBackendId",
+      "sharedRuntimeMemoryProviderCount",
+      "sharedRuntimeContextTraceRequired",
+      "sharedRuntimeContextTraceBeforeGeneration",
+      "sharedRuntimeTracePersistedAfterGeneration",
+      "sharedRuntimeBackendProfilePassedToPlan",
+    ] as const;
+    for (const key of sharedRuntimeFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const backendReadinessFields = [
       "backendReadinessMatrixPassed",
       "backendReadinessBlockerCount",

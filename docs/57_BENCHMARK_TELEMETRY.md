@@ -194,6 +194,8 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:backend-readiness` writes `.artifacts/evals/backend-readiness-matrix-latest.json`. The matrix links the hosted profile proof to the compiled backend and keeps the custom WebGPU runtime recorded as Kernel Lab instead of production answer proof.
 
+`pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`. That proof keeps benchmark telemetry tied to the shared memory/context runtime instead of treating each backend as a separate product lane.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:

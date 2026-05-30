@@ -41,6 +41,7 @@ const releaseGateDefaultEnv = makeReleaseGateDefaultEnvOverrides(process.env);
 const releaseGateEnv = { ...process.env, ...releaseGateDefaultEnv };
 const requireHostedProfile = releaseGateEnv.RELEASE_REQUIRE_HOSTED_PROFILE === "true";
 const requireBackendReadinessMatrix = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_BACKEND_READINESS_MATRIX === "true";
+const requireSharedRuntimeReadiness = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_SHARED_RUNTIME_READINESS === "true";
 
 const steps: GateStep[] = [];
 
@@ -68,6 +69,9 @@ if (requireHostedProfile) {
 }
 if (requireBackendReadinessMatrix) {
   await runGate("backend readiness matrix", ["run", "eval:backend-readiness"]);
+}
+if (requireSharedRuntimeReadiness) {
+  await runGate("shared runtime readiness", ["run", "eval:shared-runtime"]);
 }
 await runGate("build", ["run", "build"]);
 await runGate("web dist size", ["run", "check:web-dist"]);
@@ -171,6 +175,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
       : []),
     ...(requireBackendReadinessMatrix
       ? [["backend-readiness-matrix", join(childArtifactRoot, "backend-readiness-matrix-latest.json")] as const]
+      : []),
+    ...(requireSharedRuntimeReadiness
+      ? [["shared-runtime-readiness", join(childArtifactRoot, "shared-runtime-readiness-latest.json")] as const]
       : []),
   ] as const;
   const artifacts: LatestArtifact[] = [];

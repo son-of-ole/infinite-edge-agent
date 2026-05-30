@@ -102,6 +102,8 @@ RELEASE_REQUIRE_HOSTED_PROFILE=true pnpm release:gate
 
 The hosted profile flag also runs `pnpm eval:backend-readiness` and includes `.artifacts/evals/backend-readiness-matrix-latest.json`, which records `compiled-browser-webllm` as the deploy-ready backend only when the hosted proof passes and records `unlocked-browser-transformer` as Kernel Lab/research-only. Use `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` to require that matrix independently.
 
+It also runs `pnpm eval:shared-runtime` and includes `.artifacts/evals/shared-runtime-readiness-latest.json`, which records that memory retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the model backend. Use `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` to require that proof independently.
+
 ## 8. Final manual checks
 
 - Browser-smoke the target deployment in Chrome or Edge: initialize one configured backend, send a prompt, retrieve memory, export memory, clear memory, confirm runtime traces persist, and confirm the browser-preview benchmark route returns `passed: true` for non-degenerate visible output.
