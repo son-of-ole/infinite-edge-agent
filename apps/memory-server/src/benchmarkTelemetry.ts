@@ -171,6 +171,24 @@ export function registerBenchmarkTelemetryRoutes(
     }
   });
 
+  app.get(`${prefix}/dashboard`, async (request, reply) => {
+    const limit = readQueryLimit(request);
+    const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
+    const summary = summarizeBenchmarkTelemetryRuns(runs);
+    return reply
+      .type("text/html; charset=utf-8")
+      .send(renderBenchmarkTelemetryDashboard(runs, summary));
+  });
+
+  app.get(`${prefix}/export.csv`, async (request, reply) => {
+    const limit = readQueryLimit(request);
+    const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
+    return reply
+      .header("content-disposition", "attachment; filename=\"benchmark-runs.csv\"")
+      .type("text/csv; charset=utf-8")
+      .send(renderBenchmarkTelemetryCsv(runs));
+  });
+
   app.get(prefix, async (request) => {
     const limit = readQueryLimit(request);
     return { runs: await store.list({ ...(limit !== undefined ? { limit } : {}) }) };
@@ -231,6 +249,125 @@ function sanitizeBenchmarkArtifactJson(value: unknown): unknown {
   return sanitized;
 }
 
+function renderBenchmarkTelemetryDashboard(
+  runs: readonly StoredBenchmarkTelemetryRun[],
+  summary: BenchmarkTelemetrySummary
+): string {
+  const rows = runs.map((run) => `
+      <tr>
+        <td>${escapeHtml(run.receivedAt)}</td>
+        <td>${escapeHtml(run.backendId ?? "unknown")}</td>
+        <td>${escapeHtml(run.modelId ?? "unknown")}</td>
+        <td>${escapeHtml(run.device.os)}</td>
+        <td>${escapeHtml(run.device.browserName)}</td>
+        <td>${formatMetric(run.summary.tokensPerSecond)}</td>
+        <td>${formatBoolean(run.summary.memoryGroundingPassed)}</td>
+        <td>${formatBoolean(run.summary.expectedExactPassed)}</td>
+        <td>${formatBoolean(run.summary.productionDeployReadyPassed)}</td>
+      </tr>`).join("");
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Infinite Edge Agent Benchmark Runs</title>
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; color: #111827; background: #f8fafc; }
+      main { max-width: 1180px; margin: 0 auto; }
+      h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+      .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; margin: 1.5rem 0; }
+      .metric { border: 1px solid #d1d5db; border-radius: 8px; padding: 0.875rem; background: white; }
+      .metric strong { display: block; font-size: 1.35rem; margin-top: 0.25rem; }
+      table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #d1d5db; }
+      th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: 0.65rem; font-size: 0.9rem; }
+      th { background: #f3f4f6; }
+      a { color: #075985; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Infinite Edge Agent Benchmark Runs</h1>
+      <p>Sanitized hosted browser benchmark telemetry. Raw prompts, responses, expected answers, token diagnostics, and user agents are not rendered here.</p>
+      <p><a href="./export.csv">Download CSV</a></p>
+      <section class="summary">
+        <div class="metric">Runs<strong>${summary.count}</strong></div>
+        <div class="metric">Mean tokens/sec<strong>${formatMetric(summary.meanTokensPerSecond)}</strong></div>
+        <div class="metric">WebGPU available<strong>${summary.webgpuAvailableCount}</strong></div>
+        <div class="metric">Deploy-ready runs<strong>${summary.productionDeployReadyCount}</strong></div>
+      </section>
+      <table>
+        <thead>
+          <tr>
+            <th>Received</th>
+            <th>Backend</th>
+            <th>Model</th>
+            <th>OS</th>
+            <th>Browser</th>
+            <th>Tok/s</th>
+            <th>Memory</th>
+            <th>Exact</th>
+            <th>Deploy</th>
+          </tr>
+        </thead>
+        <tbody>${rows || "<tr><td colspan=\"9\">No benchmark runs saved yet.</td></tr>"}</tbody>
+      </table>
+    </main>
+  </body>
+</html>`;
+}
+
+function renderBenchmarkTelemetryCsv(runs: readonly StoredBenchmarkTelemetryRun[]): string {
+  const header = [
+    "run_id",
+    "received_at",
+    "created_at",
+    "backend_id",
+    "model_id",
+    "app_version",
+    "git_sha",
+    "deploy_url",
+    "os",
+    "browser_name",
+    "browser_version",
+    "mobile",
+    "hardware_concurrency",
+    "device_memory_gb",
+    "webgpu_available",
+    "tokens_per_second",
+    "time_to_first_token_ms",
+    "init_load_ms",
+    "memory_grounding_passed",
+    "expected_exact_passed",
+    "compiled_backend_ready_passed",
+    "production_deploy_ready_passed"
+  ];
+  const rows = runs.map((run) => [
+    run.runId,
+    run.receivedAt,
+    run.createdAt,
+    run.backendId,
+    run.modelId,
+    run.appVersion,
+    run.gitSha,
+    run.deployUrl,
+    run.device.os,
+    run.device.browserName,
+    run.device.browserVersion,
+    run.device.mobile,
+    run.device.hardwareConcurrency,
+    run.device.deviceMemoryGb,
+    run.device.webgpuAvailable,
+    run.summary.tokensPerSecond,
+    run.summary.timeToFirstTokenMs,
+    run.summary.initLoadMs,
+    run.summary.memoryGroundingPassed,
+    run.summary.expectedExactPassed,
+    run.summary.compiledBackendReadyPassed,
+    run.summary.productionDeployReadyPassed
+  ].map(csvCell).join(","));
+  return `${header.join(",")}\n${rows.join("\n")}${rows.length > 0 ? "\n" : ""}`;
+}
+
 function sendBenchmarkTelemetryError(error: unknown, reply: FastifyReply): FastifyReply {
   if (error instanceof BenchmarkTelemetryError) {
     return reply.status(error.statusCode).send({
@@ -278,6 +415,31 @@ function countBy(values: readonly string[]): Record<string, number> {
 
 function roundMetric(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+function formatMetric(value: number | null): string {
+  return value === null ? "n/a" : String(value);
+}
+
+function formatBoolean(value: boolean | null): string {
+  if (value === null) return "n/a";
+  return value ? "pass" : "fail";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  const text = String(value);
+  if (!/[",\n\r]/.test(text)) return text;
+  return `"${text.replaceAll("\"", "\"\"")}"`;
 }
 
 class BenchmarkTelemetryError extends Error {

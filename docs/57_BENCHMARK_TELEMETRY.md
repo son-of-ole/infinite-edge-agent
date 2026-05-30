@@ -23,6 +23,8 @@ The repo now includes an optional telemetry collector in `apps/memory-server`:
 - `POST /api/benchmark-runs` validates and stores one benchmark run.
 - `GET /api/benchmark-runs?limit=100` lists recent runs.
 - `GET /api/benchmark-runs/summary` returns small aggregate counts.
+- `GET /api/benchmark-runs/dashboard` renders a minimal sanitized dashboard.
+- `GET /api/benchmark-runs/export.csv` exports sanitized run metadata for spreadsheet analysis.
 
 Enable it with:
 
@@ -33,7 +35,7 @@ BENCHMARK_TELEMETRY_DIR=.data/benchmark-runs
 BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES=1048576
 ```
 
-The included collector is JSONL-backed so it works in local development and simple hosted environments without adding another service. The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path.
+The included collector is JSONL-backed so it works in local development and simple hosted environments without adding another service. The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path. The dashboard and CSV export intentionally render only run metadata and pass/fail/speed fields, not prompt or response text.
 
 ## Recommended Durable Storage
 

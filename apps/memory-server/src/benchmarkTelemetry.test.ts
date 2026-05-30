@@ -78,6 +78,44 @@ describe("benchmark telemetry server", () => {
     await app.close();
   });
 
+  it("exports dashboard HTML and CSV rows for hosted benchmark review", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "edge-ai-benchmark-telemetry-export-"));
+    const app = Fastify();
+    registerBenchmarkTelemetryRoutes(app, {
+      enabled: true,
+      prefix: "/api/benchmark-runs",
+      dir,
+      maxArtifactBytes: 64_000
+    });
+
+    await app.inject({
+      method: "POST",
+      url: "/api/benchmark-runs",
+      payload: makePayload()
+    });
+
+    const dashboard = await app.inject({ method: "GET", url: "/api/benchmark-runs/dashboard" });
+    expect(dashboard.statusCode).toBe(200);
+    expect(dashboard.headers["content-type"]).toContain("text/html");
+    expect(dashboard.body).toContain("Infinite Edge Agent Benchmark Runs");
+    expect(dashboard.body).toContain("compiled-browser-webllm");
+    expect(dashboard.body).toContain("8.25");
+    expect(dashboard.body).not.toContain("private benchmark prompt");
+    expect(dashboard.body).not.toContain("Helena");
+
+    const csv = await app.inject({ method: "GET", url: "/api/benchmark-runs/export.csv" });
+    expect(csv.statusCode).toBe(200);
+    expect(csv.headers["content-type"]).toContain("text/csv");
+    expect(csv.body).toContain("run_id,received_at,created_at,backend_id,model_id");
+    expect(csv.body).toContain("bench_test");
+    expect(csv.body).toContain("compiled-browser-webllm");
+    expect(csv.body).toContain("8.25");
+    expect(csv.body).not.toContain("private benchmark prompt");
+    expect(csv.body).not.toContain("Helena");
+
+    await app.close();
+  });
+
   it("does not register public telemetry routes unless explicitly enabled", async () => {
     const app = Fastify();
     registerBenchmarkTelemetryRoutes(app, {
