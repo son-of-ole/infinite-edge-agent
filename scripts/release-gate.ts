@@ -46,8 +46,9 @@ const requireSharedRuntimeReadiness = requireHostedProfile || releaseGateEnv.REL
 const requireV12ReadinessBundle = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_READINESS === "true";
 const requireV12ReadinessSuite = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_SUITE === "true";
 const requireHostedBenchmarkProof = releaseGateEnv.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
-const requireV12ProductionArchive = releaseGateEnv.RELEASE_REQUIRE_V12_PRODUCTION === "true";
-const requireRepositoryPublication = releaseGateEnv.RELEASE_REQUIRE_REPOSITORY_PUBLICATION === "true";
+const requireV12FinalStateStatus = releaseGateEnv.RELEASE_REQUIRE_V12_FINAL_STATE === "true";
+const requireV12ProductionArchive = requireV12FinalStateStatus || releaseGateEnv.RELEASE_REQUIRE_V12_PRODUCTION === "true";
+const requireRepositoryPublication = requireV12FinalStateStatus || releaseGateEnv.RELEASE_REQUIRE_REPOSITORY_PUBLICATION === "true";
 
 const steps: GateStep[] = [];
 
@@ -97,6 +98,9 @@ if (requireHostedBenchmarkProof) {
 }
 if (requireV12ProductionArchive) {
   await runGate("v12 production archive", ["run", "eval:v12-production"]);
+}
+if (requireV12FinalStateStatus) {
+  await runGate("v12 final state status", ["run", "eval:v12-final-state"]);
 }
 await runGate("build", ["run", "build"]);
 await runGate("web dist size", ["run", "check:web-dist"]);
@@ -232,6 +236,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
       : []),
     ...(requireV12ProductionArchive
       ? [["v12-production-archive", join(childArtifactRoot, "v12-production-archive-latest.json")] as const]
+      : []),
+    ...(requireV12FinalStateStatus
+      ? [["v12-final-state-status", join(childArtifactRoot, "v12-final-state-status-latest.json")] as const]
       : []),
   ] as const;
   const artifacts: LatestArtifact[] = [];

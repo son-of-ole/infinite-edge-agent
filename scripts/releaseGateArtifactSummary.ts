@@ -132,6 +132,34 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const v12FinalStateFields = [
+      "v12FinalStatePassed",
+      "v12FinalStateBlockerCount",
+      "v12FinalStateNextAction",
+      "v12FinalStateDeployBackendId",
+      "v12FinalStateKernelLabBackendId",
+      "v12FinalStateFallbackBackendId",
+      "v12FinalStateArchitectureReady",
+      "v12FinalStateSourcePublished",
+      "v12FinalStateExactHistoryHandoffReady",
+      "v12FinalStateHostedProductionArchivePassed",
+      "v12FinalStateHostedBenchmarkProofPassed",
+      "v12FinalStateHostedProofSourceBound",
+      "v12FinalStateBackendSpecificProductionEvidenceReady",
+      "v12FinalStateRequirementCount",
+      "v12FinalStatePassedRequirementCount",
+      "v12FinalStateRepositoryHeadSha",
+      "v12FinalStateRepositoryAheadCount",
+      "v12FinalStateRepositoryBehindCount",
+      "v12FinalStateRepositoryDirty",
+      "v12FinalStateProductionProofSourceGitSha",
+      "v12FinalStateProductionExpectedSourceGitSha",
+      "v12FinalStateProductionDeployUrl",
+      "v12FinalStateProductionMeanTokensPerSecond",
+    ] as const;
+    for (const key of v12FinalStateFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const repositoryReadinessFields = [
       "repositoryReadinessPassed",
       "repositoryReadinessBlockerCount",

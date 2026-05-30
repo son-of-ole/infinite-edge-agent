@@ -134,6 +134,14 @@ This writes `.artifacts/evals/repository-publication-status-latest.json`, `.arti
 
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should require and summarize that source publication status artifact.
 
+For final ship/no-ship status, run:
+
+```bash
+pnpm eval:v12-final-state
+```
+
+This writes `.artifacts/evals/v12-final-state-status-latest.json`. It passes only when the v12 architecture readiness bundle passes, source history is actually published to `origin/main`, and the source-bound hosted v12 production archive passes. A verified exact-history bundle handoff is reported as useful transfer evidence, but it does not count as source publication. Set `RELEASE_REQUIRE_V12_FINAL_STATE=true` when `pnpm release:gate` should require this final status artifact; this also causes the gate to require repository publication status and the v12 production archive.
+
 For strict production archive proof, run:
 
 ```bash

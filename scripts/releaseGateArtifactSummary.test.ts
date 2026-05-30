@@ -2,6 +2,45 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps v12 final-state fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        v12FinalStatePassed: true,
+        v12FinalStateBlockerCount: 0,
+        v12FinalStateNextAction: "ready",
+        v12FinalStateDeployBackendId: "compiled-browser-webllm",
+        v12FinalStateKernelLabBackendId: "unlocked-browser-transformer",
+        v12FinalStateFallbackBackendId: "wasm-small-core",
+        v12FinalStateArchitectureReady: true,
+        v12FinalStateSourcePublished: true,
+        v12FinalStateExactHistoryHandoffReady: true,
+        v12FinalStateHostedProductionArchivePassed: true,
+        v12FinalStateHostedBenchmarkProofPassed: true,
+        v12FinalStateHostedProofSourceBound: true,
+        v12FinalStateBackendSpecificProductionEvidenceReady: true,
+        v12FinalStateRequirementCount: 4,
+        v12FinalStatePassedRequirementCount: 4,
+        v12FinalStateRepositoryHeadSha: "abc123",
+        v12FinalStateRepositoryAheadCount: 0,
+        v12FinalStateRepositoryBehindCount: 0,
+        v12FinalStateRepositoryDirty: false,
+        v12FinalStateProductionProofSourceGitSha: "abc123",
+        v12FinalStateProductionExpectedSourceGitSha: "abc123",
+        v12FinalStateProductionDeployUrl: "https://agent.example.com",
+        v12FinalStateProductionMeanTokensPerSecond: 2.7,
+      },
+    })).toMatchObject({
+      v12FinalStatePassed: true,
+      v12FinalStateNextAction: "ready",
+      v12FinalStateDeployBackendId: "compiled-browser-webllm",
+      v12FinalStateKernelLabBackendId: "unlocked-browser-transformer",
+      v12FinalStateFallbackBackendId: "wasm-small-core",
+      v12FinalStateSourcePublished: true,
+      v12FinalStateHostedProofSourceBound: true,
+      v12FinalStateProductionMeanTokensPerSecond: 2.7,
+    });
+  });
+
   it("keeps repository readiness fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {

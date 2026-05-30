@@ -75,6 +75,7 @@ The repository is not claiming a new base model. The contribution is the runtime
 - Public benchmark direction: opt-in, sanitized, device/GPU-aware telemetry
 - Final-state archive: `pnpm eval:v12-suite`
 - Production archive: `pnpm eval:v12-production`
+- Final ship/no-ship status: `pnpm eval:v12-final-state`
 - Hosted runtime proof: `pnpm verify:hosted-benchmark-proof`
 - Source publication status: `pnpm eval:repository-publication`
 - Exact-history publication handoff: `pnpm handoff:repository-publication`

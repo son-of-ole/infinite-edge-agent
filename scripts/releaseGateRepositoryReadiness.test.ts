@@ -19,4 +19,12 @@ describe("release gate repository readiness wiring", () => {
     expect(source).toContain('await runGate("repository publication status", ["run", "eval:repository-publication"])');
     expect(source).toContain('["repository-publication-status", join(childArtifactRoot, "repository-publication-status-latest.json")]');
   });
+
+  it("can require the v12 final-state status as explicit release evidence", () => {
+    const source = readFileSync(releaseGateSource, "utf8");
+
+    expect(source).toContain('RELEASE_REQUIRE_V12_FINAL_STATE === "true"');
+    expect(source).toContain('await runGate("v12 final state status", ["run", "eval:v12-final-state"])');
+    expect(source).toContain('["v12-final-state-status", join(childArtifactRoot, "v12-final-state-status-latest.json")]');
+  });
 });

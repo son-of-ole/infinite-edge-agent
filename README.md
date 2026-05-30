@@ -157,6 +157,7 @@ pnpm eval:shared-runtime    # Write shared memory/context runtime readiness arti
 pnpm eval:v12-readiness     # Write combined v12 final-state readiness artifact
 pnpm eval:v12-production    # Write strict production archive requiring hosted benchmark proof
 pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
+pnpm eval:v12-final-state   # Verify architecture + GitHub publication + source-bound hosted proof together
 pnpm eval:repository-publication # Report pushed vs exact-history bundle handoff state
 pnpm handoff:repository-publication # Write exact-history publication handoff JSON and Markdown
 pnpm materialize:hosted-benchmark # Save pasted or URL-hosted browser proof JSON for CI/release gates
@@ -287,6 +288,8 @@ Hosted production benchmark URLs must use a public HTTPS origin. Localhost, loop
 
 `pnpm eval:v12-production` is the strict production archive command. It forces hosted benchmark proof on, writes the v12 suite and `.artifacts/evals/v12-production-archive-latest.json`, and fails if `HOSTED_BENCHMARK_ARTIFACT_PATH` is missing or invalid. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `release:gate` should require the final production archive; the release gate validates the archive's backend-specific proof fields, including proof schema version `2`, `compiled-browser-webllm` as deploy backend, `unlocked-browser-transformer` as Kernel Lab, `wasm-small-core` as fallback-only, role-boundary proof, model-registry alignment proof, required hosted benchmark proof, source-bound-required proof mode, workflow-preflight proof, Backend Broker selection evidence, concrete hosted runtime proof fields, and zero blockers. In this mode, the backend readiness matrix itself is proof-bound and cannot mark the compiled backend deploy-ready from environment configuration alone; the production archive summary reports this as `v12ProductionBackendReadinessProofBound: true`, `v12ProductionWorkflowPreflightPassed: true`, and `v12ProductionModelRegistryAligned: true`.
 
+`pnpm eval:v12-final-state` writes `.artifacts/evals/v12-final-state-status-latest.json`. It is the strict ship/no-ship status artifact: it requires the v12 architecture readiness bundle, actual source publication to `origin/main`, and a source-bound hosted v12 production archive to pass together. A verified Git bundle handoff is useful evidence, but it intentionally does not satisfy `v12FinalStateSourcePublished`; the repository has to be pushed before this artifact can pass.
+
 After running the real hosted benchmark in Chrome or Edge, validate the saved browser artifact before making a backend-specific production claim:
 
 ```bash
@@ -303,6 +306,8 @@ The proof verifier rejects artifacts that are not proof schema version `2`, are 
 When local commits cannot be pushed directly, `pnpm eval:repository-publication` writes `.artifacts/evals/repository-publication-status-latest.json` and `.artifacts/evals/repository-publication-handoff-latest.md`. It reports whether `main` is published to `origin/main` or whether verified exact-history Git bundles contain the current head for handoff. The Markdown handoff lists the direct push, full-bundle restore, and existing-clone fast-forward commands for publishing the same Git history from another network. This does not replace a real GitHub push; it keeps the publication boundary explicit until the exact history lands on the remote.
 
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should include that publication status artifact in the release evidence.
+
+Set `RELEASE_REQUIRE_V12_FINAL_STATE=true` when `pnpm release:gate` should require the final ship/no-ship status artifact. This also requires repository publication status and the v12 production archive because final state cannot be claimed from architecture checks alone.
 
 For production releases, the browser artifact must also be source-bound: the hosted app should emit `v12ProductionProofSourceGitSha` from `VITE_GIT_SHA`, and the verifier should run with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` plus `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. `release:gate` rejects standalone `hosted-benchmark-proof` artifacts that were not generated with source binding required, and rejects v12 production archives unless `v12ProductionProofSourceBoundRequired` and `v12ProductionProofSourceBound` are both true.
 
