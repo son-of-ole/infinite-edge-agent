@@ -4,6 +4,9 @@ export interface LocalModelOption {
   id: string;
   label: string;
   backend: LocalModelOptionFromRegistry["backend"];
+  backendLabel: string;
+  productionRole: LocalModelOptionFromRegistry["productionRole"];
+  deployReadyCandidate: boolean;
   notes: string;
   estimatedDownload: string;
   modelAssetPath?: string;

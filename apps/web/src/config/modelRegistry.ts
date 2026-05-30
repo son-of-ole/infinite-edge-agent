@@ -1,4 +1,8 @@
 import registryJson from "./models.registry.json";
+import {
+  getBrowserBackendRegistryEntry,
+  type BrowserBackendProductionRole,
+} from "../lib/runtime/backendBroker";
 
 export type ModelRegistryProductionRole = "production_candidate" | "research_kernel_lab" | "fallback";
 export type ModelRegistryQualityClass = "answer" | "control" | "research";
@@ -45,6 +49,9 @@ export interface LocalModelOptionFromRegistry {
   id: string;
   label: string;
   backend: ModelRegistryEntry["backendId"];
+  backendLabel: string;
+  productionRole: BrowserBackendProductionRole;
+  deployReadyCandidate: boolean;
   notes: string;
   estimatedDownload: string;
   modelAssetPath?: string;
@@ -63,14 +70,37 @@ export function listLocalModelOptionsFromRegistry(): LocalModelOptionFromRegistr
   return MODEL_REGISTRY.models
     .filter((entry) => entry.backendId !== "wasm-small-core")
     .sort((left, right) => roleSort(left.productionRole) - roleSort(right.productionRole))
-    .map((entry) => ({
-      id: entry.modelId,
-      label: entry.label,
-      backend: entry.backendId,
-      notes: entry.notes,
-      estimatedDownload: entry.estimatedDownload,
-      ...(entry.artifactUrl.startsWith("/") ? { modelAssetPath: entry.artifactUrl } : {}),
-    }));
+    .map((entry) => {
+      const backend = getRequiredBrokerEntry(entry);
+      return {
+        id: entry.modelId,
+        label: entry.label,
+        backend: entry.backendId,
+        backendLabel: backend.label,
+        productionRole: backend.productionRole,
+        deployReadyCandidate: backend.productionRole === "production_candidate",
+        notes: entry.notes,
+        estimatedDownload: entry.estimatedDownload,
+        ...(entry.artifactUrl.startsWith("/") ? { modelAssetPath: entry.artifactUrl } : {}),
+      };
+    });
+}
+
+function getRequiredBrokerEntry(entry: ModelRegistryEntry) {
+  const backend = getBrowserBackendRegistryEntry(entry.backendId);
+  if (!backend) {
+    throw new Error(`Model registry backend "${entry.backendId}" is not registered in the Backend Broker.`);
+  }
+  if (backend.productionRole !== entry.productionRole) {
+    throw new Error(
+      `Model registry role drift for backend "${entry.backendId}": `
+      + `model registry has ${entry.productionRole}, Backend Broker has ${backend.productionRole}.`,
+    );
+  }
+  if (!backend.modelIds.includes(entry.modelId)) {
+    throw new Error(`Model registry model "${entry.modelId}" is not listed by Backend Broker backend "${entry.backendId}".`);
+  }
+  return backend;
 }
 
 function roleSort(role: ModelRegistryProductionRole): number {

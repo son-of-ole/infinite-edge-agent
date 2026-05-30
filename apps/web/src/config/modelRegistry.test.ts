@@ -50,10 +50,15 @@ describe("v12 model registry", () => {
     expect(options[0]).toMatchObject({
       backend: "compiled-browser-webllm",
       id: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate",
+      deployReadyCandidate: true,
     });
     expect(options.find((option) => option.backend === "unlocked-browser-transformer")).toMatchObject({
       backend: "unlocked-browser-transformer",
       id: "Qwen/Qwen3-0.6B",
+      productionRole: "research_kernel_lab",
+      deployReadyCandidate: false,
     });
+    expect(options.some((option) => option.backend === "wasm-small-core")).toBe(false);
   });
 });
