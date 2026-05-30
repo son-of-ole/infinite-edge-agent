@@ -25,6 +25,7 @@ const completeHostedEnv = {
   BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000",
   HOSTED_PRODUCTION_BENCHMARK_URL:
     "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+  HOSTED_BENCHMARK_EXPECTED_GIT_SHA: "abc123",
 };
 
 function makePassingHostedBenchmarkArtifact() {
@@ -45,6 +46,7 @@ function makePassingHostedBenchmarkArtifact() {
     passed: true,
     summary: {
       v12ProductionProofSchemaVersion: 2,
+      v12ProductionProofSourceGitSha: "abc123",
       runtimeBackendId: "compiled-browser-webllm",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",

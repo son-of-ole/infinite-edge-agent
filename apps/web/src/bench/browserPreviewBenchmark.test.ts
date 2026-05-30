@@ -1935,6 +1935,7 @@ describe("browser preview benchmark payload", () => {
     const payload = buildBrowserPreviewBenchmarkPayload({
       createdAt: "2026-05-24T00:00:00.000Z",
       profile: "full",
+      sourceGitSha: "abc123",
       strictWebGpuRequested: false,
       minGeneratedTokens: 1,
       runs: [compiledRun],
@@ -1945,6 +1946,7 @@ describe("browser preview benchmark payload", () => {
     expect(payload.summary).toMatchObject({
       runtimeBackendId: "compiled-browser-webllm",
       v12ProductionProofSchemaVersion: 2,
+      v12ProductionProofSourceGitSha: "abc123",
       runtimeBackendRole: "production_candidate",
       backendBrokerTraceCount: 1,
       backendBrokerSelectionPassed: true,

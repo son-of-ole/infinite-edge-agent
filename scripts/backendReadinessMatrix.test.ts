@@ -47,6 +47,7 @@ function makePassingHostedBenchmarkProofReport() {
       passed: true,
       summary: {
         v12ProductionProofSchemaVersion: 2,
+        v12ProductionProofSourceGitSha: "abc123",
         runtimeBackendId: "compiled-browser-webllm",
         runtimeBackendRole: "production_candidate",
         deployBackendId: "compiled-browser-webllm",

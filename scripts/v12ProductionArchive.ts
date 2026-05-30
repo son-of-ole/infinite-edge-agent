@@ -68,6 +68,11 @@ export function buildV12ProductionArchiveArtifact(input: {
   const blockers = suite.blockers;
   const artifactCount = suite.totalArtifactCount + 1;
   const hostedProof = suite.hostedBenchmarkProof?.proof;
+  const expectedSourceGitSha = suite.hostedBenchmarkProof?.expectedSourceGitSha ?? null;
+  const proofSourceGitSha = hostedProof?.sourceGitSha ?? null;
+  const proofSourceBound = expectedSourceGitSha
+    ? proofSourceGitSha === expectedSourceGitSha
+    : false;
 
   return {
     name: "v12-production-archive",
@@ -83,6 +88,9 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
       v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),
       v12ProductionProofSchemaVersion: hostedProof?.v12ProductionProofSchemaVersion ?? null,
+      v12ProductionProofSourceGitSha: proofSourceGitSha,
+      v12ProductionExpectedSourceGitSha: expectedSourceGitSha,
+      v12ProductionProofSourceBound: proofSourceBound,
       v12ProductionArtifactCount: artifactCount,
       v12ProductionSuiteArtifactCount: suite.totalArtifactCount,
       v12ProductionChildArtifactCount: suite.childArtifactCount,

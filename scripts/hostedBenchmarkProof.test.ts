@@ -27,6 +27,7 @@ function makePassingBrowserPreviewArtifact() {
     passed: true,
     summary: {
       v12ProductionProofSchemaVersion: 2,
+      v12ProductionProofSourceGitSha: "abc123",
       runtimeBackendId: "compiled-browser-webllm",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",
@@ -141,6 +142,16 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof requires v12 production proof schema version 2.");
   });
 
+  it("fails production proof when the hosted artifact does not match the expected source commit", () => {
+    const report = evaluateHostedBenchmarkProof({
+      artifact: makePassingBrowserPreviewArtifact(),
+      expectedSourceGitSha: "def456",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof source commit abc123 does not match expected commit def456.");
+  });
+
   it("extracts proof fields from a browser-runtime-bench wrapper artifact", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: {
@@ -194,6 +205,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkCpuFallbackUsed: false,
         hostedBenchmarkStrictWebGpuPassed: true,
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
+        hostedBenchmarkProofSourceGitSha: "abc123",
         hostedBenchmarkBackendBrokerSelectionPassed: true,
         hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
         hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",

@@ -294,6 +294,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   requireKvPredictivePrefetch?: boolean;
   minGeneratedTokens?: number;
   technicalProofOnly?: boolean;
+  sourceGitSha?: string | null;
 }): BrowserPreviewBenchmarkPayload {
   const coherentResponseCount = input.runs.filter((run) => run.coherent && hasVisibleResponseQuality(run)).length;
   const visibleResponseQualityPassed = input.runs.length > 0 && coherentResponseCount === input.runs.length;
@@ -510,6 +511,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
     summary: {
       profile: input.profile,
       v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
+      ...(input.sourceGitSha?.trim() ? { v12ProductionProofSourceGitSha: input.sourceGitSha.trim() } : {}),
       memoryQueryMode: memoryGroundingRequired
         ? summarizeStringField(memoryGroundingRuns.map((proof) => proof.mode)) ?? "seeded_browser_vector_context_rebuild"
         : "direct_model_no_memory_retrieval",

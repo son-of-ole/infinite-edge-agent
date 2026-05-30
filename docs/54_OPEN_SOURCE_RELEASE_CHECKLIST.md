@@ -133,10 +133,14 @@ This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, w
 After the real Chrome or Edge hosted benchmark is saved, validate the runtime artifact:
 
 ```bash
-HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-latest.json pnpm verify:hosted-benchmark-proof
+HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-latest.json \
+HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-commit-sha> \
+pnpm verify:hosted-benchmark-proof
 ```
 
 This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` when `pnpm release:gate` should fail unless the saved browser artifact proves proof schema version `2`, the compiled backend, Backend Broker selection, grounded memory, exact output, speed floor, and no CPU fallback.
+
+For production release proof, set `VITE_GIT_SHA=<deployment-commit-sha>` on the hosted build. The benchmark artifact must report that SHA as `v12ProductionProofSourceGitSha`, and the verifier/release gate must compare it with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` so an older hosted artifact cannot pass for a newer commit.
 
 For remote release verification, use the manual GitHub Actions workflow **V12 Production Proof**. Provide:
 

@@ -93,6 +93,11 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
     && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7
     && artifact.summary?.v12ProductionProofSchemaVersion === 2
+    && typeof artifact.summary?.v12ProductionProofSourceGitSha === "string"
+    && artifact.summary.v12ProductionProofSourceGitSha.trim().length > 0
+    && typeof artifact.summary?.v12ProductionExpectedSourceGitSha === "string"
+    && artifact.summary.v12ProductionExpectedSourceGitSha.trim().length > 0
+    && artifact.summary?.v12ProductionProofSourceBound === true
     && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 6
     && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 5
     && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"

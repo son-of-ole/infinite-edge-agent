@@ -222,7 +222,9 @@ export async function runV12ReadinessSuite(options: {
   const env = options.env ?? process.env;
   const hostedBenchmarkArtifactPath = options.hostedBenchmarkArtifactPath ?? env.HOSTED_BENCHMARK_ARTIFACT_PATH;
   const hostedBenchmarkProof = hostedBenchmarkArtifactPath
-    ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath)
+    ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath, {
+      expectedSourceGitSha: readExpectedHostedBenchmarkGitSha(env),
+    })
     : null;
   const suite = evaluateV12ReadinessSuite({ env, hostedBenchmarkProof });
   const hosted = await writeHostedDeploymentProfileArtifact(suite.hostedProfile, { artifactDir, createdAt });
@@ -244,6 +246,12 @@ export async function runV12ReadinessSuite(options: {
     suite,
     childArtifacts,
   };
+}
+
+function readExpectedHostedBenchmarkGitSha(env: HostedDeploymentProfileEnv): string | null {
+  return env.HOSTED_BENCHMARK_EXPECTED_GIT_SHA?.trim()
+    || env.GITHUB_SHA?.trim()
+    || null;
 }
 
 function toChildArtifacts(input: {

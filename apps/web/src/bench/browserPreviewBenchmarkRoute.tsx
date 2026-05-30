@@ -324,6 +324,7 @@ async function runBrowserPreviewBenchmark(
       requireKvReuse: request.requireKvReuse,
       requireKvPredictivePrefetch: request.requireKvPredictivePrefetch,
       minGeneratedTokens: request.minGeneratedTokens,
+      sourceGitSha: request.benchmarkTelemetryConfig.gitSha ?? null,
       technicalProofOnly: (
         request.strictLongPromptProof
         || request.requireKvPredictivePrefetch

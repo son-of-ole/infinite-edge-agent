@@ -45,8 +45,10 @@ jobs:
       HOSTED_BENCHMARK_ARTIFACT_URL: ${{ inputs.hosted_benchmark_artifact_url }}
       HOSTED_BENCHMARK_ARTIFACT_JSON: ${{ inputs.hosted_benchmark_artifact_json }}
       HOSTED_BENCHMARK_ARTIFACT_BASE64: ${{ inputs.hosted_benchmark_artifact_base64 }}
+      HOSTED_BENCHMARK_EXPECTED_GIT_SHA: ${{ github.sha }}
       VITE_LLM_BACKEND: compiled-browser-webllm
       VITE_DEFAULT_MODEL: Qwen3-0.6B-q4f16_1-MLC
+      VITE_GIT_SHA: ${{ github.sha }}
       VITE_COMPILED_WEBLLM_ENABLED: "true"
       VITE_REQUIRE_UNLOCKED_RUNTIME: "false"
       VITE_MTP_ENABLED: "false"

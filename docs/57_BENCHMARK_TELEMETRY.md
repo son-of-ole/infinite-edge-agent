@@ -119,6 +119,8 @@ VITE_GIT_SHA=<deployment-sha>
 VITE_DEPLOY_URL=https://your-hosted-agent.example
 ```
 
+For v12 production proof, the browser benchmark artifact carries this deployment SHA as `v12ProductionProofSourceGitSha`. Release verification should set `HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>` so stale hosted artifacts from another build fail instead of being reused.
+
 ```text
 /__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true
 ```
@@ -186,6 +188,7 @@ BENCHMARK_TELEMETRY_STORAGE=postgres
 BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
 HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>
 ```
 
 If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the canonical URL from `VITE_DEPLOY_URL`. The generated URL still has to be run in real Chrome or Edge for authoritative proof.

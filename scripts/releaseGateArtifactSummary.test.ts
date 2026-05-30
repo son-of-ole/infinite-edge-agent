@@ -28,6 +28,9 @@ describe("release gate artifact summary", () => {
         v12ProductionCpuFallbackUsed: false,
         v12ProductionStrictWebGpuPassed: true,
         v12ProductionProofSchemaVersion: 2,
+        v12ProductionProofSourceGitSha: "abc123",
+        v12ProductionExpectedSourceGitSha: "abc123",
+        v12ProductionProofSourceBound: true,
       },
     })).toMatchObject({
       v12ProductionArchivePassed: true,
@@ -53,6 +56,9 @@ describe("release gate artifact summary", () => {
       v12ProductionCpuFallbackUsed: false,
       v12ProductionStrictWebGpuPassed: true,
       v12ProductionProofSchemaVersion: 2,
+      v12ProductionProofSourceGitSha: "abc123",
+      v12ProductionExpectedSourceGitSha: "abc123",
+      v12ProductionProofSourceBound: true,
     });
   });
 
@@ -74,6 +80,7 @@ describe("release gate artifact summary", () => {
         hostedBenchmarkCpuFallbackUsed: false,
         hostedBenchmarkStrictWebGpuPassed: true,
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
+        hostedBenchmarkProofSourceGitSha: "abc123",
       },
     })).toMatchObject({
       hostedBenchmarkProofPassed: true,
@@ -91,6 +98,7 @@ describe("release gate artifact summary", () => {
       hostedBenchmarkCpuFallbackUsed: false,
       hostedBenchmarkStrictWebGpuPassed: true,
       hostedBenchmarkV12ProductionProofSchemaVersion: 2,
+      hostedBenchmarkProofSourceGitSha: "abc123",
     });
   });
 
