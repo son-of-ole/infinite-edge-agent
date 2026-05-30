@@ -73,7 +73,12 @@ import { EmbeddingClient } from "./lib/embedding/embeddingClient";
 import { CompiledWebLlmClient } from "./lib/llm/compiledWebLlmClient";
 import type { ChatClient } from "./lib/llm/types";
 import type { UnlockedBrowserTransformerClientOptions } from "./lib/llm/unlockedBrowserTransformerClient";
-import { getBrowserBackendRegistryEntry } from "./lib/runtime/backendBroker";
+import {
+  getBrowserBackendRegistryEntry,
+  selectBrowserBackend,
+  type BrowserBackendSelection,
+  type BrowserBackendTask,
+} from "./lib/runtime/backendBroker";
 import { makeBrowserMetric, timed, type BrowserMetric } from "./lib/runtime/browserMetrics";
 import type { KVSwapPersistenceHealth } from "./lib/runtime/kvSwapPersistence";
 import { clearBrowserModelCaches, inspectBrowserModelCache, type BrowserModelCacheSnapshot } from "./lib/runtime/modelCache";
@@ -705,24 +710,30 @@ async function createChatClient(
   if (!backendEntry) {
     throw new Error(`Unsupported backend ${backend}. Backend Broker only ships registered browser backends.`);
   }
+  const selection = resolveBrowserAnswerBackendSelection({
+    backend,
+    modelId,
+    task: "grounded_answer",
+  });
+  onProgress(`Backend Broker selected ${selection.backendId} (${selection.reason})`);
 
-  if (backendEntry.productionRole === "production_candidate") {
+  if (selection.productionRole === "production_candidate") {
     if (!COMPILED_WEBLLM_ENABLED) {
       throw new Error(`Compiled production backend ${backend} is registered by Backend Broker, but its runtime adapter is not available in this build yet.`);
     }
     onProgress("Loading compiled WebLLM backend");
-    const client = new CompiledWebLlmClient({ modelId, onProgress });
+    const client = new CompiledWebLlmClient({ modelId: selection.modelId, onProgress });
     await client.init();
     return client;
   }
 
-  if (backend !== "unlocked-browser-transformer") {
+  if (selection.backendId !== "unlocked-browser-transformer") {
     throw new Error(`Backend ${backend} is registered as ${backendEntry.productionRole}, not an answer-generation runtime for this build.`);
   }
 
   onProgress(UNLOCKED_MODEL_MANIFEST_PATH ? "Loading unlocked model manifest" : "Using unlocked tensor-control fixture");
   const options = makeUnlockedBrowserWorkerOptions({
-    modelId,
+    modelId: selection.modelId,
     manifestPath: UNLOCKED_MODEL_MANIFEST_PATH,
     manifestSha256: UNLOCKED_MODEL_MANIFEST_SHA256,
     allowFixtureWeights: UNLOCKED_ALLOW_FIXTURE,
@@ -757,6 +768,28 @@ async function createChatClient(
     await client.dispose();
     throw error;
   }
+}
+
+export interface BrowserAnswerBackendSelectionInput {
+  backend: string;
+  modelId: string;
+  task?: BrowserBackendTask;
+  availableBackendIds?: string[];
+}
+
+export function resolveBrowserAnswerBackendSelection(
+  input: BrowserAnswerBackendSelectionInput,
+): BrowserBackendSelection {
+  const backendEntry = getBrowserBackendRegistryEntry(input.backend);
+  if (!backendEntry) {
+    throw new Error(`Unsupported backend ${input.backend}. Backend Broker only ships registered browser backends.`);
+  }
+  return selectBrowserBackend({
+    task: input.task ?? "grounded_answer",
+    preferredBackendId: input.backend,
+    preferredModelId: input.modelId,
+    ...(input.availableBackendIds ? { availableBackendIds: input.availableBackendIds } : {}),
+  });
 }
 
 export interface UnlockedBrowserWorkerOptionsInput {

@@ -1,8 +1,42 @@
 import { describe, expect, it } from "vitest";
 import { BROWSER_NGRAM_MTP_DRAFT_MODEL_ID } from "./config";
-import { makeUnlockedBrowserWorkerOptions } from "./App";
+import { makeUnlockedBrowserWorkerOptions, resolveBrowserAnswerBackendSelection } from "./App";
 
 describe("App unlocked worker wiring", () => {
+  it("normalizes answer runtime backend and model through the Backend Broker", () => {
+    const selection = resolveBrowserAnswerBackendSelection({
+      backend: "compiled-browser-webllm",
+      modelId: "Qwen/Qwen3-0.6B",
+    });
+
+    expect(selection).toMatchObject({
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate",
+      deployReadyCandidate: true,
+      reason: "compiled_first_grounded_answer",
+      proofRequirements: expect.arrayContaining([
+        "memory_grounding",
+        "backend_trace",
+      ]),
+    });
+  });
+
+  it("keeps explicit Kernel Lab selections broker-classified as research runtime work", () => {
+    const selection = resolveBrowserAnswerBackendSelection({
+      backend: "unlocked-browser-transformer",
+      modelId: "Qwen/Qwen3-0.6B",
+    });
+
+    expect(selection).toMatchObject({
+      backendId: "unlocked-browser-transformer",
+      modelId: "Qwen/Qwen3-0.6B",
+      productionRole: "research_kernel_lab",
+      deployReadyCandidate: false,
+      reason: "kernel_lab_required",
+    });
+  });
+
   it("passes supported browser MTP options through to the unlocked worker client", () => {
     const options = makeUnlockedBrowserWorkerOptions({
       modelId: "Qwen/Qwen3-0.6B",

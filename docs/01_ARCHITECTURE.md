@@ -152,6 +152,8 @@ Current backend strategy:
 - `wasm-small-core` is reserved for bounded control/fallback work such as memory tagging and context triage.
 - Browser-vector memory is the open-source default. LanceDB sidecar and remote HTTP memory are scale layers, not required desktop-only defaults.
 
+The web app resolves the answer runtime through the Backend Broker before constructing a model client. That selection normalizes the backend/model pair, records the broker reason, and keeps compiled production answers separate from explicit Kernel Lab research runs.
+
 ## First-class runtime rule
 
 No application code should assume one model runtime is the whole product architecture. Application code calls the shared runtime/memory/context layer and the Backend Broker chooses the backend for the turn. Kernel Lab features stay in the research lane unless a backend-specific production gate proves quality, speed, and hot-path behavior for that backend.
