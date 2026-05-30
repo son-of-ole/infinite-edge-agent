@@ -40,10 +40,11 @@ The GitHub Actions workflow uses fixture/browser-only settings and must not requ
 | Qwen parity fixtures | `pnpm eval:qwen-parity` | `.artifacts/evals/ci/qwen-parity-accuracy-latest.json` |
 | Browser-only production eval | `PRODUCTION_EVAL_SIDECAR_MODE=skip pnpm eval:production` | `.artifacts/evals/ci/production-latest.json` |
 | Browser runtime benchmark | `VITE_UNLOCKED_RUNTIME_PROFILE=ci pnpm bench:browser-runtime` | `.artifacts/evals/ci/browser-runtime-bench-latest.json` |
+| v12 readiness invariants | `pnpm verify:hosted-profile && pnpm eval:backend-readiness && pnpm eval:shared-runtime && pnpm eval:v12-readiness` with compiled-backend CI env | `.artifacts/evals/ci/v12-readiness-bundle-latest.json` proves Backend Broker roles, model-registry alignment, and shared runtime separation |
 | Build | `pnpm build` | Workspace build outputs |
 | Dist size | `pnpm check:web-dist` | Passes without bundled local weights |
 
-The default CI lane is intentionally fixture/open-source safe. It does not claim hosted production readiness because real v12 production proof requires an operator-saved browser benchmark artifact from the deployed site.
+The default CI lane is intentionally fixture/open-source safe. Its v12 invariant step uses public placeholder CI endpoints to prove the repository wiring, Backend Broker role separation, model-registry alignment, and shared memory/context runtime contract. It does not claim hosted production readiness because real v12 production proof requires an operator-saved browser benchmark artifact from the deployed site.
 
 ## 5. Strict release gates for model-backed builds
 
@@ -151,7 +152,7 @@ For remote release verification, use the manual GitHub Actions workflow **V12 Pr
 
 The URL source is intentionally public-hosted only. Localhost, loopback, link-local, and private-network artifact URLs are rejected; use pasted JSON or base64 for local/private saved artifacts.
 
-The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`.
+The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`. The materialized source benchmark is stored inside that uploaded proof bundle at `hosted/browser-runtime-bench-latest.json` so the archive contains both the source browser artifact and the derived v12 production proof.
 
 To generate the base64 input from a saved artifact:
 
