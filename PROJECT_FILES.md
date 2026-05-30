@@ -189,6 +189,8 @@ This manifest started as the v4 handoff package inventory. The authoritative fil
 - `scripts/browserRuntimeBenchmark.ts`
 - `scripts/convert-unlocked-model.ts`
 - `scripts/eval-production.ts`
+- `scripts/hostedBenchmarkProof.test.ts`
+- `scripts/hostedBenchmarkProof.ts`
 - `scripts/qwenParityAccuracy.test.ts`
 - `scripts/qwenParityAccuracy.ts`
 - `scripts/release-gate.ts`

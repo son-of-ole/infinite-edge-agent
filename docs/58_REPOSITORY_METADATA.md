@@ -57,6 +57,7 @@ The repository is not claiming a new base model. The contribution is the runtime
 - Hosted proof: real Chrome/Edge browser benchmark artifacts
 - Public benchmark direction: opt-in, sanitized, device/GPU-aware telemetry
 - Final-state archive: `pnpm eval:v12-suite`
+- Hosted runtime proof: `pnpm verify:hosted-benchmark-proof`
 
 ## Suggested Hugging Face Space Blurb
 

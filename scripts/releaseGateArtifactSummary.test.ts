@@ -2,6 +2,42 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps hosted benchmark proof fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        hostedBenchmarkProofPassed: true,
+        hostedBenchmarkArtifactPath: ".artifacts/evals/hosted/browser-runtime-bench-latest.json",
+        hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+        hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+        hostedBenchmarkCompiledBackendReadyPassed: true,
+        hostedBenchmarkProductionDeployReadyPassed: true,
+        hostedBenchmarkMemoryGroundingPassed: true,
+        hostedBenchmarkExpectedExactPassed: true,
+        hostedBenchmarkProductionSpeedFloorPassed: true,
+        hostedBenchmarkMeanTokensPerSecond: 2.7,
+        hostedBenchmarkDirectModelFactualProofUsed: false,
+        hostedBenchmarkTechnicalProofOnly: false,
+        hostedBenchmarkCpuFallbackUsed: false,
+        hostedBenchmarkStrictWebGpuPassed: true,
+      },
+    })).toMatchObject({
+      hostedBenchmarkProofPassed: true,
+      hostedBenchmarkArtifactPath: ".artifacts/evals/hosted/browser-runtime-bench-latest.json",
+      hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+      hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+      hostedBenchmarkCompiledBackendReadyPassed: true,
+      hostedBenchmarkProductionDeployReadyPassed: true,
+      hostedBenchmarkMemoryGroundingPassed: true,
+      hostedBenchmarkExpectedExactPassed: true,
+      hostedBenchmarkProductionSpeedFloorPassed: true,
+      hostedBenchmarkMeanTokensPerSecond: 2.7,
+      hostedBenchmarkDirectModelFactualProofUsed: false,
+      hostedBenchmarkTechnicalProofOnly: false,
+      hostedBenchmarkCpuFallbackUsed: false,
+      hostedBenchmarkStrictWebGpuPassed: true,
+    });
+  });
+
   it("keeps v12 readiness suite fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {

@@ -36,6 +36,7 @@
     "eval:shared-runtime": "node --import tsx scripts/sharedRuntimeReadiness.ts",
     "eval:v12-readiness": "node --import tsx scripts/v12ReadinessBundle.ts",
     "eval:v12-suite": "node --import tsx scripts/v12ReadinessSuite.ts",
+    "verify:hosted-benchmark-proof": "node --import tsx scripts/hostedBenchmarkProof.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",
     "release:gate": "tsx scripts/release-gate.ts"
   },

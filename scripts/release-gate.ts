@@ -44,6 +44,7 @@ const requireBackendReadinessMatrix = requireHostedProfile || releaseGateEnv.REL
 const requireSharedRuntimeReadiness = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_SHARED_RUNTIME_READINESS === "true";
 const requireV12ReadinessBundle = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_READINESS === "true";
 const requireV12ReadinessSuite = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_SUITE === "true";
+const requireHostedBenchmarkProof = releaseGateEnv.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
 
 const steps: GateStep[] = [];
 
@@ -80,6 +81,9 @@ if (requireV12ReadinessBundle) {
 }
 if (requireV12ReadinessSuite) {
   await runGate("v12 readiness suite", ["run", "eval:v12-suite"]);
+}
+if (requireHostedBenchmarkProof) {
+  await runGate("hosted benchmark proof", ["run", "verify:hosted-benchmark-proof"]);
 }
 await runGate("build", ["run", "build"]);
 await runGate("web dist size", ["run", "check:web-dist"]);
@@ -192,6 +196,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
       : []),
     ...(requireV12ReadinessSuite
       ? [["v12-readiness-suite", join(childArtifactRoot, "v12-readiness-suite-latest.json")] as const]
+      : []),
+    ...(requireHostedBenchmarkProof
+      ? [["hosted-benchmark-proof", join(childArtifactRoot, "hosted-benchmark-proof-latest.json")] as const]
       : []),
   ] as const;
   const artifacts: LatestArtifact[] = [];
