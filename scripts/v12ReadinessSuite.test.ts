@@ -132,6 +132,7 @@ describe("v12 readiness suite", () => {
       },
       hostedBenchmarkProof: evaluateHostedBenchmarkProof({
         artifact: makePassingHostedBenchmarkArtifact(),
+        expectedSourceGitSha: "abc123",
       }),
     });
 
@@ -144,7 +145,9 @@ describe("v12 readiness suite", () => {
       proofSource: "hosted_deployment_profile+hosted_benchmark_proof",
       proofRequirements: expect.arrayContaining([
         "hosted_benchmark_artifact_passed",
+        "hosted_benchmark_artifact_source_bound",
       ]),
+      hostedBenchmarkProofSourceBound: true,
     });
   });
 

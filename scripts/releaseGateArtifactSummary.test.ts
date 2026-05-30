@@ -196,6 +196,10 @@ describe("release gate artifact summary", () => {
         backendReadinessResearchBackendCount: 1,
         backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
         backendReadinessCompiledHostedProfilePassed: true,
+        backendReadinessProofBoundToHostedBenchmark: true,
+        backendReadinessHostedBenchmarkProofSourceGitSha: "abc123",
+        backendReadinessHostedBenchmarkExpectedSourceGitSha: "abc123",
+        backendReadinessHostedBenchmarkProofSourceBound: true,
       },
     })).toMatchObject({
       backendReadinessMatrixPassed: true,
@@ -205,6 +209,10 @@ describe("release gate artifact summary", () => {
       backendReadinessResearchBackendCount: 1,
       backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
       backendReadinessCompiledHostedProfilePassed: true,
+      backendReadinessProofBoundToHostedBenchmark: true,
+      backendReadinessHostedBenchmarkProofSourceGitSha: "abc123",
+      backendReadinessHostedBenchmarkExpectedSourceGitSha: "abc123",
+      backendReadinessHostedBenchmarkProofSourceBound: true,
     });
   });
 

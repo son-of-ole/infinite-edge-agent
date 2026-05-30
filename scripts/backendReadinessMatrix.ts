@@ -26,6 +26,9 @@ export interface BackendReadinessEntry {
   proofSource: string;
   blockers: string[];
   proofRequirements: string[];
+  hostedBenchmarkProofSourceGitSha: string | null;
+  hostedBenchmarkExpectedSourceGitSha: string | null;
+  hostedBenchmarkProofSourceBound: boolean | null;
 }
 
 export interface BackendReadinessMatrix {
@@ -61,12 +64,17 @@ export function evaluateBackendReadinessMatrix(input: {
   const backends = BROWSER_BACKEND_REGISTRY.map((entry): BackendReadinessEntry => {
     if (entry.productionRole === "production_candidate") {
       const hostedProfileReady = entry.backendId === hostedProfile.profile.llmBackend && hostedProfile.passed;
+      const hostedBenchmarkProofSourceBound = requireHostedBenchmarkProof
+        ? Boolean(
+          hostedBenchmarkProof?.expectedSourceGitSha
+          && hostedBenchmarkProof.proof.sourceGitSha === hostedBenchmarkProof.expectedSourceGitSha,
+        )
+        : null;
+      const hostedBenchmarkPassed = hostedBenchmarkProof?.passed === true
+        && hostedBenchmarkProof.proof.runtimeBackendId === entry.backendId
+        && hostedBenchmarkProof.proof.deployBackendId === entry.backendId;
       const hostedBenchmarkReady = !requireHostedBenchmarkProof
-        || (
-          hostedBenchmarkProof?.passed === true
-          && hostedBenchmarkProof.proof.runtimeBackendId === entry.backendId
-          && hostedBenchmarkProof.proof.deployBackendId === entry.backendId
-        );
+        || (hostedBenchmarkPassed && hostedBenchmarkProofSourceBound === true);
       const deployReady = hostedProfileReady && hostedBenchmarkReady;
       const proofSource = requireHostedBenchmarkProof
         ? "hosted_deployment_profile+hosted_benchmark_proof"
@@ -76,16 +84,22 @@ export function evaluateBackendReadinessMatrix(input: {
         "hosted_profile_passed",
         "grounded_exact_benchmark_url",
         "durable_benchmark_telemetry",
-        ...(requireHostedBenchmarkProof ? ["hosted_benchmark_artifact_passed"] : []),
+        ...(requireHostedBenchmarkProof ? [
+          "hosted_benchmark_artifact_passed",
+          "hosted_benchmark_artifact_source_bound",
+        ] : []),
       ];
       const blockers = deployReady ? [] : [
         ...(!hostedProfileReady ? [
           "Compiled production backend is not deploy-ready because hosted deployment profile failed.",
           ...hostedProfile.blockers,
         ] : []),
-        ...(requireHostedBenchmarkProof && !hostedBenchmarkReady ? [
+        ...(requireHostedBenchmarkProof && !hostedBenchmarkPassed ? [
           "Hosted benchmark proof is required to mark compiled-browser-webllm deploy-ready.",
           ...(hostedBenchmarkProof?.blockers ?? []),
+        ] : []),
+        ...(requireHostedBenchmarkProof && hostedBenchmarkPassed && hostedBenchmarkProofSourceBound !== true ? [
+          "Hosted benchmark proof must be source-bound to the expected deployment commit.",
         ] : []),
       ];
       return {
@@ -98,6 +112,9 @@ export function evaluateBackendReadinessMatrix(input: {
         proofSource,
         blockers,
         proofRequirements,
+        hostedBenchmarkProofSourceGitSha: hostedBenchmarkProof?.proof.sourceGitSha ?? null,
+        hostedBenchmarkExpectedSourceGitSha: hostedBenchmarkProof?.expectedSourceGitSha ?? null,
+        hostedBenchmarkProofSourceBound: hostedBenchmarkProofSourceBound ?? null,
       };
     }
     if (entry.productionRole === "research_kernel_lab") {
@@ -116,6 +133,9 @@ export function evaluateBackendReadinessMatrix(input: {
           "kernel_parity",
           "research_trace",
         ],
+        hostedBenchmarkProofSourceGitSha: null,
+        hostedBenchmarkExpectedSourceGitSha: null,
+        hostedBenchmarkProofSourceBound: null,
       };
     }
     return {
@@ -131,14 +151,19 @@ export function evaluateBackendReadinessMatrix(input: {
         "task_bounds",
         "fallback_trace",
       ],
+      hostedBenchmarkProofSourceGitSha: null,
+      hostedBenchmarkExpectedSourceGitSha: null,
+      hostedBenchmarkProofSourceBound: null,
     };
   });
   const deployBackend = backends.find((entry) => entry.productionRole === "production_candidate" && entry.deployReady);
   const blockers = deployBackend
     ? []
     : [
-      requireHostedBenchmarkProof && (!hostedBenchmarkProof || hostedBenchmarkProof.passed !== true)
-        ? "Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing or failed."
+      requireHostedBenchmarkProof && hostedBenchmarkProof?.passed === true
+        ? "Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing, failed, or not source-bound."
+        : requireHostedBenchmarkProof && (!hostedBenchmarkProof || hostedBenchmarkProof.passed !== true)
+          ? "Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing or failed."
         : "Compiled production backend is not deploy-ready because hosted deployment profile failed.",
     ];
 
@@ -179,6 +204,9 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessKernelLabBackendId: researchBackendIds[0] ?? null,
       backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.deployReady ?? false,
       backendReadinessProofBoundToHostedBenchmark: isBackendReadinessProofBoundToHostedBenchmark(matrix),
+      backendReadinessHostedBenchmarkProofSourceGitSha: hostedCompiledBackend?.hostedBenchmarkProofSourceGitSha ?? null,
+      backendReadinessHostedBenchmarkExpectedSourceGitSha: hostedCompiledBackend?.hostedBenchmarkExpectedSourceGitSha ?? null,
+      backendReadinessHostedBenchmarkProofSourceBound: hostedCompiledBackend?.hostedBenchmarkProofSourceBound ?? null,
     },
     matrix,
   };
@@ -192,7 +220,9 @@ export function isBackendReadinessProofBoundToHostedBenchmark(matrix: BackendRea
   return Boolean(
     deployBackend
     && deployBackend.proofSource.includes("hosted_benchmark_proof")
-    && deployBackend.proofRequirements.includes("hosted_benchmark_artifact_passed"),
+    && deployBackend.proofRequirements.includes("hosted_benchmark_artifact_passed")
+    && deployBackend.proofRequirements.includes("hosted_benchmark_artifact_source_bound")
+    && deployBackend.hostedBenchmarkProofSourceBound === true
   );
 }
 

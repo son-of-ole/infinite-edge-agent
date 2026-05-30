@@ -28,7 +28,7 @@ const completeHostedEnv = {
     "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
 };
 
-function makePassingHostedBenchmarkProofReport() {
+function makePassingHostedBenchmarkProofReport(options: { expectedSourceGitSha?: string | null } = {}) {
   const brokerSelection = {
     backendId: "compiled-browser-webllm",
     modelId: "Qwen3-0.6B-q4f16_1-MLC",
@@ -89,6 +89,7 @@ function makePassingHostedBenchmarkProofReport() {
         },
       ],
     },
+    expectedSourceGitSha: options.expectedSourceGitSha,
   });
 }
 
@@ -151,7 +152,7 @@ describe("evaluateBackendReadinessMatrix", () => {
     const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
     const matrix = evaluateBackendReadinessMatrix({
       hostedProfile,
-      hostedBenchmarkProof: makePassingHostedBenchmarkProofReport(),
+      hostedBenchmarkProof: makePassingHostedBenchmarkProofReport({ expectedSourceGitSha: "abc123" }),
       requireHostedBenchmarkProof: true,
     });
 
@@ -163,11 +164,41 @@ describe("evaluateBackendReadinessMatrix", () => {
       proofSource: "hosted_deployment_profile+hosted_benchmark_proof",
       proofRequirements: expect.arrayContaining([
         "hosted_benchmark_artifact_passed",
+        "hosted_benchmark_artifact_source_bound",
       ]),
+      hostedBenchmarkProofSourceGitSha: "abc123",
+      hostedBenchmarkExpectedSourceGitSha: "abc123",
+      hostedBenchmarkProofSourceBound: true,
     });
 
     expect(buildBackendReadinessMatrixArtifact(matrix, "2026-05-30T17:30:00.000Z").summary).toMatchObject({
       backendReadinessProofBoundToHostedBenchmark: true,
+      backendReadinessHostedBenchmarkProofSourceGitSha: "abc123",
+      backendReadinessHostedBenchmarkExpectedSourceGitSha: "abc123",
+      backendReadinessHostedBenchmarkProofSourceBound: true,
+    });
+  });
+
+  it("does not mark the compiled backend deploy-ready when required hosted benchmark proof is not source-bound", () => {
+    const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
+    const matrix = evaluateBackendReadinessMatrix({
+      hostedProfile,
+      hostedBenchmarkProof: makePassingHostedBenchmarkProofReport(),
+      requireHostedBenchmarkProof: true,
+    });
+
+    expect(matrix.passed).toBe(false);
+    expect(matrix.deployBackendId).toBeNull();
+    expect(matrix.blockers).toContain("Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing, failed, or not source-bound.");
+    expect(matrix.backends.find((backend) => backend.backendId === "compiled-browser-webllm")).toMatchObject({
+      readinessStatus: "blocked",
+      deployReady: false,
+      hostedBenchmarkProofSourceGitSha: "abc123",
+      hostedBenchmarkExpectedSourceGitSha: null,
+      hostedBenchmarkProofSourceBound: false,
+      blockers: expect.arrayContaining([
+        "Hosted benchmark proof must be source-bound to the expected deployment commit.",
+      ]),
     });
   });
 

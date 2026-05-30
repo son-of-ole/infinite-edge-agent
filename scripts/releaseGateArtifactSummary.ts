@@ -260,6 +260,10 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "backendReadinessResearchBackendCount",
       "backendReadinessKernelLabBackendId",
       "backendReadinessCompiledHostedProfilePassed",
+      "backendReadinessProofBoundToHostedBenchmark",
+      "backendReadinessHostedBenchmarkProofSourceGitSha",
+      "backendReadinessHostedBenchmarkExpectedSourceGitSha",
+      "backendReadinessHostedBenchmarkProofSourceBound",
     ] as const;
     for (const key of backendReadinessFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];
