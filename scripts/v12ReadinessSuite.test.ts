@@ -133,6 +133,7 @@ describe("v12 readiness suite", () => {
       hostedBenchmarkProof: evaluateHostedBenchmarkProof({
         artifact: makePassingHostedBenchmarkArtifact(),
         expectedSourceGitSha: "abc123",
+        requireSourceBound: true,
       }),
     });
 
@@ -202,6 +203,7 @@ describe("v12 readiness suite", () => {
         v12SuiteSharedRuntimePassed: true,
         v12SuiteReadinessBundlePassed: true,
         v12SuiteHostedBenchmarkProofRequired: false,
+        v12SuiteHostedBenchmarkProofSourceBoundRequired: false,
         v12SuiteHostedBenchmarkProofPassed: null,
       },
     });
@@ -256,8 +258,36 @@ describe("v12 readiness suite", () => {
       v12SuiteArtifactCount: 6,
       v12SuiteChildArtifactCount: 5,
       v12SuiteHostedBenchmarkProofRequired: false,
+      v12SuiteHostedBenchmarkProofSourceBoundRequired: false,
       v12SuiteHostedBenchmarkProofPassed: true,
     });
     expect(latest.suite.childArtifacts.hostedBenchmarkProof?.latestPath).toBe(join(artifactDir, "hosted-benchmark-proof-latest.json"));
+  });
+
+  it("honors explicit hosted benchmark source-bound mode even when hosted proof is optional", async () => {
+    const artifactDir = await mkdtemp(join(tmpdir(), "v12-readiness-suite-source-bound-"));
+    const hostedBenchmarkPath = join(artifactDir, "source-browser-runtime-bench-latest.json");
+    await writeFile(hostedBenchmarkPath, `${JSON.stringify(makePassingHostedBenchmarkArtifact(), null, 2)}\n`);
+
+    const result = await runV12ReadinessSuite({
+      env: {
+        ...completeHostedEnv,
+        HOSTED_BENCHMARK_ARTIFACT_PATH: hostedBenchmarkPath,
+        HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND: "true",
+      },
+      artifactDir,
+      createdAt: "2026-05-30T20:45:00.000Z",
+    });
+
+    expect(result.suite.hostedBenchmarkProof?.sourceBoundRequired).toBe(true);
+    expect(result.suite.hostedBenchmarkProof?.expectedSourceGitSha).toBe("abc123");
+
+    const latest = JSON.parse(await readFile(result.latestPath, "utf8")) as ReturnType<typeof buildV12ReadinessSuiteArtifact>;
+
+    expect(latest.summary).toMatchObject({
+      v12SuiteHostedBenchmarkProofRequired: false,
+      v12SuiteHostedBenchmarkProofSourceBoundRequired: true,
+      v12SuiteHostedBenchmarkProofPassed: true,
+    });
   });
 });

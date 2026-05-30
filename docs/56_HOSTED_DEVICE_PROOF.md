@@ -127,7 +127,7 @@ The full v12 readiness suite is written by:
 pnpm eval:v12-suite
 ```
 
-It writes the hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with the same timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also validates and writes `hosted-benchmark-proof-latest.json` as part of the same suite. Archive this suite next to hosted Chrome/Edge benchmark evidence when making a backend-specific deploy-readiness claim.
+It writes the hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with the same timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also validates and writes `hosted-benchmark-proof-latest.json` as part of the same suite. Set `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` when the suite should require source-bound verification against `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` or `GITHUB_SHA`; the suite summary exposes this as `v12SuiteHostedBenchmarkProofSourceBoundRequired`. Archive this suite next to hosted Chrome/Edge benchmark evidence when making a backend-specific deploy-readiness claim.
 
 The strict production archive is written by:
 

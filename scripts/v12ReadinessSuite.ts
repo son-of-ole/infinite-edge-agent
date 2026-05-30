@@ -44,6 +44,7 @@ export interface V12ReadinessSuite {
   sharedRuntimePassed: boolean;
   v12ReadinessBundlePassed: boolean;
   hostedBenchmarkProofRequired: boolean;
+  hostedBenchmarkProofSourceBoundRequired: boolean;
   hostedBenchmarkProofPassed: boolean | null;
   hostedProfile: HostedDeploymentProfileReport;
   backendMatrix: BackendReadinessMatrix;
@@ -98,6 +99,10 @@ export function evaluateV12ReadinessSuite(input: {
 } = {}): V12ReadinessSuite {
   const env = input.env ?? process.env;
   const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
+  const hostedBenchmarkProofSourceBoundRequired = readHostedBenchmarkSourceBoundRequired(
+    env,
+    hostedBenchmarkProofRequired,
+  );
   const hostedBenchmarkProof = input.hostedBenchmarkProof ?? null;
   const hostedProfile = input.hostedProfile ?? evaluateHostedDeploymentProfile(input.env ?? process.env);
   const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix({
@@ -121,6 +126,9 @@ export function evaluateV12ReadinessSuite(input: {
       : hostedBenchmarkProofRequired
         ? ["hosted_benchmark_proof: required but no HOSTED_BENCHMARK_ARTIFACT_PATH or report was provided."]
         : []),
+    ...(hostedBenchmarkProof && hostedBenchmarkProofSourceBoundRequired && hostedBenchmarkProof.sourceBoundRequired !== true
+      ? ["hosted_benchmark_proof: source-bound proof mode was required but the proof report was not generated with source binding required."]
+      : []),
   ];
   const childArtifactCount = hostedBenchmarkProof ? 5 : 4;
 
@@ -136,6 +144,7 @@ export function evaluateV12ReadinessSuite(input: {
     sharedRuntimePassed: sharedRuntime.passed,
     v12ReadinessBundlePassed: v12Bundle.passed,
     hostedBenchmarkProofRequired,
+    hostedBenchmarkProofSourceBoundRequired,
     hostedBenchmarkProofPassed: hostedBenchmarkProof ? hostedBenchmarkProof.passed : hostedBenchmarkProofRequired ? false : null,
     hostedProfile,
     backendMatrix,
@@ -172,6 +181,7 @@ export function buildV12ReadinessSuiteArtifact(
       v12SuiteSharedRuntimePassed: suite.sharedRuntimePassed,
       v12SuiteReadinessBundlePassed: suite.v12ReadinessBundlePassed,
       v12SuiteHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
+      v12SuiteHostedBenchmarkProofSourceBoundRequired: suite.hostedBenchmarkProofSourceBoundRequired,
       v12SuiteHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
     },
     suite: {
@@ -221,11 +231,15 @@ export async function runV12ReadinessSuite(options: {
   const createdAt = options.createdAt ?? new Date().toISOString();
   const env = options.env ?? process.env;
   const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
+  const hostedBenchmarkProofSourceBoundRequired = readHostedBenchmarkSourceBoundRequired(
+    env,
+    hostedBenchmarkProofRequired,
+  );
   const hostedBenchmarkArtifactPath = options.hostedBenchmarkArtifactPath ?? env.HOSTED_BENCHMARK_ARTIFACT_PATH;
   const hostedBenchmarkProof = hostedBenchmarkArtifactPath
     ? await evaluateHostedBenchmarkProofFile(hostedBenchmarkArtifactPath, {
       expectedSourceGitSha: readExpectedHostedBenchmarkGitSha(env),
-      requireSourceBound: hostedBenchmarkProofRequired,
+      requireSourceBound: hostedBenchmarkProofSourceBoundRequired,
     })
     : null;
   const suite = evaluateV12ReadinessSuite({ env, hostedBenchmarkProof });
@@ -254,6 +268,13 @@ function readExpectedHostedBenchmarkGitSha(env: HostedDeploymentProfileEnv): str
   return env.HOSTED_BENCHMARK_EXPECTED_GIT_SHA?.trim()
     || env.GITHUB_SHA?.trim()
     || null;
+}
+
+function readHostedBenchmarkSourceBoundRequired(
+  env: HostedDeploymentProfileEnv,
+  hostedBenchmarkProofRequired: boolean,
+): boolean {
+  return hostedBenchmarkProofRequired || env.HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND === "true";
 }
 
 function toChildArtifacts(input: {

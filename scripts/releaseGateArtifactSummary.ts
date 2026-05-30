@@ -218,6 +218,7 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12SuiteSharedRuntimePassed",
       "v12SuiteReadinessBundlePassed",
       "v12SuiteHostedBenchmarkProofRequired",
+      "v12SuiteHostedBenchmarkProofSourceBoundRequired",
       "v12SuiteHostedBenchmarkProofPassed",
     ] as const;
     for (const key of v12ReadinessSuiteFields) {

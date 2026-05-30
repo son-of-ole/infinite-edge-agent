@@ -120,7 +120,7 @@ For the full final-state artifact set, run:
 pnpm eval:v12-suite
 ```
 
-This writes hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with one timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also writes `hosted-benchmark-proof-latest.json` as a child artifact. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+This writes hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with one timestamp. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, it also writes `hosted-benchmark-proof-latest.json` as a child artifact. Set `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` for release evidence so the suite validates the saved browser proof against `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` or `GITHUB_SHA`; the suite summary records this as `v12SuiteHostedBenchmarkProofSourceBoundRequired`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
 For strict production archive proof, run:
 
