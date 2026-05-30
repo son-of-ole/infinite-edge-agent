@@ -1,4 +1,5 @@
 import {
+  BROWSER_BACKEND_REGISTRY,
   getBrowserBackendRegistryEntry,
   type BrowserBackendSelection,
 } from "../lib/runtime/backendBroker";
@@ -426,6 +427,22 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
     : false;
   const backendBrokerReason = summarizeStringField(brokerSelections.map((selection) => selection.reason));
   const backendBrokerProofRequirements = uniqueSorted(brokerSelections.flatMap((selection) => selection.proofRequirements));
+  const brokerProductionBackends = BROWSER_BACKEND_REGISTRY.filter((entry) => entry.productionRole === "production_candidate");
+  const brokerKernelLabBackends = BROWSER_BACKEND_REGISTRY.filter((entry) => entry.productionRole === "research_kernel_lab");
+  const brokerFallbackBackends = BROWSER_BACKEND_REGISTRY.filter((entry) => entry.productionRole === "fallback");
+  const backendBrokerDeployBackendId = brokerProductionBackends[0]?.backendId ?? null;
+  const backendBrokerKernelLabBackendId = brokerKernelLabBackends[0]?.backendId ?? null;
+  const backendBrokerFallbackBackendId = brokerFallbackBackends[0]?.backendId ?? null;
+  const backendBrokerFallbackDeployReadyCandidate = brokerFallbackBackends.some((entry) => entry.deployDefault);
+  const backendBrokerRoleBoundaryPassed = brokerProductionBackends.length === 1
+    && brokerKernelLabBackends.length === 1
+    && brokerFallbackBackends.length === 1
+    && backendBrokerDeployBackendId === "compiled-browser-webllm"
+    && backendBrokerKernelLabBackendId === "unlocked-browser-transformer"
+    && backendBrokerFallbackBackendId === "wasm-small-core"
+    && backendBrokerFallbackDeployReadyCandidate === false
+    && BROWSER_BACKEND_REGISTRY.every((entry) =>
+      entry.productionRole === "production_candidate" || entry.deployDefault === false);
   const backendBrokerSelectionPassed = input.runs.length > 0
     && backendBrokerTraceCount === input.runs.length
     && input.runs.every((run) => brokerSelectionMatchesRuntime(run.runtimeTrace.brokerSelection, run.runtimeTrace.backend));
@@ -469,6 +486,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const compiledBackendReadyPassed = sharedProductionQualityPassed
     && productionCandidateBackend
     && backendBrokerSelectionPassed
+    && backendBrokerRoleBoundaryPassed
     && productionSpeedFloorPassed
     && memoryGroundingRequired
     && memoryGroundingPassed
@@ -608,6 +626,12 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       backendBrokerDeployReadyCandidate,
       backendBrokerReason,
       backendBrokerProofRequirements,
+      backendBrokerDeployBackendId,
+      backendBrokerKernelLabBackendId,
+      backendBrokerFallbackBackendId,
+      backendBrokerFallbackBackendCount: brokerFallbackBackends.length,
+      backendBrokerFallbackDeployReadyCandidate,
+      backendBrokerRoleBoundaryPassed,
       deployBackendId: productionDeployReadyPassed ? runtimeBackendId : null,
       researchBackendId: runtimeBackendEntry?.productionRole === "research_kernel_lab" ? runtimeBackendId : null,
       productionDeployReadyPassed,

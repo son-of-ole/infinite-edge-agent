@@ -78,6 +78,12 @@ function makePassingHostedBenchmarkProofReport(options: { expectedSourceGitSha?:
         backendBrokerDeployReadyCandidate: brokerSelection.deployReadyCandidate,
         backendBrokerReason: brokerSelection.reason,
         backendBrokerProofRequirements: brokerSelection.proofRequirements,
+        backendBrokerDeployBackendId: "compiled-browser-webllm",
+        backendBrokerKernelLabBackendId: "unlocked-browser-transformer",
+        backendBrokerFallbackBackendId: "wasm-small-core",
+        backendBrokerFallbackBackendCount: 1,
+        backendBrokerFallbackDeployReadyCandidate: false,
+        backendBrokerRoleBoundaryPassed: true,
       },
       runs: [
         {

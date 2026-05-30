@@ -169,6 +169,12 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && Number(artifact.summary?.hostedBenchmarkMemoryIncludedCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemoryExpectedMemoryIdCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemoryExpectedHitMeanRank ?? Number.POSITIVE_INFINITY) <= 1
+    && artifact.summary?.hostedBenchmarkBrokerDeployBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkBrokerKernelLabBackendId === "unlocked-browser-transformer"
+    && artifact.summary?.hostedBenchmarkBrokerFallbackBackendId === "wasm-small-core"
+    && Number(artifact.summary?.hostedBenchmarkBrokerFallbackBackendCount ?? 0) === 1
+    && artifact.summary?.hostedBenchmarkBrokerFallbackDeployReadyCandidate === false
+    && artifact.summary?.hostedBenchmarkBrokerRoleBoundaryPassed === true
     && typeof artifact.summary?.hostedBenchmarkProofSourceGitSha === "string"
     && artifact.summary.hostedBenchmarkProofSourceGitSha.trim().length > 0
     && typeof artifact.summary?.hostedBenchmarkExpectedSourceGitSha === "string"

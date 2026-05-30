@@ -57,6 +57,12 @@ function makePassingBrowserPreviewArtifact() {
       backendBrokerProductionRole: brokerSelection.productionRole,
       backendBrokerDeployReadyCandidate: brokerSelection.deployReadyCandidate,
       backendBrokerReason: brokerSelection.reason,
+      backendBrokerDeployBackendId: "compiled-browser-webllm",
+      backendBrokerKernelLabBackendId: "unlocked-browser-transformer",
+      backendBrokerFallbackBackendId: "wasm-small-core",
+      backendBrokerFallbackBackendCount: 1,
+      backendBrokerFallbackDeployReadyCandidate: false,
+      backendBrokerRoleBoundaryPassed: true,
     },
     runs: [
       {
@@ -158,6 +164,17 @@ describe("hosted benchmark proof verifier", () => {
 
     expect(report.passed).toBe(false);
     expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker selection evidence for compiled-browser-webllm.");
+  });
+
+  it("fails production proof when the hosted artifact lacks Backend Broker role-boundary evidence", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    delete (artifact.summary as Record<string, unknown>).backendBrokerRoleBoundaryPassed;
+    delete (artifact.summary as Record<string, unknown>).backendBrokerFallbackBackendId;
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker role-boundary evidence for compiled deploy, Kernel Lab, and fallback backends.");
   });
 
   it("fails production proof when the hosted artifact uses a stale v12 proof schema", () => {
@@ -272,6 +289,12 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
         hostedBenchmarkBrokerProductionRole: "production_candidate",
         hostedBenchmarkBrokerDeployReadyCandidate: true,
+        hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+        hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+        hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+        hostedBenchmarkBrokerFallbackBackendCount: 1,
+        hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+        hostedBenchmarkBrokerRoleBoundaryPassed: true,
       },
     });
   });

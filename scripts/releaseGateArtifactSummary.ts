@@ -220,6 +220,12 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "hostedBenchmarkBrokerProductionRole",
       "hostedBenchmarkBrokerDeployReadyCandidate",
       "hostedBenchmarkBrokerReason",
+      "hostedBenchmarkBrokerDeployBackendId",
+      "hostedBenchmarkBrokerKernelLabBackendId",
+      "hostedBenchmarkBrokerFallbackBackendId",
+      "hostedBenchmarkBrokerFallbackBackendCount",
+      "hostedBenchmarkBrokerFallbackDeployReadyCandidate",
+      "hostedBenchmarkBrokerRoleBoundaryPassed",
     ] as const;
     for (const key of hostedBenchmarkProofFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];

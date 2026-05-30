@@ -115,6 +115,12 @@ describe("release gate artifact summary", () => {
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
         hostedBenchmarkProofSourceGitSha: "abc123",
         hostedBenchmarkProofSourceBoundRequired: true,
+        hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+        hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+        hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+        hostedBenchmarkBrokerFallbackBackendCount: 1,
+        hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+        hostedBenchmarkBrokerRoleBoundaryPassed: true,
       },
     })).toMatchObject({
       hostedBenchmarkProofPassed: true,
@@ -143,6 +149,12 @@ describe("release gate artifact summary", () => {
       hostedBenchmarkV12ProductionProofSchemaVersion: 2,
       hostedBenchmarkProofSourceGitSha: "abc123",
       hostedBenchmarkProofSourceBoundRequired: true,
+      hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+      hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+      hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+      hostedBenchmarkBrokerFallbackBackendCount: 1,
+      hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+      hostedBenchmarkBrokerRoleBoundaryPassed: true,
     });
   });
 

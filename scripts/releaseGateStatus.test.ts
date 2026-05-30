@@ -83,10 +83,43 @@ describe("release gate status", () => {
             hostedBenchmarkMemoryIncludedCount: 1,
             hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
             hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+            hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+            hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+            hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+            hostedBenchmarkBrokerFallbackBackendCount: 1,
+            hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+            hostedBenchmarkBrokerRoleBoundaryPassed: true,
           },
         },
       ],
     })).toBe(true);
+  });
+
+  it("fails standalone hosted benchmark proof without Backend Broker role-boundary evidence", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkConcreteMemoryGroundingPassed: true,
+            hostedBenchmarkMemoryGroundingRunCount: 1,
+            hostedBenchmarkMemorySeededCorpusCount: 16,
+            hostedBenchmarkMemoryRetrievedCount: 1,
+            hostedBenchmarkMemoryIncludedCount: 1,
+            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+            hostedBenchmarkBrokerRoleBoundaryPassed: false,
+          },
+        },
+      ],
+    })).toBe(false);
   });
 
   it("fails standalone hosted benchmark proof without concrete memory grounding evidence", () => {

@@ -43,6 +43,12 @@ export interface HostedBenchmarkProof {
   brokerDeployReadyCandidate: boolean;
   brokerReason: string | null;
   brokerProofRequirements: string[];
+  brokerDeployBackendId: string | null;
+  brokerKernelLabBackendId: string | null;
+  brokerFallbackBackendId: string | null;
+  brokerFallbackBackendCount: number | null;
+  brokerFallbackDeployReadyCandidate: boolean;
+  brokerRoleBoundaryPassed: boolean;
 }
 
 export interface HostedBenchmarkProofReport {
@@ -190,6 +196,16 @@ export function evaluateHostedBenchmarkProof(input: {
   ) {
     blockers.push(`Hosted benchmark proof requires Backend Broker selection evidence for ${expectedBackendId}.`);
   }
+  if (
+    proof.brokerDeployBackendId !== expectedBackendId
+    || proof.brokerKernelLabBackendId !== "unlocked-browser-transformer"
+    || proof.brokerFallbackBackendId !== "wasm-small-core"
+    || proof.brokerFallbackBackendCount !== 1
+    || proof.brokerFallbackDeployReadyCandidate !== false
+    || proof.brokerRoleBoundaryPassed !== true
+  ) {
+    blockers.push("Hosted benchmark proof requires Backend Broker role-boundary evidence for compiled deploy, Kernel Lab, and fallback backends.");
+  }
   if (expectedResponse && proof.response !== null && proof.response.trim() !== expectedResponse) {
     blockers.push(`Hosted benchmark proof expected response ${expectedResponse}.`);
   }
@@ -251,6 +267,12 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkBrokerProductionRole: report.proof.brokerProductionRole,
       hostedBenchmarkBrokerDeployReadyCandidate: report.proof.brokerDeployReadyCandidate,
       hostedBenchmarkBrokerReason: report.proof.brokerReason,
+      hostedBenchmarkBrokerDeployBackendId: report.proof.brokerDeployBackendId,
+      hostedBenchmarkBrokerKernelLabBackendId: report.proof.brokerKernelLabBackendId,
+      hostedBenchmarkBrokerFallbackBackendId: report.proof.brokerFallbackBackendId,
+      hostedBenchmarkBrokerFallbackBackendCount: report.proof.brokerFallbackBackendCount,
+      hostedBenchmarkBrokerFallbackDeployReadyCandidate: report.proof.brokerFallbackDeployReadyCandidate,
+      hostedBenchmarkBrokerRoleBoundaryPassed: report.proof.brokerRoleBoundaryPassed,
     },
     report,
   };
@@ -329,6 +351,12 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
   const brokerProofRequirements = readStringList(source.summary.backendBrokerProofRequirements)
     ?? brokerSelection?.proofRequirements
     ?? [];
+  const brokerDeployBackendId = readString(source.summary.backendBrokerDeployBackendId);
+  const brokerKernelLabBackendId = readString(source.summary.backendBrokerKernelLabBackendId);
+  const brokerFallbackBackendId = readString(source.summary.backendBrokerFallbackBackendId);
+  const brokerFallbackBackendCount = readNumber(source.summary.backendBrokerFallbackBackendCount);
+  const brokerFallbackDeployReadyCandidate = readBoolean(source.summary.backendBrokerFallbackDeployReadyCandidate);
+  const brokerRoleBoundaryPassed = readBoolean(source.summary.backendBrokerRoleBoundaryPassed);
   const backendBrokerTraceCount = readNumber(source.summary.backendBrokerTraceCount)
     ?? (brokerSelection ? 1 : 0);
   const backendBrokerSelectionPassed = readBoolean(source.summary.backendBrokerSelectionPassed)
@@ -382,6 +410,12 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     brokerDeployReadyCandidate,
     brokerReason,
     brokerProofRequirements,
+    brokerDeployBackendId,
+    brokerKernelLabBackendId,
+    brokerFallbackBackendId,
+    brokerFallbackBackendCount,
+    brokerFallbackDeployReadyCandidate,
+    brokerRoleBoundaryPassed,
   };
 }
 
@@ -428,6 +462,12 @@ function buildEmptyProof(): HostedBenchmarkProof {
     brokerDeployReadyCandidate: false,
     brokerReason: null,
     brokerProofRequirements: [],
+    brokerDeployBackendId: null,
+    brokerKernelLabBackendId: null,
+    brokerFallbackBackendId: null,
+    brokerFallbackBackendCount: null,
+    brokerFallbackDeployReadyCandidate: false,
+    brokerRoleBoundaryPassed: false,
   };
 }
 
