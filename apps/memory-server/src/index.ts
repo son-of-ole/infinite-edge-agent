@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { GacListOptions, MemoryChunk, MemoryDeleteOptions, MemorySearchOptions, RawMemorySearchOptions, RuntimeTrace, RuntimeTraceListOptions } from "@infinite-edge-agent/core";
 import { createAesGcmStringCodec } from "./encryption.js";
+import { registerBenchmarkTelemetryRoutes } from "./benchmarkTelemetry.js";
 import { LanceMemoryStore } from "./lancedbStore.js";
 import { shouldExposeLocalRoutes } from "./localRoutes.js";
 import {
@@ -53,6 +54,13 @@ const expectedTenantId = process.env.MEMORY_TENANT_ID;
 const expectedCellId = process.env.MEMORY_CELL_ID;
 const corsOrigin = parseCorsOrigin(process.env.MEMORY_CORS_ORIGIN);
 const memoryEncryptionKey = process.env.MEMORY_ENCRYPTION_KEY;
+const benchmarkTelemetryEnabled = process.env.BENCHMARK_TELEMETRY_ENABLED === "true";
+const benchmarkTelemetryPrefix = process.env.BENCHMARK_TELEMETRY_PREFIX ?? "/api/benchmark-runs";
+const benchmarkTelemetryDir = process.env.BENCHMARK_TELEMETRY_DIR ?? ".data/benchmark-runs";
+const benchmarkTelemetryMaxArtifactBytes = readPositiveInt(
+  process.env.BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES,
+  1024 * 1024
+);
 
 const store = new LanceMemoryStore(dbUri, tableName, {
   ...(memoryEncryptionKey ? { stringCodec: createAesGcmStringCodec(memoryEncryptionKey) } : {})
@@ -76,6 +84,12 @@ if (shouldExposeLocalRoutes({
 if (apiPrefix) {
   registerMemoryRoutes(server, apiPrefix, "remote-http");
 }
+registerBenchmarkTelemetryRoutes(server, {
+  enabled: benchmarkTelemetryEnabled,
+  prefix: benchmarkTelemetryPrefix,
+  dir: benchmarkTelemetryDir,
+  maxArtifactBytes: benchmarkTelemetryMaxArtifactBytes
+});
 
 await server.listen({ host, port });
 

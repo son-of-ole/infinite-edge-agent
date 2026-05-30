@@ -16,7 +16,26 @@ Hosted app
   -> public dashboard/export
 ```
 
-## Recommended Storage
+## Current Implementation
+
+The repo now includes an optional telemetry collector in `apps/memory-server`:
+
+- `POST /api/benchmark-runs` validates and stores one benchmark run.
+- `GET /api/benchmark-runs?limit=100` lists recent runs.
+- `GET /api/benchmark-runs/summary` returns small aggregate counts.
+
+Enable it with:
+
+```bash
+BENCHMARK_TELEMETRY_ENABLED=true
+BENCHMARK_TELEMETRY_PREFIX=/api/benchmark-runs
+BENCHMARK_TELEMETRY_DIR=.data/benchmark-runs
+BENCHMARK_TELEMETRY_MAX_ARTIFACT_BYTES=1048576
+```
+
+The included collector is JSONL-backed so it works in local development and simple hosted environments without adding another service. The server validates the submitted payload and sanitizes the artifact again before writing it, so it does not rely only on the browser-side redaction path.
+
+## Recommended Durable Storage
 
 For Replit-hosted deployments, use hosted SQL/Postgres rather than writing JSON files to the app filesystem. Deployment filesystems are not a durable benchmark database.
 
