@@ -15,6 +15,7 @@ describe("CI v12 readiness gates", () => {
     expect(workflow).toContain('VITE_REQUIRE_UNLOCKED_RUNTIME: "false"');
     expect(workflow).toContain('VITE_MTP_ENABLED: "false"');
     expect(workflow).toContain("BENCHMARK_TELEMETRY_STORAGE: postgres");
+    expect(workflow).toContain("VITE_DEPLOY_URL: https://ci.example.com");
     expect(workflow).toContain("HOSTED_PRODUCTION_BENCHMARK_URL:");
     expect(workflow).toContain("pnpm verify:hosted-profile");
     expect(workflow).toContain("pnpm eval:backend-readiness");

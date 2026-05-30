@@ -95,6 +95,7 @@ jobs:
           BENCHMARK_TELEMETRY_ADMIN_TOKEN: ci-admin-token
           BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60"
           BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000"
+          VITE_DEPLOY_URL: https://ci.example.com
           HOSTED_PRODUCTION_BENCHMARK_URL: 'https://ci.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
         run: |
           pnpm verify:hosted-profile
