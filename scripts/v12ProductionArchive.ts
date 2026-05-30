@@ -66,6 +66,7 @@ export function buildV12ProductionArchiveArtifact(input: {
   const suite = input.suiteResult.suite;
   const blockers = suite.blockers;
   const artifactCount = suite.totalArtifactCount + 1;
+  const hostedProof = suite.hostedBenchmarkProof?.proof;
 
   return {
     name: "v12-production-archive",
@@ -82,6 +83,18 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionArtifactCount: artifactCount,
       v12ProductionSuiteArtifactCount: suite.totalArtifactCount,
       v12ProductionChildArtifactCount: suite.childArtifactCount,
+      v12ProductionHostedBenchmarkRuntimeBackendId: hostedProof?.runtimeBackendId ?? null,
+      v12ProductionHostedBenchmarkDeployBackendId: hostedProof?.deployBackendId ?? null,
+      v12ProductionCompiledBackendReadyPassed: hostedProof?.compiledBackendReadyPassed ?? false,
+      v12ProductionDeployReadyPassed: hostedProof?.productionDeployReadyPassed ?? false,
+      v12ProductionMemoryGroundingPassed: hostedProof?.memoryGroundingPassed ?? false,
+      v12ProductionExpectedExactPassed: hostedProof?.expectedExactPassed ?? false,
+      v12ProductionSpeedFloorPassed: hostedProof?.productionSpeedFloorPassed ?? false,
+      v12ProductionMeanTokensPerSecond: hostedProof?.meanTokensPerSecond ?? null,
+      v12ProductionDirectModelFactualProofUsed: hostedProof?.directModelFactualProofUsed ?? null,
+      v12ProductionTechnicalProofOnly: hostedProof?.technicalProofOnly ?? null,
+      v12ProductionCpuFallbackUsed: hostedProof?.cpuFallbackUsed ?? null,
+      v12ProductionStrictWebGpuPassed: hostedProof?.strictWebGpuPassed ?? false,
     },
     archive: {
       passed: suite.passed,

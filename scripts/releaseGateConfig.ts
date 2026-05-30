@@ -15,6 +15,9 @@ const DEFAULT_STRICT_BROWSER_BENCH_PROMPTS = "What is the capital of Utah?|Write
 const DEFAULT_STRICT_BROWSER_BENCH_GENERATION_TOKENS = "16";
 
 export function makeReleaseGateDefaultEnvOverrides(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  if (env.RELEASE_REQUIRE_V12_PRODUCTION === "true" && env.RELEASE_REQUIRE_UNLOCKED_MODEL !== "true") {
+    return {};
+  }
   return makeStrictRealQwenEnvOverrides(env, { detectInstalledDefaultModel: true });
 }
 
@@ -111,6 +114,21 @@ export function makeReleaseGateChildEnv(
   return {
     ...envOverrides,
     EVAL_ARTIFACT_DIR: join(suiteDir, "child-evals"),
+  };
+}
+
+export function makeReleaseGateTestEnvOverrides(_env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  return {
+    VITE_LLM_BACKEND: undefined,
+    VITE_DEFAULT_MODEL: undefined,
+    VITE_COMPILED_WEBLLM_ENABLED: undefined,
+    VITE_REQUIRE_UNLOCKED_RUNTIME: undefined,
+    VITE_REQUIRE_WEBGPU_KERNELS: undefined,
+    VITE_BENCHMARK_TELEMETRY_ENABLED: undefined,
+    VITE_BENCHMARK_TELEMETRY_URL: undefined,
+    VITE_MEMORY_PROVIDER: undefined,
+    VITE_QWEN_THINKING_MODE: undefined,
+    VITE_MTP_ENABLED: undefined,
   };
 }
 

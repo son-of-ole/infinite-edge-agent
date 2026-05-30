@@ -93,7 +93,19 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
     && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7
     && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 6
-    && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 5;
+    && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 5
+    && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionHostedBenchmarkDeployBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
+    && artifact.summary?.v12ProductionDeployReadyPassed === true
+    && artifact.summary?.v12ProductionMemoryGroundingPassed === true
+    && artifact.summary?.v12ProductionExpectedExactPassed === true
+    && artifact.summary?.v12ProductionSpeedFloorPassed === true
+    && Number(artifact.summary?.v12ProductionMeanTokensPerSecond ?? 0) >= 2
+    && artifact.summary?.v12ProductionDirectModelFactualProofUsed === false
+    && artifact.summary?.v12ProductionTechnicalProofOnly === false
+    && artifact.summary?.v12ProductionCpuFallbackUsed === false
+    && artifact.summary?.v12ProductionStrictWebGpuPassed === true;
 }
 
 export function computeReleaseGatePassed(input: {

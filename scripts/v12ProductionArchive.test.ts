@@ -112,6 +112,18 @@ describe("v12 production archive", () => {
         v12ProductionArtifactCount: 7,
         v12ProductionSuiteArtifactCount: 6,
         v12ProductionChildArtifactCount: 5,
+        v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+        v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+        v12ProductionCompiledBackendReadyPassed: true,
+        v12ProductionDeployReadyPassed: true,
+        v12ProductionMemoryGroundingPassed: true,
+        v12ProductionExpectedExactPassed: true,
+        v12ProductionSpeedFloorPassed: true,
+        v12ProductionMeanTokensPerSecond: 2.7,
+        v12ProductionDirectModelFactualProofUsed: false,
+        v12ProductionTechnicalProofOnly: false,
+        v12ProductionCpuFallbackUsed: false,
+        v12ProductionStrictWebGpuPassed: true,
       },
     });
 

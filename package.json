@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "description": "Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/son-of-ole/infinite-edge-agent.git"
+  },
+  "homepage": "https://github.com/son-of-ole/infinite-edge-agent#readme",
+  "bugs": {
+    "url": "https://github.com/son-of-ole/infinite-edge-agent/issues"
+  },
   "keywords": [
     "browser-ai",
     "webgpu",
@@ -22,16 +31,16 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm test:converter && pnpm --filter @infinite-edge-agent/core test && pnpm --filter @infinite-edge-agent/web test && pnpm --filter @infinite-edge-agent/memory-server test && pnpm --filter @infinite-edge-agent/browser-sdk test",
     "test:converter": "vitest run scripts/*.test.ts",
-    "convert:unlocked": "tsx scripts/convert-unlocked-model.ts",
-    "verify:unlocked": "tsx scripts/verify-unlocked-asset.ts",
-    "smoke:core": "tsx scripts/smoke-test-core.ts",
-    "smoke:sdk": "pnpm --filter @infinite-edge-agent/browser-sdk build && node scripts/smoke-test-sdk-package.mjs && tsx scripts/smoke-test-sdk.ts",
-    "check:web-dist": "tsx scripts/check-web-dist-size.ts",
-    "stress:core": "tsx scripts/stress-test-core.ts",
-    "bench:browser-runtime": "tsx scripts/browserRuntimeBenchmark.ts",
-    "ci:headless-webgpu": "tsx scripts/headlessWebGpuCiParity.ts",
-    "eval:qwen-parity": "tsx scripts/qwenParityAccuracy.ts",
-    "eval:production": "tsx scripts/eval-production.ts",
+    "convert:unlocked": "node --import tsx scripts/convert-unlocked-model.ts",
+    "verify:unlocked": "node --import tsx scripts/verify-unlocked-asset.ts",
+    "smoke:core": "node --import tsx scripts/smoke-test-core.ts",
+    "smoke:sdk": "pnpm --filter @infinite-edge-agent/browser-sdk build && node scripts/smoke-test-sdk-package.mjs && node --import tsx scripts/smoke-test-sdk.ts",
+    "check:web-dist": "node --import tsx scripts/check-web-dist-size.ts",
+    "stress:core": "node --import tsx scripts/stress-test-core.ts",
+    "bench:browser-runtime": "node --import tsx scripts/browserRuntimeBenchmark.ts",
+    "ci:headless-webgpu": "node --import tsx scripts/headlessWebGpuCiParity.ts",
+    "eval:qwen-parity": "node --import tsx scripts/qwenParityAccuracy.ts",
+    "eval:production": "node --import tsx scripts/eval-production.ts",
     "eval:backend-readiness": "node --import tsx scripts/backendReadinessMatrix.ts",
     "eval:shared-runtime": "node --import tsx scripts/sharedRuntimeReadiness.ts",
     "eval:v12-readiness": "node --import tsx scripts/v12ReadinessBundle.ts",
@@ -39,7 +48,7 @@
     "eval:v12-suite": "node --import tsx scripts/v12ReadinessSuite.ts",
     "verify:hosted-benchmark-proof": "node --import tsx scripts/hostedBenchmarkProof.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",
-    "release:gate": "tsx scripts/release-gate.ts"
+    "release:gate": "node --import tsx scripts/release-gate.ts"
   },
   "dependencies": {
     "@infinite-edge-agent/core": "workspace:*"

@@ -7,6 +7,7 @@ import {
   makeReleaseGateChildEnv,
   makeUnlockedBenchmarkEnvOverrides,
   makeUnlockedVerifyEnvOverrides,
+  makeReleaseGateTestEnvOverrides,
 } from "./releaseGateConfig";
 
 describe("release gate unlocked verification config", () => {
@@ -34,6 +35,44 @@ describe("release gate unlocked verification config", () => {
       VITE_UNLOCKED_WEIGHT_FORMAT: "f16-packed",
       VITE_UNLOCKED_BACKEND_PREFERENCE: "webgpu",
       VITE_MEMORY_PROVIDER: "browser-vector",
+    });
+  });
+
+  it("does not auto-promote the Kernel Lab gate when v12 compiled production proof is required", () => {
+    expect(makeReleaseGateDefaultEnvOverrides({
+      RELEASE_REQUIRE_V12_PRODUCTION: "true",
+      VITE_UNLOCKED_MODEL_MANIFEST_PATH: "/models/qwen3-0.6b-unlocked/manifest.json",
+      VITE_UNLOCKED_MODEL_MANIFEST_SHA256: "f".repeat(64),
+    })).toEqual({});
+    expect(makeReleaseGateDefaultEnvOverrides({
+      RELEASE_REQUIRE_V12_PRODUCTION: "true",
+      RELEASE_REQUIRE_UNLOCKED_MODEL: "true",
+      VITE_UNLOCKED_MODEL_MANIFEST_PATH: "/models/qwen3-0.6b-unlocked/manifest.json",
+      VITE_UNLOCKED_MODEL_MANIFEST_SHA256: "f".repeat(64),
+    })).toMatchObject({
+      RELEASE_REQUIRE_UNLOCKED_MODEL: "true",
+      VITE_LLM_BACKEND: "unlocked-browser-transformer",
+    });
+  });
+
+  it("strips deploy runtime env from non-production child checks", () => {
+    expect(makeReleaseGateTestEnvOverrides({
+      VITE_LLM_BACKEND: "compiled-browser-webllm",
+      VITE_BENCHMARK_TELEMETRY_ENABLED: "true",
+      VITE_BENCHMARK_TELEMETRY_URL: "/api/benchmark-runs",
+      VITE_REQUIRE_WEBGPU_KERNELS: "false",
+      RELEASE_REQUIRE_V12_PRODUCTION: "true",
+    })).toEqual({
+      VITE_LLM_BACKEND: undefined,
+      VITE_DEFAULT_MODEL: undefined,
+      VITE_COMPILED_WEBLLM_ENABLED: undefined,
+      VITE_REQUIRE_UNLOCKED_RUNTIME: undefined,
+      VITE_REQUIRE_WEBGPU_KERNELS: undefined,
+      VITE_BENCHMARK_TELEMETRY_ENABLED: undefined,
+      VITE_BENCHMARK_TELEMETRY_URL: undefined,
+      VITE_MEMORY_PROVIDER: undefined,
+      VITE_QWEN_THINKING_MODE: undefined,
+      VITE_MTP_ENABLED: undefined,
     });
   });
 

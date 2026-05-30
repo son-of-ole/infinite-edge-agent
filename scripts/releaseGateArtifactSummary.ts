@@ -143,6 +143,18 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
       "v12ProductionArtifactCount",
       "v12ProductionSuiteArtifactCount",
       "v12ProductionChildArtifactCount",
+      "v12ProductionHostedBenchmarkRuntimeBackendId",
+      "v12ProductionHostedBenchmarkDeployBackendId",
+      "v12ProductionCompiledBackendReadyPassed",
+      "v12ProductionDeployReadyPassed",
+      "v12ProductionMemoryGroundingPassed",
+      "v12ProductionExpectedExactPassed",
+      "v12ProductionSpeedFloorPassed",
+      "v12ProductionMeanTokensPerSecond",
+      "v12ProductionDirectModelFactualProofUsed",
+      "v12ProductionTechnicalProofOnly",
+      "v12ProductionCpuFallbackUsed",
+      "v12ProductionStrictWebGpuPassed",
     ] as const;
     for (const key of v12ProductionArchiveFields) {
       if (key in parsed.summary) summary[key] = parsed.summary[key];

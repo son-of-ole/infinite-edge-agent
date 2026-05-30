@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/infinite-edge-agent/infinite-edge-agent.git",
+    "url": "https://github.com/son-of-ole/infinite-edge-agent.git",
     "directory": "packages/sdk"
   },
   "keywords": [

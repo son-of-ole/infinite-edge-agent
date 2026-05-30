@@ -7,8 +7,10 @@ const packageDir = resolve("packages/sdk");
 const workspaceRoot = process.cwd();
 const tempRoot = await mkdtemp(join(tmpdir(), "infinite-edge-sdk-package-"));
 const appDir = join(tempRoot, "consumer");
+const npmCacheDir = join(tempRoot, "npm-cache");
 
 await mkdir(appDir, { recursive: true });
+await mkdir(npmCacheDir, { recursive: true });
 await writeFile(join(appDir, "package.json"), JSON.stringify({ type: "module", dependencies: {} }, null, 2));
 
 const packResult = await run("npm", ["pack", packageDir, "--silent", "--pack-destination", tempRoot], workspaceRoot);
@@ -39,7 +41,14 @@ if (packageEntrypointResult.stdout.trim()) {
 
 async function run(command, args, cwd) {
   return new Promise((resolveRun, reject) => {
-    const child = spawn(command, args, { cwd, stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(command, args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: {
+        ...process.env,
+        NPM_CONFIG_CACHE: process.env.NPM_CONFIG_CACHE ?? npmCacheDir,
+      },
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => {

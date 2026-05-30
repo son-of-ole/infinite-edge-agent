@@ -198,18 +198,7 @@ describe("release gate status", () => {
         {
           name: "v12-production-archive",
           passed: true,
-          summary: {
-            v12ProductionArchivePassed: true,
-            v12ProductionBlockerCount: 0,
-            v12ProductionSuitePassed: true,
-            v12ProductionDeployBackendId: "compiled-browser-webllm",
-            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
-            v12ProductionHostedBenchmarkProofRequired: true,
-            v12ProductionHostedBenchmarkProofPassed: true,
-            v12ProductionArtifactCount: 7,
-            v12ProductionSuiteArtifactCount: 6,
-            v12ProductionChildArtifactCount: 5,
-          },
+          summary: makeV12ProductionArchiveSummary(),
         },
       ],
     })).toMatchObject({
@@ -221,6 +210,31 @@ describe("release gate status", () => {
       strictEnv: {
         RELEASE_REQUIRE_V12_PRODUCTION: true,
       },
+    });
+  });
+
+  it("does not classify v12 production archives without concrete hosted runtime proof fields", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      requireV12ProductionArchive: true,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: null,
+      manifestSha256: null,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({}, { includeHostedRuntimeProof: false }),
+        },
+      ],
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      backendSpecificProductionProof: false,
+      v12ProductionArchiveProof: false,
     });
   });
 
@@ -237,18 +251,9 @@ describe("release gate status", () => {
         {
           name: "v12-production-archive",
           passed: true,
-          summary: {
-            v12ProductionArchivePassed: true,
-            v12ProductionBlockerCount: 0,
-            v12ProductionSuitePassed: true,
-            v12ProductionDeployBackendId: "compiled-browser-webllm",
-            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+          summary: makeV12ProductionArchiveSummary({
             v12ProductionHostedBenchmarkProofRequired: false,
-            v12ProductionHostedBenchmarkProofPassed: true,
-            v12ProductionArtifactCount: 7,
-            v12ProductionSuiteArtifactCount: 6,
-            v12ProductionChildArtifactCount: 5,
-          },
+          }),
         },
       ],
     })).toMatchObject({
@@ -786,6 +791,18 @@ describe("release gate status", () => {
             v12ProductionArtifactCount: 7,
             v12ProductionSuiteArtifactCount: 6,
             v12ProductionChildArtifactCount: 5,
+            v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+            v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+            v12ProductionCompiledBackendReadyPassed: true,
+            v12ProductionDeployReadyPassed: true,
+            v12ProductionMemoryGroundingPassed: true,
+            v12ProductionExpectedExactPassed: true,
+            v12ProductionSpeedFloorPassed: true,
+            v12ProductionMeanTokensPerSecond: 2.7,
+            v12ProductionDirectModelFactualProofUsed: false,
+            v12ProductionTechnicalProofOnly: false,
+            v12ProductionCpuFallbackUsed: false,
+            v12ProductionStrictWebGpuPassed: true,
           },
         },
       ],
@@ -800,18 +817,7 @@ describe("release gate status", () => {
         {
           name: "v12-production-archive",
           passed: true,
-          summary: {
-            v12ProductionArchivePassed: true,
-            v12ProductionBlockerCount: 0,
-            v12ProductionSuitePassed: true,
-            v12ProductionDeployBackendId: "compiled-browser-webllm",
-            v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
-            v12ProductionHostedBenchmarkProofRequired: true,
-            v12ProductionHostedBenchmarkProofPassed: true,
-            v12ProductionArtifactCount: 7,
-            v12ProductionSuiteArtifactCount: 6,
-            v12ProductionChildArtifactCount: 5,
-          },
+          summary: makeV12ProductionArchiveSummary(),
         },
       ],
     })).toBe(true);
@@ -932,4 +938,44 @@ function makeStrictUnlockedArtifacts(
       },
     },
   ];
+}
+
+function makeV12ProductionArchiveSummary(
+  overrides: Record<string, number | string | boolean | null> = {},
+  options: { includeHostedRuntimeProof?: boolean } = {},
+): Record<string, number | string | boolean | null> {
+  const summary: Record<string, number | string | boolean | null> = {
+    v12ProductionArchivePassed: true,
+    v12ProductionBlockerCount: 0,
+    v12ProductionSuitePassed: true,
+    v12ProductionDeployBackendId: "compiled-browser-webllm",
+    v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+    v12ProductionHostedBenchmarkProofRequired: true,
+    v12ProductionHostedBenchmarkProofPassed: true,
+    v12ProductionArtifactCount: 7,
+    v12ProductionSuiteArtifactCount: 6,
+    v12ProductionChildArtifactCount: 5,
+  };
+
+  if (options.includeHostedRuntimeProof !== false) {
+    Object.assign(summary, {
+      v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+      v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
+      v12ProductionCompiledBackendReadyPassed: true,
+      v12ProductionDeployReadyPassed: true,
+      v12ProductionMemoryGroundingPassed: true,
+      v12ProductionExpectedExactPassed: true,
+      v12ProductionSpeedFloorPassed: true,
+      v12ProductionMeanTokensPerSecond: 2.7,
+      v12ProductionDirectModelFactualProofUsed: false,
+      v12ProductionTechnicalProofOnly: false,
+      v12ProductionCpuFallbackUsed: false,
+      v12ProductionStrictWebGpuPassed: true,
+    });
+  }
+
+  return {
+    ...summary,
+    ...overrides,
+  };
 }

@@ -8,6 +8,7 @@ import {
   makeProductionEvalEnvOverrides,
   makeQwenParityEnvOverrides,
   makeReleaseGateChildEnv,
+  makeReleaseGateTestEnvOverrides,
   makeUnlockedBenchmarkEnvOverrides,
   makeUnlockedVerifyEnvOverrides,
 } from "./releaseGateConfig";
@@ -50,12 +51,15 @@ const requireV12ProductionArchive = releaseGateEnv.RELEASE_REQUIRE_V12_PRODUCTIO
 const steps: GateStep[] = [];
 
 await runGate("typecheck", ["run", "typecheck"]);
-await runGate("tests", ["run", "test"]);
+await runGate("tests", ["run", "test"], undefined, makeReleaseGateTestEnvOverrides(releaseGateEnv));
+const unlockedVerifyEnv = makeUnlockedVerifyEnvOverrides(releaseGateEnv);
+const unlockedBenchmarkEnv = makeUnlockedBenchmarkEnvOverrides(releaseGateEnv);
+const qwenParityEnv = makeQwenParityEnvOverrides(releaseGateEnv);
 await runGate(
   "unlocked verify",
   ["run", "verify:unlocked"],
   `backendPreference=${releaseGateEnv.VITE_UNLOCKED_BACKEND_PREFERENCE ?? "auto"}`,
-  makeUnlockedVerifyEnvOverrides(releaseGateEnv),
+  isolateDeployRuntimeEnvIfUnconfigured(unlockedVerifyEnv),
 );
 await runGate("core smoke", ["run", "smoke:core"]);
 await runGate("sdk smoke", ["run", "smoke:sdk"]);
@@ -64,9 +68,9 @@ await runGate(
   "browser runtime benchmark",
   ["run", "bench:browser-runtime"],
   undefined,
-  makeUnlockedBenchmarkEnvOverrides(releaseGateEnv),
+  isolateDeployRuntimeEnvIfUnconfigured(unlockedBenchmarkEnv),
 );
-await runGate("Qwen parity accuracy", ["run", "eval:qwen-parity"], undefined, makeQwenParityEnvOverrides(releaseGateEnv));
+await runGate("Qwen parity accuracy", ["run", "eval:qwen-parity"], undefined, isolateDeployRuntimeEnvIfUnconfigured(qwenParityEnv));
 await runGate("production eval", ["run", "eval:production"], undefined, makeProductionEvalEnvOverrides(releaseGateEnv));
 if (requireHostedProfile) {
   await runGate("hosted deployment profile", ["run", "verify:hosted-profile"]);
@@ -167,9 +171,13 @@ function pnpmCommand(): { cmd: string; args: string[]; display: string } {
 
 function spawnAndWait(command: string, args: string[], envOverrides: Record<string, string | undefined> = {}): Promise<number | null> {
   return new Promise((resolve) => {
+    const childEnv = { ...process.env, ...makeReleaseGateChildEnv(suiteDir, envOverrides) };
+    for (const [key, value] of Object.entries(childEnv)) {
+      if (value === undefined) delete childEnv[key];
+    }
     const child = spawn(command, args, {
       stdio: "inherit",
-      env: { ...process.env, ...makeReleaseGateChildEnv(suiteDir, envOverrides) },
+      env: childEnv,
     });
     child.on("error", (error) => {
       console.error(`Failed to start ${command}: ${error.message}`);
@@ -177,6 +185,13 @@ function spawnAndWait(command: string, args: string[], envOverrides: Record<stri
     });
     child.on("close", (code) => resolve(code));
   });
+}
+
+function isolateDeployRuntimeEnvIfUnconfigured(
+  envOverrides: Record<string, string | undefined>,
+): Record<string, string | undefined> {
+  if (Object.keys(envOverrides).length > 0) return envOverrides;
+  return makeReleaseGateTestEnvOverrides(releaseGateEnv);
 }
 
 async function readLatestArtifacts(): Promise<LatestArtifact[]> {
