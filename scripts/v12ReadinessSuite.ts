@@ -97,16 +97,20 @@ export function evaluateV12ReadinessSuite(input: {
   hostedBenchmarkProof?: HostedBenchmarkProofReport | null;
 } = {}): V12ReadinessSuite {
   const env = input.env ?? process.env;
+  const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
+  const hostedBenchmarkProof = input.hostedBenchmarkProof ?? null;
   const hostedProfile = input.hostedProfile ?? evaluateHostedDeploymentProfile(input.env ?? process.env);
-  const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix({ hostedProfile });
+  const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix({
+    hostedProfile,
+    hostedBenchmarkProof,
+    requireHostedBenchmarkProof: hostedBenchmarkProofRequired,
+  });
   const sharedRuntime = input.sharedRuntime ?? evaluateSharedRuntimeReadiness({ backendMatrix });
   const v12Bundle = input.v12Bundle ?? evaluateV12ReadinessBundle({
     hostedProfile,
     backendMatrix,
     sharedRuntime,
   });
-  const hostedBenchmarkProofRequired = env.RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF === "true";
-  const hostedBenchmarkProof = input.hostedBenchmarkProof ?? null;
   const blockers = [
     ...hostedProfile.blockers.map((blocker) => `hosted_deployment_profile: ${blocker}`),
     ...backendMatrix.blockers.map((blocker) => `backend_readiness_matrix: ${blocker}`),

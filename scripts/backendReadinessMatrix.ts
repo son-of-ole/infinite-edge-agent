@@ -8,6 +8,7 @@ import {
   evaluateHostedDeploymentProfile,
   type HostedDeploymentProfileReport,
 } from "./hostedDeploymentProfile";
+import type { HostedBenchmarkProofReport } from "./hostedBenchmarkProof";
 
 export type BackendReadinessStatus =
   | "deploy_ready"
@@ -51,11 +52,42 @@ export interface BackendReadinessMatrixArtifactWriteResult {
 
 export function evaluateBackendReadinessMatrix(input: {
   hostedProfile?: HostedDeploymentProfileReport;
+  hostedBenchmarkProof?: HostedBenchmarkProofReport | null;
+  requireHostedBenchmarkProof?: boolean;
 } = {}): BackendReadinessMatrix {
   const hostedProfile = input.hostedProfile ?? evaluateHostedDeploymentProfile(process.env);
+  const requireHostedBenchmarkProof = input.requireHostedBenchmarkProof === true;
+  const hostedBenchmarkProof = input.hostedBenchmarkProof ?? null;
   const backends = BROWSER_BACKEND_REGISTRY.map((entry): BackendReadinessEntry => {
     if (entry.productionRole === "production_candidate") {
-      const deployReady = entry.backendId === hostedProfile.profile.llmBackend && hostedProfile.passed;
+      const hostedProfileReady = entry.backendId === hostedProfile.profile.llmBackend && hostedProfile.passed;
+      const hostedBenchmarkReady = !requireHostedBenchmarkProof
+        || (
+          hostedBenchmarkProof?.passed === true
+          && hostedBenchmarkProof.proof.runtimeBackendId === entry.backendId
+          && hostedBenchmarkProof.proof.deployBackendId === entry.backendId
+        );
+      const deployReady = hostedProfileReady && hostedBenchmarkReady;
+      const proofSource = requireHostedBenchmarkProof
+        ? "hosted_deployment_profile+hosted_benchmark_proof"
+        : "hosted_deployment_profile";
+      const proofRequirements = [
+        "compiled_backend_selected",
+        "hosted_profile_passed",
+        "grounded_exact_benchmark_url",
+        "durable_benchmark_telemetry",
+        ...(requireHostedBenchmarkProof ? ["hosted_benchmark_artifact_passed"] : []),
+      ];
+      const blockers = deployReady ? [] : [
+        ...(!hostedProfileReady ? [
+          "Compiled production backend is not deploy-ready because hosted deployment profile failed.",
+          ...hostedProfile.blockers,
+        ] : []),
+        ...(requireHostedBenchmarkProof && !hostedBenchmarkReady ? [
+          "Hosted benchmark proof is required to mark compiled-browser-webllm deploy-ready.",
+          ...(hostedBenchmarkProof?.blockers ?? []),
+        ] : []),
+      ];
       return {
         backendId: entry.backendId,
         label: entry.label,
@@ -63,17 +95,9 @@ export function evaluateBackendReadinessMatrix(input: {
         deployDefault: entry.deployDefault,
         deployReady,
         readinessStatus: deployReady ? "deploy_ready" : "blocked",
-        proofSource: "hosted_deployment_profile",
-        blockers: deployReady ? [] : [
-          "Compiled production backend is not deploy-ready because hosted deployment profile failed.",
-          ...hostedProfile.blockers,
-        ],
-        proofRequirements: [
-          "compiled_backend_selected",
-          "hosted_profile_passed",
-          "grounded_exact_benchmark_url",
-          "durable_benchmark_telemetry",
-        ],
+        proofSource,
+        blockers,
+        proofRequirements,
       };
     }
     if (entry.productionRole === "research_kernel_lab") {
@@ -112,7 +136,11 @@ export function evaluateBackendReadinessMatrix(input: {
   const deployBackend = backends.find((entry) => entry.productionRole === "production_candidate" && entry.deployReady);
   const blockers = deployBackend
     ? []
-    : ["Compiled production backend is not deploy-ready because hosted deployment profile failed."];
+    : [
+      requireHostedBenchmarkProof && (!hostedBenchmarkProof || hostedBenchmarkProof.passed !== true)
+        ? "Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing or failed."
+        : "Compiled production backend is not deploy-ready because hosted deployment profile failed.",
+    ];
 
   return {
     passed: blockers.length === 0,

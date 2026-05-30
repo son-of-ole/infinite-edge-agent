@@ -7,6 +7,7 @@ import {
   evaluateBackendReadinessMatrix,
   writeBackendReadinessMatrixArtifact,
 } from "./backendReadinessMatrix";
+import { evaluateHostedBenchmarkProof } from "./hostedBenchmarkProof";
 import { evaluateHostedDeploymentProfile } from "./hostedDeploymentProfile";
 
 const completeHostedEnv = {
@@ -26,6 +27,48 @@ const completeHostedEnv = {
   HOSTED_PRODUCTION_BENCHMARK_URL:
     "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
 };
+
+function makePassingHostedBenchmarkProofReport() {
+  return evaluateHostedBenchmarkProof({
+    artifact: {
+      name: "browser-preview-benchmark",
+      createdAt: "2026-05-30T21:00:00.000Z",
+      passed: true,
+      summary: {
+        runtimeBackendId: "compiled-browser-webllm",
+        runtimeBackendRole: "production_candidate",
+        deployBackendId: "compiled-browser-webllm",
+        productionDeployReadyPassed: true,
+        compiledBackendReadyPassed: true,
+        memoryGroundingRequired: true,
+        memoryGroundingPassed: true,
+        memoryExpectedHitPassed: true,
+        memoryContextRebuildPassed: true,
+        memoryAnswerOnlyPassed: true,
+        directModelFactualProofUsed: false,
+        expectedExactCheckCount: 1,
+        expectedExactPassCount: 1,
+        expectedExactPassed: true,
+        technicalProofOnly: false,
+        productionQualityPassed: true,
+        productionSpeedFloorPassed: true,
+        productionSpeedTokensPerSecond: 2.7,
+        productionSpeedFloorTokensPerSecond: 2,
+        meanTokensPerSecond: 2.7,
+        strictWebGpuPassed: true,
+        cpuFallbackUsed: false,
+      },
+      runs: [
+        {
+          response: "Helena",
+          runtimeTrace: {
+            backend: "compiled-browser-webllm",
+          },
+        },
+      ],
+    },
+  });
+}
 
 describe("evaluateBackendReadinessMatrix", () => {
   it("marks the compiled backend as deploy-ready only when hosted profile proof passes", () => {
@@ -57,6 +100,49 @@ describe("evaluateBackendReadinessMatrix", () => {
         deployReady: false,
       }),
     ]));
+  });
+
+  it("does not mark the compiled backend deploy-ready without hosted benchmark proof when proof is required", () => {
+    const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
+    const matrix = evaluateBackendReadinessMatrix({
+      hostedProfile,
+      requireHostedBenchmarkProof: true,
+    });
+
+    expect(matrix.passed).toBe(false);
+    expect(matrix.deployBackendId).toBeNull();
+    expect(matrix.blockers).toContain("Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing or failed.");
+    expect(matrix.backends.find((backend) => backend.backendId === "compiled-browser-webllm")).toMatchObject({
+      readinessStatus: "blocked",
+      deployReady: false,
+      proofSource: "hosted_deployment_profile+hosted_benchmark_proof",
+      blockers: expect.arrayContaining([
+        "Hosted benchmark proof is required to mark compiled-browser-webllm deploy-ready.",
+      ]),
+      proofRequirements: expect.arrayContaining([
+        "hosted_benchmark_artifact_passed",
+      ]),
+    });
+  });
+
+  it("marks the compiled backend deploy-ready when required hosted benchmark proof passes", () => {
+    const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
+    const matrix = evaluateBackendReadinessMatrix({
+      hostedProfile,
+      hostedBenchmarkProof: makePassingHostedBenchmarkProofReport(),
+      requireHostedBenchmarkProof: true,
+    });
+
+    expect(matrix.passed).toBe(true);
+    expect(matrix.deployBackendId).toBe("compiled-browser-webllm");
+    expect(matrix.backends.find((backend) => backend.backendId === "compiled-browser-webllm")).toMatchObject({
+      readinessStatus: "deploy_ready",
+      deployReady: true,
+      proofSource: "hosted_deployment_profile+hosted_benchmark_proof",
+      proofRequirements: expect.arrayContaining([
+        "hosted_benchmark_artifact_passed",
+      ]),
+    });
   });
 
   it("fails the matrix when the hosted profile does not prove the compiled production backend", () => {

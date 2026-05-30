@@ -101,7 +101,7 @@ The backend-specific matrix is written by:
 pnpm eval:backend-readiness
 ```
 
-It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. This is the artifact that prevents Kernel Lab proof from being mixed into the compiled backend deploy claim.
+It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. In strict production archive mode, the matrix also requires the saved hosted browser benchmark proof before `compiled-browser-webllm` can be marked deploy-ready. This is the artifact that prevents Kernel Lab proof from being mixed into the compiled backend deploy claim.
 
 The shared runtime proof is written by:
 
@@ -133,7 +133,7 @@ The strict production archive is written by:
 pnpm eval:v12-production
 ```
 
-It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, sufficient child artifact counts, and zero blockers.
+It requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. This is the preferred final archive for a production-ready claim. When `RELEASE_REQUIRE_V12_PRODUCTION=true`, `pnpm release:gate` validates the archive's backend-specific proof fields: `compiled-browser-webllm` deploy backend, `unlocked-browser-transformer` Kernel Lab backend, hosted benchmark proof required and passed, backend readiness bound to that hosted benchmark proof, sufficient child artifact counts, and zero blockers.
 
 The saved real-browser benchmark artifact is validated by:
 

@@ -77,9 +77,10 @@ describe("v12 production archive", () => {
     expect(result.archive.summary).toMatchObject({
       v12ProductionArchivePassed: false,
       v12ProductionHostedBenchmarkProofPassed: false,
-      v12ProductionDeployBackendId: "compiled-browser-webllm",
+      v12ProductionDeployBackendId: null,
       v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
     });
+    expect(result.archive.archive.blockers).toContain("backend_readiness_matrix: Compiled production backend is not deploy-ready because hosted benchmark proof is required and missing or failed.");
     expect(result.archive.archive.blockers).toContain("hosted_benchmark_proof: required but no HOSTED_BENCHMARK_ARTIFACT_PATH or report was provided.");
   });
 

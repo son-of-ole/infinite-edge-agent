@@ -7,6 +7,7 @@ import {
   evaluateV12ReadinessSuite,
   runV12ReadinessSuite,
 } from "./v12ReadinessSuite";
+import { evaluateHostedBenchmarkProof } from "./hostedBenchmarkProof";
 
 const completeHostedEnv = {
   VITE_LLM_BACKEND: "compiled-browser-webllm",
@@ -98,6 +99,30 @@ describe("v12 readiness suite", () => {
     expect(suite.hostedBenchmarkProofRequired).toBe(true);
     expect(suite.hostedBenchmarkProofPassed).toBe(false);
     expect(suite.blockers).toContain("hosted_benchmark_proof: required but no HOSTED_BENCHMARK_ARTIFACT_PATH or report was provided.");
+  });
+
+  it("passes required hosted benchmark proof into backend-specific readiness", () => {
+    const suite = evaluateV12ReadinessSuite({
+      env: {
+        ...completeHostedEnv,
+        RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF: "true",
+      },
+      hostedBenchmarkProof: evaluateHostedBenchmarkProof({
+        artifact: makePassingHostedBenchmarkArtifact(),
+      }),
+    });
+
+    expect(suite.passed).toBe(true);
+    expect(suite.hostedBenchmarkProofRequired).toBe(true);
+    expect(suite.hostedBenchmarkProofPassed).toBe(true);
+    expect(suite.backendReadinessPassed).toBe(true);
+    expect(suite.backendMatrix.backends.find((backend) => backend.backendId === "compiled-browser-webllm")).toMatchObject({
+      readinessStatus: "deploy_ready",
+      proofSource: "hosted_deployment_profile+hosted_benchmark_proof",
+      proofRequirements: expect.arrayContaining([
+        "hosted_benchmark_artifact_passed",
+      ]),
+    });
   });
 
   it("builds release-summary fields for the whole v12 final-state proof set", () => {

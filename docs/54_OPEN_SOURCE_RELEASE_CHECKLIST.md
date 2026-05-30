@@ -102,7 +102,7 @@ To make the full release gate require and summarize this hosted profile artifact
 RELEASE_REQUIRE_HOSTED_PROFILE=true pnpm release:gate
 ```
 
-The hosted profile flag also runs `pnpm eval:backend-readiness` and includes `.artifacts/evals/backend-readiness-matrix-latest.json`, which records `compiled-browser-webllm` as the deploy-ready backend only when the hosted proof passes and records `unlocked-browser-transformer` as Kernel Lab/research-only. Use `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` to require that matrix independently.
+The hosted profile flag also runs `pnpm eval:backend-readiness` and includes `.artifacts/evals/backend-readiness-matrix-latest.json`, which records `compiled-browser-webllm` as the deploy-ready backend only when the hosted proof passes and records `unlocked-browser-transformer` as Kernel Lab/research-only. When hosted benchmark proof is required, the matrix also requires the saved real-browser benchmark proof before it can mark the compiled backend deploy-ready. Use `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` to require that matrix independently.
 
 It also runs `pnpm eval:shared-runtime` and includes `.artifacts/evals/shared-runtime-readiness-latest.json`, which records that memory retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the model backend. Use `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` to require that proof independently.
 
@@ -128,7 +128,7 @@ For strict production archive proof, run:
 pnpm eval:v12-production
 ```
 
-This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive. With that flag enabled, the release gate validates the archive's backend-specific proof fields instead of accepting archive presence alone: deploy backend must be `compiled-browser-webllm`, Kernel Lab must be `unlocked-browser-transformer`, hosted benchmark proof must be required and passed, and blocker count must be zero.
+This requires `HOSTED_BENCHMARK_ARTIFACT_PATH`, forces hosted benchmark proof, writes the complete v12 suite, and writes `.artifacts/evals/v12-production-archive-latest.json`. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `pnpm release:gate` should require the strict production archive. With that flag enabled, the release gate validates the archive's backend-specific proof fields instead of accepting archive presence alone: deploy backend must be `compiled-browser-webllm`, Kernel Lab must be `unlocked-browser-transformer`, hosted benchmark proof must be required and passed, the backend readiness matrix must be proof-bound to that hosted benchmark artifact, and blocker count must be zero.
 
 After the real Chrome or Edge hosted benchmark is saved, validate the runtime artifact:
 
