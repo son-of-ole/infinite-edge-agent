@@ -4,7 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildRepositoryPublicationStatusArtifact,
+  buildRepositoryPublicationHandoffArtifact,
   evaluateRepositoryPublicationSnapshot,
+  writeRepositoryPublicationHandoffArtifact,
   writeRepositoryPublicationStatusArtifact,
 } from "./repositoryPublicationStatus";
 
@@ -17,6 +19,7 @@ describe("repository publication status", () => {
     };
 
     expect(packageJson.scripts?.["eval:repository-publication"]).toBe("node --import tsx scripts/repositoryPublicationStatus.ts");
+    expect(packageJson.scripts?.["handoff:repository-publication"]).toBe("node --import tsx scripts/repositoryPublicationStatus.ts");
   });
 
   it("passes as published only when clean local history matches the upstream remote", () => {
@@ -153,5 +156,64 @@ describe("repository publication status", () => {
     const latest = JSON.parse(await readFile(written.latestPath, "utf8")) as { name: string; passed: boolean };
     expect(latest.name).toBe("repository-publication-status");
     expect(latest.passed).toBe(true);
+  });
+
+  it("writes an operator-ready exact-history bundle handoff when local main is ahead", async () => {
+    const artifactDir = await mkdtemp(join(tmpdir(), "repository-publication-handoff-"));
+    const headSha = "f".repeat(40);
+    const report = evaluateRepositoryPublicationSnapshot({
+      expectedRemoteUrl,
+      snapshot: {
+        branch: "main",
+        headSha,
+        upstream: "origin/main",
+        remoteUrl: expectedRemoteUrl,
+        aheadCount: 80,
+        behindCount: 0,
+        dirty: false,
+        bundles: [
+          {
+            kind: "ahead",
+            path: "/private/tmp/infinite-edge-agent-main-ahead80.bundle",
+            verified: true,
+            headSha,
+            completeHistory: false,
+            requiredBaseSha: "1".repeat(40),
+          },
+          {
+            kind: "full",
+            path: "/private/tmp/infinite-edge-agent-main-full.bundle",
+            verified: true,
+            headSha,
+            completeHistory: true,
+          },
+        ],
+      },
+    });
+
+    const artifact = buildRepositoryPublicationHandoffArtifact(report, "2026-05-30T23:30:00.000Z");
+    const written = await writeRepositoryPublicationHandoffArtifact(report, {
+      artifactDir,
+      createdAt: "2026-05-30T23:30:00.000Z",
+    });
+
+    expect(artifact).toMatchObject({
+      name: "repository-publication-handoff",
+      passed: true,
+      summary: {
+        repositoryPublicationPublished: false,
+        repositoryPublicationBundleHandoffReady: true,
+        repositoryPublicationHandoffCommandCount: 2,
+      },
+    });
+    expect(artifact.markdown).toContain("Head SHA: `ffffffffffffffffffffffffffffffffffffffff`");
+    expect(artifact.markdown).toContain("git clone /private/tmp/infinite-edge-agent-main-full.bundle infinite-edge-agent");
+    expect(artifact.markdown).toContain("git merge --ff-only refs/remotes/bundle/main");
+    expect(artifact.markdown).toContain("git push origin main");
+    expect(written.latestJsonPath).toBe(join(artifactDir, "repository-publication-handoff-latest.json"));
+    expect(written.latestMarkdownPath).toBe(join(artifactDir, "repository-publication-handoff-latest.md"));
+
+    const latestMarkdown = await readFile(written.latestMarkdownPath, "utf8");
+    expect(latestMarkdown).toContain("Exact-History GitHub Publication Handoff");
   });
 });

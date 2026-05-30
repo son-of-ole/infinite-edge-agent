@@ -77,6 +77,7 @@ The repository is not claiming a new base model. The contribution is the runtime
 - Production archive: `pnpm eval:v12-production`
 - Hosted runtime proof: `pnpm verify:hosted-benchmark-proof`
 - Source publication status: `pnpm eval:repository-publication`
+- Exact-history publication handoff: `pnpm handoff:repository-publication`
 
 ## Suggested Hugging Face Space Blurb
 

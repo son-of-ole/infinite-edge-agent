@@ -49,10 +49,27 @@ export interface RepositoryPublicationStatusArtifact {
   report: RepositoryPublicationStatusReport;
 }
 
+export interface RepositoryPublicationHandoffArtifact {
+  name: "repository-publication-handoff";
+  createdAt: string;
+  passed: boolean;
+  summary: Record<string, number | string | boolean | null>;
+  report: RepositoryPublicationStatusReport;
+  markdown: string;
+}
+
 export interface RepositoryPublicationStatusWriteResult {
   artifact: RepositoryPublicationStatusArtifact;
   latestPath: string;
   resultPath: string;
+}
+
+export interface RepositoryPublicationHandoffWriteResult {
+  artifact: RepositoryPublicationHandoffArtifact;
+  latestJsonPath: string;
+  resultJsonPath: string;
+  latestMarkdownPath: string;
+  resultMarkdownPath: string;
 }
 
 export function evaluateRepositoryPublicationSnapshot(input: {
@@ -149,6 +166,27 @@ export function buildRepositoryPublicationStatusArtifact(
   };
 }
 
+export function buildRepositoryPublicationHandoffArtifact(
+  report: RepositoryPublicationStatusReport,
+  createdAt = new Date().toISOString(),
+): RepositoryPublicationHandoffArtifact {
+  const handoffCommandCount = countHandoffCommandGroups(report);
+  return {
+    name: "repository-publication-handoff",
+    createdAt,
+    passed: report.passed,
+    summary: {
+      ...report.summary,
+      repositoryPublicationHandoffCommandCount: handoffCommandCount,
+    },
+    report,
+    markdown: buildRepositoryPublicationHandoffMarkdown(report, {
+      createdAt,
+      handoffCommandCount,
+    }),
+  };
+}
+
 export async function writeRepositoryPublicationStatusArtifact(
   report: RepositoryPublicationStatusReport,
   options: { artifactDir?: string; createdAt?: string } = {},
@@ -166,6 +204,106 @@ export async function writeRepositoryPublicationStatusArtifact(
   await writeFile(latestPath, json);
 
   return { artifact, latestPath, resultPath };
+}
+
+export async function writeRepositoryPublicationHandoffArtifact(
+  report: RepositoryPublicationStatusReport,
+  options: { artifactDir?: string; createdAt?: string } = {},
+): Promise<RepositoryPublicationHandoffWriteResult> {
+  const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
+  const artifact = buildRepositoryPublicationHandoffArtifact(report, options.createdAt);
+  const runDir = join(artifactDir, "repository-publication-handoff");
+  const timestamp = artifact.createdAt.replace(/[:.]/g, "-");
+  const latestJsonPath = join(artifactDir, "repository-publication-handoff-latest.json");
+  const resultJsonPath = join(runDir, `${timestamp}.json`);
+  const latestMarkdownPath = join(artifactDir, "repository-publication-handoff-latest.md");
+  const resultMarkdownPath = join(runDir, `${timestamp}.md`);
+  const json = `${JSON.stringify(artifact, null, 2)}\n`;
+
+  await mkdir(runDir, { recursive: true });
+  await writeFile(resultJsonPath, json);
+  await writeFile(latestJsonPath, json);
+  await writeFile(resultMarkdownPath, artifact.markdown);
+  await writeFile(latestMarkdownPath, artifact.markdown);
+
+  return { artifact, latestJsonPath, resultJsonPath, latestMarkdownPath, resultMarkdownPath };
+}
+
+function countHandoffCommandGroups(report: RepositoryPublicationStatusReport): number {
+  if (!report.bundleHandoffReady) return 0;
+  const matchingBundles = getMatchingVerifiedBundles(report);
+  const hasFullBundle = matchingBundles.some((bundle) => bundle.kind === "full" && bundle.completeHistory === true);
+  const hasAheadBundle = matchingBundles.some((bundle) => bundle.kind === "ahead");
+  return Number(hasFullBundle) + Number(hasAheadBundle);
+}
+
+function buildRepositoryPublicationHandoffMarkdown(
+  report: RepositoryPublicationStatusReport,
+  options: { createdAt: string; handoffCommandCount: number },
+): string {
+  const snapshot = report.snapshot;
+  const remoteUrl = String(report.summary.repositoryPublicationExpectedRemoteUrl ?? EXPECTED_REMOTE_URL);
+  const matchingBundles = getMatchingVerifiedBundles(report);
+  const fullBundle = matchingBundles.find((bundle) => bundle.kind === "full" && bundle.completeHistory === true);
+  const aheadBundle = matchingBundles.find((bundle) => bundle.kind === "ahead");
+  const lines = [
+    "# Exact-History GitHub Publication Handoff",
+    "",
+    `Created: ${options.createdAt}`,
+    `Repository: \`${remoteUrl}\``,
+    `Branch: \`${snapshot.branch ?? "unknown"}\``,
+    `Head SHA: \`${snapshot.headSha ?? "unknown"}\``,
+    `Upstream: \`${snapshot.upstream ?? "unknown"}\``,
+    `Ahead count: \`${snapshot.aheadCount ?? "unknown"}\``,
+    `Behind count: \`${snapshot.behindCount ?? "unknown"}\``,
+    `Published: \`${report.published}\``,
+    `Bundle handoff ready: \`${report.bundleHandoffReady}\``,
+    "",
+  ];
+
+  if (report.published) {
+    lines.push("The local branch already matches the upstream remote. No bundle handoff is required.", "");
+  } else if (!report.bundleHandoffReady) {
+    lines.push("Publication handoff is not ready.", "");
+    if (report.blockers.length > 0) {
+      lines.push("## Blockers", "");
+      for (const blocker of report.blockers) lines.push(`- ${blocker}`);
+      lines.push("");
+    }
+  } else {
+    lines.push("Use one of the bundle paths below to publish the exact local Git history. Do not recreate the repository with GitHub contents API commits; that would flatten the verified local history.", "");
+    lines.push("## Direct Push", "", "Try this first from a network that can resolve GitHub:", "", "```bash", "git push origin main", "```", "");
+    if (fullBundle) {
+      lines.push("## Full Bundle Restore", "", "Use this on another machine when you want a complete standalone clone from the verified bundle:", "", "```bash");
+      lines.push(`git clone ${fullBundle.path} infinite-edge-agent`);
+      lines.push("cd infinite-edge-agent");
+      lines.push(`git remote set-url origin ${remoteUrl}`);
+      lines.push("git push origin main");
+      lines.push("```", "");
+    }
+    if (aheadBundle) {
+      lines.push("## Existing Clone Fast-Forward", "", "Use this inside an existing clone whose `origin/main` contains the required base commit:", "", "```bash");
+      lines.push(`git fetch ${aheadBundle.path} main:refs/remotes/bundle/main`);
+      lines.push("git merge --ff-only refs/remotes/bundle/main");
+      lines.push("git push origin main");
+      lines.push("```", "");
+    }
+  }
+
+  lines.push("## Verified Bundles", "");
+  for (const bundle of snapshot.bundles) {
+    lines.push(`- \`${bundle.kind}\`: \`${bundle.path}\`, verified=\`${bundle.verified}\`, head=\`${bundle.headSha ?? "unknown"}\`, completeHistory=\`${bundle.completeHistory ?? "unknown"}\``);
+  }
+  lines.push("", `Handoff command groups: \`${options.handoffCommandCount}\``, "");
+  return `${lines.join("\n")}\n`;
+}
+
+function getMatchingVerifiedBundles(report: RepositoryPublicationStatusReport): RepositoryPublicationBundleStatus[] {
+  const headSha = report.snapshot.headSha;
+  return report.snapshot.bundles.filter((bundle) =>
+    bundle.verified === true
+    && Boolean(headSha)
+    && bundle.headSha === headSha);
 }
 
 async function collectRepositoryPublicationSnapshot(rootDir: string): Promise<RepositoryPublicationSnapshot> {
@@ -298,6 +436,7 @@ async function runGit(rootDir: string, args: string[]): Promise<string> {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = await evaluateRepositoryPublicationStatus();
   await writeRepositoryPublicationStatusArtifact(report);
+  await writeRepositoryPublicationHandoffArtifact(report);
   console.log(JSON.stringify(report, null, 2));
   if (!report.passed) process.exitCode = 1;
 }

@@ -158,6 +158,7 @@ pnpm eval:v12-readiness     # Write combined v12 final-state readiness artifact
 pnpm eval:v12-production    # Write strict production archive requiring hosted benchmark proof
 pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
 pnpm eval:repository-publication # Report pushed vs exact-history bundle handoff state
+pnpm handoff:repository-publication # Write exact-history publication handoff JSON and Markdown
 pnpm materialize:hosted-benchmark # Save pasted or URL-hosted browser proof JSON for CI/release gates
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
 pnpm verify:repository      # Check public repo metadata, docs, assets, and v12 workflows
@@ -299,7 +300,7 @@ For the GitHub production-proof workflow, saved artifact URLs must be public HTT
 
 The proof verifier rejects artifacts that are not proof schema version `2`, are not `compiled-browser-webllm`, are technical-only, lack concrete run-level grounded memory evidence, lack Backend Broker selection and role-boundary evidence, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback. The saved run must include the expected memory ids, retrieved ids, context-included ids, retrieval rank for the grounded answer, `compiled-browser-webllm` as deploy backend, `unlocked-browser-transformer` as Kernel Lab, and `wasm-small-core` as fallback-only. Set `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` to make `release:gate` require that saved browser artifact.
 
-When local commits cannot be pushed directly, `pnpm eval:repository-publication` writes `.artifacts/evals/repository-publication-status-latest.json`. It reports whether `main` is published to `origin/main` or whether verified exact-history Git bundles contain the current head for handoff. This does not replace a real GitHub push; it keeps the publication boundary explicit until the exact history lands on the remote.
+When local commits cannot be pushed directly, `pnpm eval:repository-publication` writes `.artifacts/evals/repository-publication-status-latest.json` and `.artifacts/evals/repository-publication-handoff-latest.md`. It reports whether `main` is published to `origin/main` or whether verified exact-history Git bundles contain the current head for handoff. The Markdown handoff lists the direct push, full-bundle restore, and existing-clone fast-forward commands for publishing the same Git history from another network. This does not replace a real GitHub push; it keeps the publication boundary explicit until the exact history lands on the remote.
 
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should include that publication status artifact in the release evidence.
 
