@@ -61,6 +61,7 @@ function buildV12ProductionWorkflowPreflightReport(
 ): V12ProductionWorkflowPreflightReport {
   const checks = [
     checkWorkflowInputs(workflow),
+    checkHostedOriginBinding(workflow),
     checkCompiledBackendProfile(workflow),
     checkSourceBoundProof(workflow),
     checkTelemetryProfile(workflow),
@@ -132,6 +133,20 @@ function checkWorkflowInputs(workflow: string): V12ProductionWorkflowPreflightCh
   return makeCheck({
     id: "workflow_inputs",
     label: "Workflow accepts deploy URL and all hosted benchmark artifact source inputs.",
+    evidence: [WORKFLOW_PATH],
+    blockers,
+  });
+}
+
+function checkHostedOriginBinding(workflow: string): V12ProductionWorkflowPreflightCheck {
+  const blockers = collectMissing(workflow, [
+    ["VITE_DEPLOY_URL: ${{ inputs.deploy_url }}", "production proof workflow must pass deploy_url into VITE_DEPLOY_URL."],
+    ["HOSTED_PRODUCTION_BENCHMARK_URL: ${{ inputs.hosted_production_benchmark_url }}", "production proof workflow must pass the explicit benchmark URL override into HOSTED_PRODUCTION_BENCHMARK_URL."],
+  ]);
+
+  return makeCheck({
+    id: "hosted_origin_binding",
+    label: "Workflow binds the requested public deploy origin into hosted profile and benchmark proof configuration.",
     evidence: [WORKFLOW_PATH],
     blockers,
   });

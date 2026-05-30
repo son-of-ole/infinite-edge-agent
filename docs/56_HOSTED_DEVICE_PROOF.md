@@ -184,7 +184,7 @@ Required repository secrets:
 - `BENCHMARK_TELEMETRY_DATABASE_URL`
 - `BENCHMARK_TELEMETRY_ADMIN_TOKEN`
 
-The workflow materializes the saved browser artifact, verifies the hosted deploy profile, verifies the benchmark proof, writes the v12 production archive, runs the v12 production release gate, and uploads the proof artifact directory.
+The workflow materializes the saved browser artifact, verifies the hosted deploy profile, verifies the benchmark proof, writes the v12 production archive, runs the v12 production release gate, and uploads the proof artifact directory. The workflow preflight also checks that the `deploy_url` input is wired into `VITE_DEPLOY_URL`, so hosted proof cannot pass from a benchmark artifact disconnected from the requested public deploy origin.
 
 ## What Still Needs Automation
 

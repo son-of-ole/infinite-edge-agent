@@ -220,6 +220,8 @@ RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate
 
 This keeps the normal open-source CI fixture-safe while still giving release operators a remote, artifact-producing v12 production proof lane for real hosted browser benchmark results.
 
+The v12 workflow preflight verifies that the manual workflow passes `deploy_url` into `VITE_DEPLOY_URL` and passes the optional benchmark URL override into `HOSTED_PRODUCTION_BENCHMARK_URL`. This keeps the hosted profile, browser artifact, telemetry row, and production archive tied to the same public hosted origin.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:
