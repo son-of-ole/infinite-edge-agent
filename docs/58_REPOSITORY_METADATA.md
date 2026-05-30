@@ -56,8 +56,8 @@ The repository is not claiming a new base model. The contribution is the runtime
 - Memory default: browser-local IndexedDB/vector memory
 - Hosted proof: real Chrome/Edge browser benchmark artifacts
 - Public benchmark direction: opt-in, sanitized, device/GPU-aware telemetry
+- Final-state archive: `pnpm eval:v12-suite`
 
 ## Suggested Hugging Face Space Blurb
 
 Run a local-first browser AI agent with persistent memory, grounded retrieval proof, and WebGPU-backed inference directly in the browser. The demo uses the compiled production lane and reports benchmark/readiness artifacts instead of hiding backend fallbacks.
-

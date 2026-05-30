@@ -119,6 +119,14 @@ pnpm eval:v12-readiness
 
 It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific role proof, and shared runtime proof into one final-state deploy readiness artifact.
 
+The full v12 readiness suite is written by:
+
+```bash
+pnpm eval:v12-suite
+```
+
+It writes the hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with the same timestamp. Archive this suite next to hosted Chrome/Edge benchmark evidence when making a backend-specific deploy-readiness claim.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

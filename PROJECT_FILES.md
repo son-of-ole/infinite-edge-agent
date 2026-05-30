@@ -110,6 +110,7 @@ This manifest started as the v4 handoff package inventory. The authoritative fil
 - `docs/56_HOSTED_DEVICE_PROOF.md`
 - `docs/57_BENCHMARK_TELEMETRY.md`
 - `docs/58_REPOSITORY_METADATA.md`
+- `docs/superpowers/plans/2026-05-30-v12-readiness-suite.md`
 - `docs/ADR/0001-local-first-browser-runtime.md`
 - `docs/ADR/0002-memory-store-split.md`
 - `docs/ADR/0003-first-class-advanced-runtime.md`
@@ -197,6 +198,8 @@ This manifest started as the v4 handoff package inventory. The authoritative fil
 - `scripts/releaseGateConfig.ts`
 - `scripts/releaseGateStatus.test.ts`
 - `scripts/releaseGateStatus.ts`
+- `scripts/v12ReadinessSuite.test.ts`
+- `scripts/v12ReadinessSuite.ts`
 - `scripts/smoke-test-core.ts`
 - `scripts/smoke-test-sdk-package.mjs`
 - `scripts/smoke-test-sdk.test.ts`

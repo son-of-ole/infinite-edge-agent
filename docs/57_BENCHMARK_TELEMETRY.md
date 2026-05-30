@@ -198,6 +198,8 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, which is the combined artifact to archive next to hosted Chrome benchmark and telemetry database evidence.
 
+`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp, including `.artifacts/evals/v12-readiness-suite-latest.json`. This is the preferred archive command when publishing hosted benchmark telemetry results across devices.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:

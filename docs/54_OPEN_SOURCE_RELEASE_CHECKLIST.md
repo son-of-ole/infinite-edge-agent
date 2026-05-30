@@ -112,6 +112,14 @@ pnpm eval:v12-readiness
 
 This writes `.artifacts/evals/v12-readiness-bundle-latest.json`. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
+For the full final-state artifact set, run:
+
+```bash
+pnpm eval:v12-suite
+```
+
+This writes hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json` with one timestamp. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+
 ## 8. Final manual checks
 
 - Confirm `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CITATION.cff`, and `LICENSE` are present and consistent with the public release posture.

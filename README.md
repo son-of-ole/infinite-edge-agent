@@ -138,6 +138,7 @@ pnpm eval:production        # Run production eval harness
 pnpm eval:backend-readiness # Write backend role/readiness matrix artifact
 pnpm eval:shared-runtime    # Write shared memory/context runtime readiness artifact
 pnpm eval:v12-readiness     # Write combined v12 final-state readiness artifact
+pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
 pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
 pnpm smoke:sdk              # Validate embeddable browser SDK package
@@ -252,6 +253,8 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`. Se
 `pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`, proving that memory search, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing sit above the model backend boundary. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this artifact automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
 
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile, backend matrix, and shared-runtime proof into one final-state artifact. Use `RELEASE_REQUIRE_V12_READINESS=true` to require that bundle independently.
+
+`pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp: hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
 For WebGPU and WASM performance, use a secure context and cross-origin isolation headers where your hosting platform supports them.
 

@@ -132,6 +132,23 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const v12ReadinessSuiteFields = [
+      "v12SuitePassed",
+      "v12SuiteBlockerCount",
+      "v12SuiteArtifactCount",
+      "v12SuiteChildArtifactCount",
+      "v12SuiteDeployBackendId",
+      "v12SuiteKernelLabBackendId",
+      "v12SuiteRequirementCount",
+      "v12SuitePassedRequirementCount",
+      "v12SuiteHostedProfilePassed",
+      "v12SuiteBackendReadinessPassed",
+      "v12SuiteSharedRuntimePassed",
+      "v12SuiteReadinessBundlePassed",
+    ] as const;
+    for (const key of v12ReadinessSuiteFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const v12ReadinessFields = [
       "v12ReadinessPassed",
       "v12BlockerCount",
