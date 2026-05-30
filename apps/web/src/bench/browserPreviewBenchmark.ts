@@ -425,6 +425,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const runtimeBackendEntry = getBrowserBackendRegistryEntry(runtimeBackendId);
   const runtimeBackendRole = runtimeBackendEntry?.productionRole ?? "unknown";
   const benchmarkDeviceInfo = normalizeBenchmarkDeviceInfo(input.benchmarkDeviceInfo);
+  const benchmarkGpuLabelEvidencePassed = hasBenchmarkGpuLabelEvidence(benchmarkDeviceInfo);
   const brokerSelections = input.runs
     .map((run) => run.runtimeTrace.brokerSelection)
     .filter((selection): selection is BrowserBackendSelection => Boolean(selection));
@@ -504,6 +505,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
     && expectedExactPassed
     && noCpuFallback
     && positiveWebGpuKernelProof
+    && benchmarkGpuLabelEvidencePassed
     && !directModelFactualProofUsed;
   const productionQualityPassed = kernelLabQualityPassed || compiledBackendReadyPassed;
   const customKernelLabReadyPassed = kernelLabQualityPassed
@@ -540,7 +542,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       profile: input.profile,
       v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       ...(input.sourceGitSha?.trim() ? { v12ProductionProofSourceGitSha: input.sourceGitSha.trim() } : {}),
-      benchmarkGpuLabelEvidencePassed: hasBenchmarkGpuLabelEvidence(benchmarkDeviceInfo),
+      benchmarkGpuLabelEvidencePassed,
       benchmarkGpuVendor: benchmarkDeviceInfo.gpuVendor,
       benchmarkGpuArchitecture: benchmarkDeviceInfo.gpuArchitecture,
       benchmarkGpuDevice: benchmarkDeviceInfo.gpuDevice,
