@@ -29,6 +29,8 @@ function makePassingBrowserPreviewArtifact() {
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
       runtimeBackendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      runtimeModelId: "Qwen3-0.6B-q4f16_1-MLC",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",
       productionDeployReadyPassed: true,
@@ -178,6 +180,24 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker selection evidence for compiled-browser-webllm.");
   });
 
+  it("fails production proof when the hosted artifact does not prove the expected compiled model id", () => {
+    const artifact = makePassingBrowserPreviewArtifact();
+    (artifact.summary as Record<string, unknown>).modelId = "Qwen3-1.7B-q4f16_1-MLC";
+    (artifact.summary as Record<string, unknown>).runtimeModelId = "Qwen3-1.7B-q4f16_1-MLC";
+    (artifact.summary as Record<string, unknown>).backendBrokerSelectedModelId = "Qwen3-1.7B-q4f16_1-MLC";
+    const runtimeTrace = artifact.runs[0]?.runtimeTrace as Record<string, unknown>;
+    runtimeTrace.brokerSelection = {
+      ...(runtimeTrace.brokerSelection as Record<string, unknown>),
+      modelId: "Qwen3-1.7B-q4f16_1-MLC",
+    };
+
+    const report = evaluateHostedBenchmarkProof({ artifact });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted benchmark proof requires modelId=Qwen3-0.6B-q4f16_1-MLC.");
+    expect(report.blockers).toContain("Hosted benchmark proof requires Backend Broker selected model Qwen3-0.6B-q4f16_1-MLC.");
+  });
+
   it("fails production proof when the hosted artifact lacks Backend Broker role-boundary evidence", () => {
     const artifact = makePassingBrowserPreviewArtifact();
     delete (artifact.summary as Record<string, unknown>).backendBrokerRoleBoundaryPassed;
@@ -297,6 +317,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkProofBlockerCount: 0,
         hostedBenchmarkArtifactPath: "/tmp/browser-runtime-bench-latest.json",
         hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+        hostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
         hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
         hostedBenchmarkCompiledBackendReadyPassed: true,
         hostedBenchmarkProductionDeployReadyPassed: true,

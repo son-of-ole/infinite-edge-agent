@@ -40,6 +40,7 @@ describe("evaluateHostedDeploymentProfile", () => {
       telemetryAdminProtected: true,
       telemetryRateLimited: true,
       benchmarkBackend: "compiled-browser-webllm",
+      benchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
       benchmarkExpectedExact: "Helena",
       benchmarkRequiresSubmitTelemetry: true,
       mtpProductionDisabled: true,
@@ -87,6 +88,38 @@ describe("evaluateHostedDeploymentProfile", () => {
 
     expect(report.passed).toBe(false);
     expect(report.blockers).toContain("Hosted production benchmark URL must set backend=compiled-browser-webllm.");
+  });
+
+  it("rejects hosted profiles that do not pin the compiled production model", () => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      VITE_DEFAULT_MODEL: "Qwen3-1.7B-q4f16_1-MLC",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted production requires VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC.");
+  });
+
+  it("rejects hosted benchmark URLs that omit the compiled production model id", () => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      HOSTED_PRODUCTION_BENCHMARK_URL:
+        "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted production benchmark URL must set modelId=Qwen3-0.6B-q4f16_1-MLC.");
+  });
+
+  it("rejects hosted benchmark URLs that use a different compiled model id", () => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      HOSTED_PRODUCTION_BENCHMARK_URL:
+        "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-1.7B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.blockers).toContain("Hosted production benchmark URL must set modelId=Qwen3-0.6B-q4f16_1-MLC.");
   });
 
   it.each([
@@ -161,6 +194,7 @@ describe("evaluateHostedDeploymentProfile", () => {
         hostedProfileTelemetryAdminProtected: true,
         hostedProfileTelemetryRateLimited: true,
         hostedProfileBenchmarkBackend: "compiled-browser-webllm",
+        hostedProfileBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
         hostedProfileBenchmarkMemoryGrounding: "montana_capital",
         hostedProfileBenchmarkExpectedExact: "Helena",
         hostedProfileBenchmarkRequiresSubmitTelemetry: true,

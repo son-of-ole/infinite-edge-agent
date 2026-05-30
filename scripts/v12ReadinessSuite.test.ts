@@ -48,6 +48,8 @@ function makePassingHostedBenchmarkArtifact() {
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
       runtimeBackendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      runtimeModelId: "Qwen3-0.6B-q4f16_1-MLC",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",
       productionDeployReadyPassed: true,

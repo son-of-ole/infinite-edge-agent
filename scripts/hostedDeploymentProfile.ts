@@ -20,6 +20,7 @@ export interface HostedDeploymentProfileReport {
     telemetryRateLimited: boolean;
     benchmarkUrl: string | null;
     benchmarkBackend: string | null;
+    benchmarkModelId: string | null;
     benchmarkMemoryGrounding: string | null;
     benchmarkMemoryGroundingProfile: string | null;
     benchmarkExpectedExact: string | null;
@@ -66,6 +67,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   if (llmBackend !== HOSTED_BACKEND_ID) {
     blockers.push("Hosted production requires VITE_LLM_BACKEND=compiled-browser-webllm.");
   }
+  if (defaultModel !== HOSTED_DEFAULT_MODEL) {
+    blockers.push(`Hosted production requires VITE_DEFAULT_MODEL=${HOSTED_DEFAULT_MODEL}.`);
+  }
   if (compiledWebLlmEnabled !== true) {
     blockers.push("Hosted production requires VITE_COMPILED_WEBLLM_ENABLED=true.");
   }
@@ -108,6 +112,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
     if (parsedBenchmark.searchParams.get("backend") !== HOSTED_BACKEND_ID) {
       blockers.push("Hosted production benchmark URL must set backend=compiled-browser-webllm.");
     }
+    if (parsedBenchmark.searchParams.get("modelId") !== HOSTED_DEFAULT_MODEL) {
+      blockers.push(`Hosted production benchmark URL must set modelId=${HOSTED_DEFAULT_MODEL}.`);
+    }
     if (!benchmarkProvesGrounding(parsedBenchmark.searchParams)) {
       blockers.push("Hosted production benchmark URL must require memoryGrounding=montana_capital or memoryGroundingProfile=qa_corpus_v1.");
     }
@@ -116,10 +123,6 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
     }
     if (!benchmarkSubmitsTelemetry(parsedBenchmark.searchParams)) {
       blockers.push("Hosted production benchmark URL must opt in with submitTelemetry=true or benchmarkTelemetry=true.");
-    }
-    const benchmarkModelId = parsedBenchmark.searchParams.get("modelId");
-    if (benchmarkModelId && benchmarkModelId !== HOSTED_DEFAULT_MODEL) {
-      warnings.push(`Hosted benchmark modelId is ${benchmarkModelId}; expected ${HOSTED_DEFAULT_MODEL} for the public compiled proof profile.`);
     }
   }
 
@@ -140,6 +143,7 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
       telemetryRateLimited,
       benchmarkUrl: expectedBenchmarkUrl,
       benchmarkBackend: parsedBenchmark?.searchParams.get("backend") ?? null,
+      benchmarkModelId: parsedBenchmark?.searchParams.get("modelId") ?? null,
       benchmarkMemoryGrounding: parsedBenchmark?.searchParams.get("memoryGrounding") ?? null,
       benchmarkMemoryGroundingProfile: parsedBenchmark?.searchParams.get("memoryGroundingProfile") ?? null,
       benchmarkExpectedExact: parsedBenchmark?.searchParams.get("expectedExact") ?? null,
@@ -170,6 +174,7 @@ export function buildHostedDeploymentProfileArtifact(
       hostedProfileTelemetryAdminProtected: report.profile.telemetryAdminProtected,
       hostedProfileTelemetryRateLimited: report.profile.telemetryRateLimited,
       hostedProfileBenchmarkBackend: report.profile.benchmarkBackend,
+      hostedProfileBenchmarkModelId: report.profile.benchmarkModelId,
       hostedProfileBenchmarkMemoryGrounding: report.profile.benchmarkMemoryGrounding,
       hostedProfileBenchmarkMemoryGroundingProfile: report.profile.benchmarkMemoryGroundingProfile,
       hostedProfileBenchmarkExpectedExact: report.profile.benchmarkExpectedExact,

@@ -142,6 +142,35 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails standalone hosted benchmark proof when compiled model identity is missing or wrong", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkModelId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: makeHostedBenchmarkProofSummary({
+            hostedBenchmarkModelId: "Qwen3-1.7B-q4f16_1-MLC",
+            hostedBenchmarkBrokerSelectedModelId: "Qwen3-1.7B-q4f16_1-MLC",
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails standalone hosted benchmark proof without Backend Broker role-boundary evidence", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -498,6 +527,34 @@ describe("release gate status", () => {
           name: "v12-production-archive",
           passed: true,
           summary: makeV12ProductionArchiveSummary({}, { includeHostedRuntimeProof: false }),
+        },
+      ],
+    })).toMatchObject({
+      proofMode: "development-fixture-or-unconfigured",
+      productionReleaseProof: false,
+      backendSpecificProductionProof: false,
+      v12ProductionArchiveProof: false,
+    });
+  });
+
+  it("does not classify v12 production archives when the compiled model identity is missing or wrong", () => {
+    expect(classifyReleaseGateProof({
+      passed: true,
+      strictUnlockedModel: false,
+      requireBrowserPreviewProof: false,
+      requireV12ProductionArchive: true,
+      releaseAllowFixtureGate: false,
+      unlockedAllowFixture: "false",
+      manifestPath: null,
+      manifestSha256: null,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionHostedBenchmarkModelId: "Qwen3-1.7B-q4f16_1-MLC",
+            v12ProductionBrokerSelectedModelId: "Qwen3-1.7B-q4f16_1-MLC",
+          }),
         },
       ],
     })).toMatchObject({
@@ -1165,6 +1222,37 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when compiled model identity is missing or wrong", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionHostedBenchmarkModelId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionHostedBenchmarkModelId: "Qwen3-1.7B-q4f16_1-MLC",
+            v12ProductionBrokerSelectedModelId: "Qwen3-1.7B-q4f16_1-MLC",
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when hosted broker role-boundary proof is missing from the archive", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1378,6 +1466,7 @@ function makeHostedBenchmarkProofSummary(
   return {
     hostedBenchmarkProofPassed: true,
     hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+    hostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
     hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
     hostedBenchmarkCompiledBackendReadyPassed: true,
     hostedBenchmarkProductionDeployReadyPassed: true,
@@ -1409,6 +1498,7 @@ function makeHostedBenchmarkProofSummary(
     hostedBenchmarkBackendBrokerSelectionPassed: true,
     hostedBenchmarkBackendBrokerTraceCount: 1,
     hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
+    hostedBenchmarkBrokerSelectedModelId: "Qwen3-0.6B-q4f16_1-MLC",
     hostedBenchmarkBrokerProductionRole: "production_candidate",
     hostedBenchmarkBrokerDeployReadyCandidate: true,
     hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
@@ -1528,6 +1618,7 @@ function makeV12ProductionArchiveSummary(
   if (options.includeHostedRuntimeProof !== false) {
     Object.assign(summary, {
       v12ProductionHostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
+      v12ProductionHostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
       v12ProductionHostedBenchmarkDeployBackendId: "compiled-browser-webllm",
       v12ProductionCompiledBackendReadyPassed: true,
       v12ProductionDeployReadyPassed: true,

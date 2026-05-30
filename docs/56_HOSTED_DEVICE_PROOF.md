@@ -149,7 +149,7 @@ HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
-It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove Backend Broker selection plus deploy/Kernel Lab/fallback role boundaries, does not prove grounded memory with concrete run-level retrieved/included/expected memory ids and retrieval rank, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
+It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove `modelId=Qwen3-0.6B-q4f16_1-MLC`, does not prove Backend Broker selection with the same selected model plus deploy/Kernel Lab/fallback role boundaries, does not prove grounded memory with concrete run-level retrieved/included/expected memory ids and retrieval rank, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
 For release claims, the saved artifact must also be source-bound. The hosted app should set `VITE_GIT_SHA` at build time so the benchmark summary emits `v12ProductionProofSourceGitSha`, and the verifier should compare that value with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` while `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. The production archive preserves that strict verifier mode as `v12ProductionProofSourceBoundRequired`; the release gate requires it to be true.
 

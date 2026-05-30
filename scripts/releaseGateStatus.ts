@@ -15,6 +15,8 @@ export type ReleaseGateProofMode =
   | "production-v12-compiled-browser-runtime"
   | "development-fixture-or-unconfigured";
 
+const COMPILED_PRODUCTION_MODEL_ID = "Qwen3-0.6B-q4f16_1-MLC";
+
 export function classifyReleaseGateProof(input: {
   passed: boolean;
   strictUnlockedModel?: boolean;
@@ -112,6 +114,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && Number(artifact.summary?.v12ProductionSuiteArtifactCount ?? 0) >= 7
     && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 6
     && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionHostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
     && artifact.summary?.v12ProductionHostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
     && artifact.summary?.v12ProductionDeployReadyPassed === true
@@ -137,6 +140,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionBackendBrokerSelectionPassed === true
     && Number(artifact.summary?.v12ProductionBackendBrokerTraceCount ?? 0) > 0
     && artifact.summary?.v12ProductionBrokerSelectedBackendId === "compiled-browser-webllm"
+    && artifact.summary?.v12ProductionBrokerSelectedModelId === COMPILED_PRODUCTION_MODEL_ID
     && artifact.summary?.v12ProductionBrokerProductionRole === "production_candidate"
     && artifact.summary?.v12ProductionBrokerDeployReadyCandidate === true
     && hasBrokerProofRequirements(artifact.summary, "v12Production")
@@ -180,6 +184,7 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     artifact.passed === true
     && artifact.summary?.hostedBenchmarkProofPassed === true
     && artifact.summary?.hostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
     && artifact.summary?.hostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkCompiledBackendReadyPassed === true
     && artifact.summary?.hostedBenchmarkProductionDeployReadyPassed === true
@@ -208,6 +213,7 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkBackendBrokerSelectionPassed === true
     && Number(artifact.summary?.hostedBenchmarkBackendBrokerTraceCount ?? 0) > 0
     && artifact.summary?.hostedBenchmarkBrokerSelectedBackendId === "compiled-browser-webllm"
+    && artifact.summary?.hostedBenchmarkBrokerSelectedModelId === COMPILED_PRODUCTION_MODEL_ID
     && artifact.summary?.hostedBenchmarkBrokerProductionRole === "production_candidate"
     && artifact.summary?.hostedBenchmarkBrokerDeployReadyCandidate === true
     && artifact.summary?.hostedBenchmarkBrokerDeployBackendId === "compiled-browser-webllm"

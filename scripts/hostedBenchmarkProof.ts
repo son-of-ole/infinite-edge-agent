@@ -7,6 +7,7 @@ export interface HostedBenchmarkProof {
   sourceGitSha: string | null;
   sourceCommitEvidencePassed: boolean;
   runtimeBackendId: string | null;
+  modelId: string | null;
   deployBackendId: string | null;
   response: string | null;
   productionDeployReadyPassed: boolean;
@@ -86,6 +87,7 @@ export interface HostedBenchmarkProofArtifactWriteResult {
 }
 
 const DEFAULT_BACKEND_ID = "compiled-browser-webllm";
+const DEFAULT_MODEL_ID = "Qwen3-0.6B-q4f16_1-MLC";
 const DEFAULT_EXPECTED_RESPONSE = "Helena";
 const DEFAULT_SPEED_FLOOR = 2;
 export const REQUIRED_V12_PRODUCTION_PROOF_SCHEMA_VERSION = 2;
@@ -94,6 +96,7 @@ export async function evaluateHostedBenchmarkProofFile(
   artifactPath: string,
   options: {
     expectedBackendId?: string;
+    expectedModelId?: string;
     expectedResponse?: string | null;
     minTokensPerSecond?: number;
     expectedSourceGitSha?: string | null;
@@ -112,12 +115,14 @@ export function evaluateHostedBenchmarkProof(input: {
   artifact: unknown;
   artifactPath?: string | null;
   expectedBackendId?: string;
+  expectedModelId?: string;
   expectedResponse?: string | null;
   minTokensPerSecond?: number;
   expectedSourceGitSha?: string | null;
   requireSourceBound?: boolean;
 }): HostedBenchmarkProofReport {
   const expectedBackendId = input.expectedBackendId ?? DEFAULT_BACKEND_ID;
+  const expectedModelId = input.expectedModelId ?? DEFAULT_MODEL_ID;
   const expectedResponse = input.expectedResponse === undefined ? DEFAULT_EXPECTED_RESPONSE : input.expectedResponse;
   const minTokensPerSecond = input.minTokensPerSecond ?? DEFAULT_SPEED_FLOOR;
   const expectedSourceGitSha = normalizeString(input.expectedSourceGitSha);
@@ -135,6 +140,9 @@ export function evaluateHostedBenchmarkProof(input: {
   }
   if (proof.runtimeBackendId !== expectedBackendId) {
     blockers.push(`Hosted benchmark proof requires runtimeBackendId=${expectedBackendId}.`);
+  }
+  if (proof.modelId !== expectedModelId) {
+    blockers.push(`Hosted benchmark proof requires modelId=${expectedModelId}.`);
   }
   if (expectedSourceGitSha && proof.sourceGitSha !== expectedSourceGitSha) {
     blockers.push(`Hosted benchmark proof source commit ${proof.sourceGitSha ?? "unknown"} does not match expected commit ${expectedSourceGitSha}.`);
@@ -211,12 +219,16 @@ export function evaluateHostedBenchmarkProof(input: {
     proof.backendBrokerSelectionPassed !== true
     || proof.backendBrokerTraceCount <= 0
     || proof.brokerSelectedBackendId !== expectedBackendId
+    || proof.brokerSelectedModelId !== expectedModelId
     || proof.brokerProductionRole !== "production_candidate"
     || proof.brokerDeployReadyCandidate !== true
     || !proof.brokerProofRequirements.includes("backend_trace")
     || !proof.brokerProofRequirements.includes("memory_grounding")
   ) {
     blockers.push(`Hosted benchmark proof requires Backend Broker selection evidence for ${expectedBackendId}.`);
+  }
+  if (proof.brokerSelectedModelId !== expectedModelId) {
+    blockers.push(`Hosted benchmark proof requires Backend Broker selected model ${expectedModelId}.`);
   }
   if (
     proof.brokerDeployBackendId !== expectedBackendId
@@ -263,6 +275,7 @@ export function buildHostedBenchmarkProofArtifact(
         ? report.proof.sourceGitSha === report.expectedSourceGitSha
         : null,
       hostedBenchmarkRuntimeBackendId: report.proof.runtimeBackendId,
+      hostedBenchmarkModelId: report.proof.modelId,
       hostedBenchmarkDeployBackendId: report.proof.deployBackendId,
       hostedBenchmarkCompiledBackendReadyPassed: report.proof.compiledBackendReadyPassed,
       hostedBenchmarkProductionDeployReadyPassed: report.proof.productionDeployReadyPassed,
@@ -373,6 +386,11 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
   const firstRun = isRecord(source.runs[0]) ? source.runs[0] : {};
   const runtimeTrace = isRecord(firstRun.runtimeTrace) ? firstRun.runtimeTrace : {};
   const runtimeBackendId = readString(source.summary.runtimeBackendId) ?? readString(runtimeTrace.backend);
+  const modelId = readString(source.summary.modelId)
+    ?? readString(source.summary.runtimeModelId)
+    ?? readString(source.summary.deployModelId)
+    ?? readString(runtimeTrace.modelId)
+    ?? null;
   const v12ProductionProofSchemaVersion = readNumber(source.summary.v12ProductionProofSchemaVersion) ?? source.schemaVersion;
   const sourceGitSha = readString(source.summary.v12ProductionProofSourceGitSha)
     ?? readString(source.summary.gitSha)
@@ -413,6 +431,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     sourceGitSha,
     sourceCommitEvidencePassed,
     runtimeBackendId,
+    modelId,
     deployBackendId: readString(source.summary.deployBackendId) ?? runtimeBackendId,
     response: readString(firstRun.response),
     productionDeployReadyPassed: readBoolean(source.summary.productionDeployReadyPassed),
@@ -476,6 +495,7 @@ function buildEmptyProof(): HostedBenchmarkProof {
     sourceGitSha: null,
     sourceCommitEvidencePassed: false,
     runtimeBackendId: null,
+    modelId: null,
     deployBackendId: null,
     response: null,
     productionDeployReadyPassed: false,
