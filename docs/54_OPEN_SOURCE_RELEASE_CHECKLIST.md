@@ -130,7 +130,7 @@ For source publication status, run:
 pnpm eval:repository-publication
 ```
 
-This writes `.artifacts/evals/repository-publication-status-latest.json`, `.artifacts/evals/repository-publication-handoff-latest.json`, and `.artifacts/evals/repository-publication-handoff-latest.md`. It passes when the local `main` is either published to `origin/main` or, if local commits are still ahead because network publishing is unavailable, a verified exact-history Git bundle contains the current head. The Markdown handoff gives operator-ready commands for direct push, full-bundle restore, and existing-clone fast-forward publication. This is a handoff/status artifact only; a bundle-ready state is not the same as the GitHub repository being published.
+This writes `.artifacts/evals/repository-publication-status-latest.json`, `.artifacts/evals/repository-publication-handoff-latest.json`, and `.artifacts/evals/repository-publication-handoff-latest.md`. It passes when the local `main` is either published to `origin/main` or, if local commits are still ahead because network publishing is unavailable, a verified exact-history Git bundle contains the current head. The Markdown handoff gives operator-ready commands for direct push, full-bundle restore, existing-clone fast-forward publication, and the source-bound GitHub v12 production proof workflow. This is a handoff/status artifact only; a bundle-ready state is not the same as the GitHub repository being published.
 
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should require and summarize that source publication status artifact.
 
@@ -141,6 +141,12 @@ pnpm eval:v12-final-state
 ```
 
 This writes `.artifacts/evals/v12-final-state-status-latest.json`. It passes only when the v12 architecture readiness bundle passes, source history is actually published to `origin/main`, and the source-bound hosted v12 production archive passes. A verified exact-history bundle handoff is reported as useful transfer evidence, but it does not count as source publication. Set `RELEASE_REQUIRE_V12_FINAL_STATE=true` when `pnpm release:gate` should require this final status artifact; this also causes the gate to require repository publication status and the v12 production archive.
+
+When verifying a downloaded `v12-production-proof-artifacts` bundle from GitHub Actions, run the final-state command against that proof directory so it reads the archived hosted readiness artifacts:
+
+```bash
+EVAL_ARTIFACT_DIR=.artifacts/evals/v12-production-proof pnpm eval:v12-final-state
+```
 
 For strict production archive proof, run:
 

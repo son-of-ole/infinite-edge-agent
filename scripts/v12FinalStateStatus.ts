@@ -8,6 +8,7 @@ import {
 import {
   evaluateV12ReadinessBundle,
   type V12ReadinessBundle,
+  type V12ReadinessBundleArtifact,
 } from "./v12ReadinessBundle";
 import type { V12ProductionArchiveArtifact } from "./v12ProductionArchive";
 
@@ -40,6 +41,8 @@ export interface V12FinalStateStatus {
   productionArchive: V12ProductionArchiveArtifact | null;
 }
 
+export type V12FinalStateReadinessSource = "computed" | "artifact" | "production_archive";
+
 export interface V12FinalStateStatusArtifact {
   name: "v12-final-state-status";
   createdAt: string;
@@ -58,6 +61,7 @@ export function evaluateV12FinalStateStatus(input: {
   readinessBundle: V12ReadinessBundle;
   repositoryPublication: RepositoryPublicationStatusReport;
   productionArchive?: V12ProductionArchiveArtifact | null;
+  readinessSource?: V12FinalStateReadinessSource;
 }): V12FinalStateStatus {
   const readiness = input.readinessBundle;
   const publication = input.repositoryPublication;
@@ -178,6 +182,7 @@ export function evaluateV12FinalStateStatus(input: {
       v12FinalStateProductionExpectedSourceGitSha: archiveSummary.v12ProductionExpectedSourceGitSha ?? null,
       v12FinalStateProductionDeployUrl: archiveSummary.v12ProductionHostedBenchmarkDeployUrl ?? null,
       v12FinalStateProductionMeanTokensPerSecond: archiveSummary.v12ProductionMeanTokensPerSecond ?? null,
+      v12FinalStateReadinessSource: input.readinessSource ?? "computed",
     },
     readinessBundle: readiness,
     repositoryPublication: publication,
@@ -220,15 +225,23 @@ export async function writeV12FinalStateStatusArtifact(
 export async function evaluateCurrentV12FinalStateStatus(options: {
   artifactDir?: string;
   productionArchivePath?: string;
+  readinessBundlePath?: string;
+  repositoryPublication?: RepositoryPublicationStatusReport;
 } = {}): Promise<V12FinalStateStatus> {
   const artifactDir = options.artifactDir ?? process.env.EVAL_ARTIFACT_DIR ?? ".artifacts/evals";
   const productionArchivePath = options.productionArchivePath
     ?? process.env.V12_FINAL_STATE_PRODUCTION_ARCHIVE_PATH
     ?? join(artifactDir, "v12-production-archive-latest.json");
   const productionArchive = await readOptionalProductionArchive(productionArchivePath);
+  const readiness = await resolveReadinessBundle({
+    artifactDir,
+    readinessBundlePath: options.readinessBundlePath,
+    productionArchive,
+  });
   return evaluateV12FinalStateStatus({
-    readinessBundle: evaluateV12ReadinessBundle(),
-    repositoryPublication: await evaluateRepositoryPublicationStatus(),
+    readinessBundle: readiness.bundle,
+    readinessSource: readiness.source,
+    repositoryPublication: options.repositoryPublication ?? await evaluateRepositoryPublicationStatus(),
     productionArchive,
   });
 }
@@ -252,6 +265,33 @@ async function readOptionalProductionArchive(path: string): Promise<V12Productio
   if (!existsSync(path)) return null;
   const parsed = JSON.parse(await readFile(path, "utf8")) as V12ProductionArchiveArtifact;
   return parsed.name === "v12-production-archive" ? parsed : null;
+}
+
+async function resolveReadinessBundle(input: {
+  artifactDir: string;
+  readinessBundlePath?: string;
+  productionArchive: V12ProductionArchiveArtifact | null;
+}): Promise<{ bundle: V12ReadinessBundle; source: V12FinalStateReadinessSource }> {
+  const readinessBundlePath = input.readinessBundlePath
+    ?? process.env.V12_FINAL_STATE_READINESS_BUNDLE_PATH
+    ?? join(input.artifactDir, "v12-readiness-bundle-latest.json");
+  const artifactBundle = await readOptionalReadinessBundle(readinessBundlePath);
+  if (artifactBundle) {
+    return { bundle: artifactBundle, source: "artifact" };
+  }
+
+  const archiveBundle = input.productionArchive?.archive.suiteResult?.suite?.v12Bundle;
+  if (archiveBundle) {
+    return { bundle: archiveBundle, source: "production_archive" };
+  }
+
+  return { bundle: evaluateV12ReadinessBundle(), source: "computed" };
+}
+
+async function readOptionalReadinessBundle(path: string): Promise<V12ReadinessBundle | null> {
+  if (!existsSync(path)) return null;
+  const parsed = JSON.parse(await readFile(path, "utf8")) as V12ReadinessBundleArtifact;
+  return parsed.name === "v12-readiness-bundle" ? parsed.bundle : null;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

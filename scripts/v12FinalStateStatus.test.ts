@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import type { V12ProductionArchiveArtifact } from "./v12ProductionArchive";
 import type { V12ReadinessBundle } from "./v12ReadinessBundle";
 import {
   buildV12FinalStateStatusArtifact,
+  evaluateCurrentV12FinalStateStatus,
   evaluateV12FinalStateStatus,
   writeV12FinalStateStatusArtifact,
 } from "./v12FinalStateStatus";
@@ -235,5 +236,35 @@ describe("v12 final state status", () => {
 
     const latest = JSON.parse(await readFile(written.latestPath, "utf8")) as ReturnType<typeof buildV12FinalStateStatusArtifact>;
     expect(latest.summary.v12FinalStatePassed).toBe(true);
+  });
+
+  it("can evaluate final state from archived v12 proof artifacts instead of recomputing hosted readiness from local env", async () => {
+    const artifactDir = await mkdtemp(join(tmpdir(), "v12-final-state-proof-import-"));
+    const readinessBundle = makeReadinessBundle();
+    const productionArchive = makeProductionArchive();
+
+    await mkdir(artifactDir, { recursive: true });
+    await writeFile(join(artifactDir, "v12-readiness-bundle-latest.json"), `${JSON.stringify({
+      name: "v12-readiness-bundle",
+      createdAt: "2026-05-30T23:50:00.000Z",
+      passed: true,
+      summary: {},
+      bundle: readinessBundle,
+    }, null, 2)}\n`);
+    await writeFile(join(artifactDir, "v12-production-archive-latest.json"), `${JSON.stringify(productionArchive, null, 2)}\n`);
+
+    const status = await evaluateCurrentV12FinalStateStatus({
+      artifactDir,
+      repositoryPublication: makePublication(),
+    });
+
+    expect(status.passed).toBe(true);
+    expect(status.nextAction).toBe("ready");
+    expect(status.summary).toMatchObject({
+      v12FinalStateArchitectureReady: true,
+      v12FinalStateSourcePublished: true,
+      v12FinalStateHostedProofSourceBound: true,
+      v12FinalStateReadinessSource: "artifact",
+    });
   });
 });

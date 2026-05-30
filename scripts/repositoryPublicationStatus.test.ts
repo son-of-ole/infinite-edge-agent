@@ -278,7 +278,8 @@ describe("repository publication status", () => {
     expect(artifact.markdown).toContain("-f deploy_url=\"$DEPLOY_URL\"");
     expect(artifact.markdown).toContain("gh run watch");
     expect(artifact.markdown).toContain("gh run download");
-    expect(artifact.markdown).toContain("pnpm eval:v12-final-state");
+    expect(artifact.markdown).toContain("--dir .artifacts/evals/v12-production-proof");
+    expect(artifact.markdown).toContain("EVAL_ARTIFACT_DIR=.artifacts/evals/v12-production-proof pnpm eval:v12-final-state");
     expect(written.latestJsonPath).toBe(join(artifactDir, "repository-publication-handoff-latest.json"));
     expect(written.latestMarkdownPath).toBe(join(artifactDir, "repository-publication-handoff-latest.md"));
 
