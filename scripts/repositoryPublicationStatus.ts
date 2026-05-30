@@ -309,6 +309,38 @@ function buildRepositoryPublicationHandoffMarkdown(
     }
   }
 
+  if (report.published || report.bundleHandoffReady) {
+    lines.push(
+      "## After Publish: Source-Bound V12 Production Proof",
+      "",
+      "After the exact Git history is on GitHub, verify that `origin/main` resolves to this head and trigger the hosted production proof against the deployed public URL.",
+      "",
+      "Prerequisites:",
+      "",
+      "- GitHub Actions secrets `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN` are configured.",
+      "- The hosted app was deployed from this same commit and emits `VITE_GIT_SHA` in benchmark artifacts.",
+      "- `DEPLOY_URL` is the public HTTPS origin for the hosted app, not localhost.",
+      "",
+      "```bash",
+      "git fetch origin main",
+      "test \"$(git rev-parse HEAD)\" = \"$(git rev-parse origin/main)\"",
+      "",
+      "DEPLOY_URL=\"https://<your-hosted-app>\"",
+      "gh workflow run v12-production-proof.yml \\",
+      "  --repo son-of-ole/infinite-edge-agent \\",
+      "  --ref main \\",
+      "  -f deploy_url=\"$DEPLOY_URL\"",
+      "",
+      "gh run watch --repo son-of-ole/infinite-edge-agent --workflow v12-production-proof.yml --exit-status",
+      "gh run download --repo son-of-ole/infinite-edge-agent --name v12-production-proof-artifacts --dir .artifacts/github/v12-production-proof",
+      "pnpm eval:v12-final-state",
+      "```",
+      "",
+      "The final-state artifact should only pass after the source is published and the hosted proof is source-bound to the same commit SHA.",
+      "",
+    );
+  }
+
   lines.push("## Verified Bundles", "");
   for (const bundle of snapshot.bundles) {
     lines.push(`- \`${bundle.kind}\`: \`${bundle.path}\`, verified=\`${bundle.verified}\`, head=\`${bundle.headSha ?? "unknown"}\`, completeHistory=\`${bundle.completeHistory ?? "unknown"}\``);

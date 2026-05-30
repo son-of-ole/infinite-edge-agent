@@ -269,6 +269,16 @@ describe("repository publication status", () => {
     expect(artifact.markdown).toContain("git clone /private/tmp/infinite-edge-agent-main-full.bundle infinite-edge-agent");
     expect(artifact.markdown).toContain("git merge --ff-only refs/remotes/bundle/main");
     expect(artifact.markdown).toContain("git push origin main");
+    expect(artifact.markdown).toContain("## After Publish: Source-Bound V12 Production Proof");
+    expect(artifact.markdown).toContain("git fetch origin main");
+    expect(artifact.markdown).toContain("test \"$(git rev-parse HEAD)\" = \"$(git rev-parse origin/main)\"");
+    expect(artifact.markdown).toContain("gh workflow run v12-production-proof.yml");
+    expect(artifact.markdown).toContain("--repo son-of-ole/infinite-edge-agent");
+    expect(artifact.markdown).toContain("--ref main");
+    expect(artifact.markdown).toContain("-f deploy_url=\"$DEPLOY_URL\"");
+    expect(artifact.markdown).toContain("gh run watch");
+    expect(artifact.markdown).toContain("gh run download");
+    expect(artifact.markdown).toContain("pnpm eval:v12-final-state");
     expect(written.latestJsonPath).toBe(join(artifactDir, "repository-publication-handoff-latest.json"));
     expect(written.latestMarkdownPath).toBe(join(artifactDir, "repository-publication-handoff-latest.md"));
 
