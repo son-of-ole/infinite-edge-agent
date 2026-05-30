@@ -195,6 +195,8 @@ export function buildV12ReadinessBundleArtifact(
       v12RequirementCount: bundle.requirements.length,
       v12PassedRequirementCount: bundle.requirements.filter((requirement) => requirement.passed).length,
       v12HostedProfilePassed: bundle.hostedProfile.passed,
+      v12HostedProfileDeployUrl: bundle.hostedProfile.profile.deployUrl,
+      v12HostedProfileBenchmarkDeployUrlBound: bundle.hostedProfile.profile.benchmarkDeployUrlBound,
       v12BackendReadinessPassed: bundle.backendMatrix.passed,
       v12SharedRuntimePassed: bundle.sharedRuntime.passed,
       v12ProductionWorkflowPreflightPassed: bundle.v12ProductionWorkflowPreflight.passed,

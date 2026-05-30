@@ -26,6 +26,7 @@ const completeHostedEnv = {
   BENCHMARK_TELEMETRY_ADMIN_TOKEN: "admin-token",
   BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60",
   BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000",
+  VITE_DEPLOY_URL: "https://agent.example.com",
   HOSTED_PRODUCTION_BENCHMARK_URL:
     "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
 };
@@ -117,6 +118,8 @@ describe("evaluateV12ReadinessBundle", () => {
         v12RequirementCount: 7,
         v12PassedRequirementCount: 7,
         v12HostedProfilePassed: true,
+        v12HostedProfileDeployUrl: "https://agent.example.com",
+        v12HostedProfileBenchmarkDeployUrlBound: true,
         v12BackendReadinessPassed: true,
         v12SharedRuntimePassed: true,
         v12ProductionWorkflowPreflightPassed: true,

@@ -22,6 +22,7 @@ const completeHostedEnv = {
   BENCHMARK_TELEMETRY_ADMIN_TOKEN: "admin-token",
   BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60",
   BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000",
+  VITE_DEPLOY_URL: "https://agent.example.com",
   HOSTED_PRODUCTION_BENCHMARK_URL:
     "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
 };
@@ -39,6 +40,8 @@ describe("evaluateHostedDeploymentProfile", () => {
       telemetryStorage: "postgres",
       telemetryAdminProtected: true,
       telemetryRateLimited: true,
+      deployUrl: "https://agent.example.com",
+      benchmarkDeployUrlBound: true,
       benchmarkBackend: "compiled-browser-webllm",
       benchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
       benchmarkExpectedExact: "Helena",
@@ -147,6 +150,22 @@ describe("evaluateHostedDeploymentProfile", () => {
     expect(report.blockers).toContain("Hosted production benchmark URL must use a public HTTPS origin.");
   });
 
+  it("rejects explicit benchmark URL overrides from a different deploy origin", () => {
+    const report = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      VITE_DEPLOY_URL: "https://agent.example.com",
+      HOSTED_PRODUCTION_BENCHMARK_URL:
+        "https://other-agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+    });
+
+    expect(report.passed).toBe(false);
+    expect(report.profile.deployUrl).toBe("https://agent.example.com");
+    expect(report.profile.benchmarkDeployUrlBound).toBe(false);
+    expect(report.blockers).toContain(
+      "Hosted production benchmark URL origin https://other-agent.example.com must match deploy origin https://agent.example.com.",
+    );
+  });
+
   it("rejects benchmark URLs that do not prove grounded exact Montana retrieval with telemetry submission", () => {
     const report = evaluateHostedDeploymentProfile({
       ...completeHostedEnv,
@@ -193,6 +212,8 @@ describe("evaluateHostedDeploymentProfile", () => {
         hostedProfileTelemetryStorage: "postgres",
         hostedProfileTelemetryAdminProtected: true,
         hostedProfileTelemetryRateLimited: true,
+        hostedProfileDeployUrl: "https://agent.example.com",
+        hostedProfileBenchmarkDeployUrlBound: true,
         hostedProfileBenchmarkBackend: "compiled-browser-webllm",
         hostedProfileBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
         hostedProfileBenchmarkMemoryGrounding: "montana_capital",

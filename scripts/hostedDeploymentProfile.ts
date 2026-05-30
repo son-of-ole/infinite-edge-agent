@@ -18,6 +18,8 @@ export interface HostedDeploymentProfileReport {
     telemetryStorage: string | null;
     telemetryAdminProtected: boolean;
     telemetryRateLimited: boolean;
+    deployUrl: string | null;
+    benchmarkDeployUrlBound: boolean | null;
     benchmarkUrl: string | null;
     benchmarkBackend: string | null;
     benchmarkModelId: string | null;
@@ -61,8 +63,13 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   const telemetryAdminProtected = Boolean(readString(env.BENCHMARK_TELEMETRY_ADMIN_TOKEN));
   const telemetryRateLimited = readPositiveNumber(env.BENCHMARK_TELEMETRY_RATE_LIMIT_MAX)
     && readPositiveNumber(env.BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS);
+  const rawDeployUrl = readString(env.VITE_DEPLOY_URL);
+  const deployUrl = rawDeployUrl ? normalizePublicHttpsOrigin(rawDeployUrl) : null;
   const expectedBenchmarkUrl = resolveBenchmarkUrl(env);
   const parsedBenchmark = parseBenchmarkUrl(expectedBenchmarkUrl);
+  const benchmarkDeployUrlBound = deployUrl && parsedBenchmark
+    ? parsedBenchmark.origin === deployUrl
+    : null;
 
   if (llmBackend !== HOSTED_BACKEND_ID) {
     blockers.push("Hosted production requires VITE_LLM_BACKEND=compiled-browser-webllm.");
@@ -97,6 +104,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   if (!readString(env.VITE_BENCHMARK_TELEMETRY_URL)) {
     blockers.push("Hosted browser config requires VITE_BENCHMARK_TELEMETRY_URL.");
   }
+  if (rawDeployUrl && !deployUrl) {
+    blockers.push("Hosted production deploy URL must use a public HTTPS origin.");
+  }
 
   if (!expectedBenchmarkUrl) {
     blockers.push("Hosted production requires HOSTED_PRODUCTION_BENCHMARK_URL or BROWSER_RUNTIME_BENCH_PREVIEW_URL.");
@@ -105,6 +115,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
   } else {
     if (!isPublicHttpsUrl(parsedBenchmark)) {
       blockers.push("Hosted production benchmark URL must use a public HTTPS origin.");
+    }
+    if (deployUrl && benchmarkDeployUrlBound !== true) {
+      blockers.push(`Hosted production benchmark URL origin ${parsedBenchmark.origin} must match deploy origin ${deployUrl}.`);
     }
     if (parsedBenchmark.pathname !== "/__bench/browser-runtime") {
       blockers.push("Hosted production benchmark URL must target /__bench/browser-runtime.");
@@ -141,6 +154,8 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
       telemetryStorage,
       telemetryAdminProtected,
       telemetryRateLimited,
+      deployUrl,
+      benchmarkDeployUrlBound,
       benchmarkUrl: expectedBenchmarkUrl,
       benchmarkBackend: parsedBenchmark?.searchParams.get("backend") ?? null,
       benchmarkModelId: parsedBenchmark?.searchParams.get("modelId") ?? null,
@@ -173,6 +188,8 @@ export function buildHostedDeploymentProfileArtifact(
       hostedProfileTelemetryStorage: report.profile.telemetryStorage,
       hostedProfileTelemetryAdminProtected: report.profile.telemetryAdminProtected,
       hostedProfileTelemetryRateLimited: report.profile.telemetryRateLimited,
+      hostedProfileDeployUrl: report.profile.deployUrl,
+      hostedProfileBenchmarkDeployUrlBound: report.profile.benchmarkDeployUrlBound,
       hostedProfileBenchmarkBackend: report.profile.benchmarkBackend,
       hostedProfileBenchmarkModelId: report.profile.benchmarkModelId,
       hostedProfileBenchmarkMemoryGrounding: report.profile.benchmarkMemoryGrounding,
@@ -232,6 +249,15 @@ function parseBenchmarkUrl(value: string | null): URL | null {
   if (!value) return null;
   try {
     return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizePublicHttpsOrigin(value: string): string | null {
+  try {
+    const url = new URL(value);
+    return isPublicHttpsUrl(url) ? url.origin : null;
   } catch {
     return null;
   }

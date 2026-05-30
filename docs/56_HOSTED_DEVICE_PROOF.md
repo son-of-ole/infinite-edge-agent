@@ -97,6 +97,8 @@ The verifier checks the deploy profile, not the model output. It requires:
 - rate limiting configured,
 - and a public HTTPS benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
 
+When `VITE_DEPLOY_URL` is set, the verifier also requires the benchmark URL origin to match that deploy origin. This prevents an operator from proving one hosted site while configuring or releasing another.
+
 The verifier does not replace the real Chrome benchmark. It prevents a hosted environment from being called production-ready before the authoritative browser proof can even produce the right artifact.
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` so the deploy profile can be archived alongside the real browser benchmark artifact. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` when the full release gate should include this proof.
@@ -123,7 +125,7 @@ The combined v12 readiness bundle is written by:
 pnpm eval:v12-readiness
 ```
 
-It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, model-registry alignment, shared runtime proof, and production workflow preflight proof into one final-state deploy readiness artifact. The bundle includes seven requirements, including the explicit `model_registry_alignment` and `production_proof_workflow` requirements.
+It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific deploy/Kernel Lab/fallback role proof, model-registry alignment, shared runtime proof, and production workflow preflight proof into one final-state deploy readiness artifact. The bundle includes seven requirements, including the explicit `model_registry_alignment` and `production_proof_workflow` requirements, and reports the hosted deploy URL plus whether the benchmark URL was bound to that origin.
 
 The full v12 readiness suite is written by:
 

@@ -96,7 +96,7 @@ For the hosted compiled backend, verify the environment and production benchmark
 pnpm verify:hosted-profile
 ```
 
-This check must pass before the real Chrome hosted benchmark is treated as authoritative. It requires the compiled backend, `VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC`, MTP-off production policy, Postgres-backed benchmark telemetry, admin-protected telemetry review routes, rate limiting, a public HTTPS benchmark origin, and the grounded exact Montana canary URL with `modelId=Qwen3-0.6B-q4f16_1-MLC` plus telemetry opt-in. It writes `.artifacts/evals/hosted-deployment-profile-latest.json`.
+This check must pass before the real Chrome hosted benchmark is treated as authoritative. It requires the compiled backend, `VITE_DEFAULT_MODEL=Qwen3-0.6B-q4f16_1-MLC`, MTP-off production policy, Postgres-backed benchmark telemetry, admin-protected telemetry review routes, rate limiting, a public HTTPS benchmark origin, the benchmark origin bound to `VITE_DEPLOY_URL` when a deploy URL is provided, and the grounded exact Montana canary URL with `modelId=Qwen3-0.6B-q4f16_1-MLC` plus telemetry opt-in. It writes `.artifacts/evals/hosted-deployment-profile-latest.json`.
 
 To make the full release gate require and summarize this hosted profile artifact, run:
 
@@ -114,7 +114,7 @@ For a single final-state artifact, run:
 pnpm eval:v12-readiness
 ```
 
-This writes `.artifacts/evals/v12-readiness-bundle-latest.json`, including the `production_proof_workflow` requirement and `v12ProductionWorkflowPreflightPassed` summary field. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+This writes `.artifacts/evals/v12-readiness-bundle-latest.json`, including the `production_proof_workflow` requirement, `v12ProductionWorkflowPreflightPassed`, and hosted profile deploy-origin binding fields. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
 For the full final-state artifact set, run:
 
