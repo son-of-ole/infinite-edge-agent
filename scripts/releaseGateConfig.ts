@@ -18,7 +18,9 @@ export function makeReleaseGateDefaultEnvOverrides(env: NodeJS.ProcessEnv): Reco
   if (env.RELEASE_REQUIRE_V12_PRODUCTION === "true" && env.RELEASE_REQUIRE_UNLOCKED_MODEL !== "true") {
     return {};
   }
-  return makeStrictRealQwenEnvOverrides(env, { detectInstalledDefaultModel: true });
+  return makeStrictRealQwenEnvOverrides(env, {
+    detectInstalledDefaultModel: env.RELEASE_AUTO_DETECT_UNLOCKED_MODEL === "true",
+  });
 }
 
 export function makeUnlockedVerifyEnvOverrides(env: NodeJS.ProcessEnv): Record<string, string | undefined> {

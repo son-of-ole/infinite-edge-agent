@@ -55,6 +55,13 @@ describe("release gate unlocked verification config", () => {
     });
   });
 
+  it("does not auto-promote installed Kernel Lab models unless explicitly requested", () => {
+    expect(makeReleaseGateDefaultEnvOverrides({})).toEqual({});
+    expect(makeReleaseGateDefaultEnvOverrides({
+      RELEASE_AUTO_DETECT_UNLOCKED_MODEL: "false",
+    })).toEqual({});
+  });
+
   it("strips deploy runtime env from non-production child checks", () => {
     expect(makeReleaseGateTestEnvOverrides({
       VITE_LLM_BACKEND: "compiled-browser-webllm",
