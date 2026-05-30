@@ -78,6 +78,8 @@ describe("release gate status", () => {
             hostedBenchmarkExpectedSourceGitSha: "abc123",
             hostedBenchmarkProofSourceBound: true,
             hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkGpuLabelEvidencePassed: true,
+            hostedBenchmarkGpuDescription: "Apple M3",
             hostedBenchmarkConcreteMemoryGroundingPassed: true,
             hostedBenchmarkMemoryGroundingRunCount: 1,
             hostedBenchmarkMemorySeededCorpusCount: 16,
@@ -138,6 +140,41 @@ describe("release gate status", () => {
             hostedBenchmarkExpectedSourceGitSha: "abc123",
             hostedBenchmarkProofSourceBound: true,
             hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkConcreteMemoryGroundingPassed: true,
+            hostedBenchmarkMemoryGroundingRunCount: 1,
+            hostedBenchmarkMemorySeededCorpusCount: 16,
+            hostedBenchmarkMemoryRetrievedCount: 1,
+            hostedBenchmarkMemoryIncludedCount: 1,
+            hostedBenchmarkMemoryExpectedMemoryIdCount: 1,
+            hostedBenchmarkMemoryExpectedHitMeanRank: 1,
+            hostedBenchmarkBrokerDeployBackendId: "compiled-browser-webllm",
+            hostedBenchmarkBrokerKernelLabBackendId: "unlocked-browser-transformer",
+            hostedBenchmarkBrokerFallbackBackendId: "wasm-small-core",
+            hostedBenchmarkBrokerFallbackBackendCount: 1,
+            hostedBenchmarkBrokerFallbackDeployReadyCandidate: false,
+            hostedBenchmarkBrokerRoleBoundaryPassed: true,
+          },
+        },
+      ],
+    })).toBe(false);
+  });
+
+  it("fails standalone hosted benchmark proof without explicit GPU label evidence", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      latestArtifacts: [
+        {
+          name: "hosted-benchmark-proof",
+          passed: true,
+          summary: {
+            hostedBenchmarkProofPassed: true,
+            hostedBenchmarkProofSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceCommitEvidencePassed: true,
+            hostedBenchmarkExpectedSourceGitSha: "abc123",
+            hostedBenchmarkProofSourceBound: true,
+            hostedBenchmarkProofSourceBoundRequired: true,
+            hostedBenchmarkGpuLabelEvidencePassed: false,
+            hostedBenchmarkGpuDescription: null,
             hostedBenchmarkConcreteMemoryGroundingPassed: true,
             hostedBenchmarkMemoryGroundingRunCount: 1,
             hostedBenchmarkMemorySeededCorpusCount: 16,
@@ -1129,6 +1166,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when explicit GPU label evidence is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionGpuLabelEvidencePassed: false,
+            v12ProductionGpuDescription: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails v12-production-required releases when concrete memory grounding evidence is missing", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1324,6 +1378,8 @@ function makeV12ProductionArchiveSummary(
       v12ProductionExpectedExactPassed: true,
       v12ProductionSpeedFloorPassed: true,
       v12ProductionMeanTokensPerSecond: 2.7,
+      v12ProductionGpuLabelEvidencePassed: true,
+      v12ProductionGpuDescription: "Apple M3",
       v12ProductionDirectModelFactualProofUsed: false,
       v12ProductionTechnicalProofOnly: false,
       v12ProductionCpuFallbackUsed: false,

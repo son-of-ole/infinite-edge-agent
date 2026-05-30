@@ -104,6 +104,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && typeof artifact.summary?.v12ProductionProofSourceGitSha === "string"
     && artifact.summary.v12ProductionProofSourceGitSha.trim().length > 0
     && artifact.summary?.v12ProductionProofSourceCommitEvidencePassed === true
+    && hasGpuLabelEvidence(artifact.summary, "v12Production")
     && typeof artifact.summary?.v12ProductionExpectedSourceGitSha === "string"
     && artifact.summary.v12ProductionExpectedSourceGitSha.trim().length > 0
     && artifact.summary?.v12ProductionProofSourceBoundRequired === true
@@ -176,6 +177,7 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkProofSourceBoundRequired === true
     && artifact.summary?.hostedBenchmarkProofSourceBound === true
     && artifact.summary?.hostedBenchmarkProofSourceCommitEvidencePassed === true
+    && hasGpuLabelEvidence(artifact.summary, "hostedBenchmark")
     && artifact.summary?.hostedBenchmarkConcreteMemoryGroundingPassed === true
     && Number(artifact.summary?.hostedBenchmarkMemoryGroundingRunCount ?? 0) > 0
     && Number(artifact.summary?.hostedBenchmarkMemorySeededCorpusCount ?? 0) > 0
@@ -194,6 +196,20 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && typeof artifact.summary?.hostedBenchmarkExpectedSourceGitSha === "string"
     && artifact.summary.hostedBenchmarkExpectedSourceGitSha.trim().length > 0
   );
+}
+
+function hasGpuLabelEvidence(
+  summary: Record<string, number | string | boolean | null> | undefined,
+  prefix: "hostedBenchmark" | "v12Production",
+): boolean {
+  if (!summary || summary[`${prefix}GpuLabelEvidencePassed`] !== true) return false;
+  return [
+    `${prefix}GpuVendor`,
+    `${prefix}GpuArchitecture`,
+    `${prefix}GpuDevice`,
+    `${prefix}GpuDescription`,
+    `${prefix}WebGlRenderer`,
+  ].some((key) => typeof summary[key] === "string" && summary[key].trim().length > 0);
 }
 
 function strictUnlockedArtifactsPassed(artifacts: ReleaseGateLatestArtifactStatusInput[]): boolean {
