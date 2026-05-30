@@ -17,6 +17,7 @@ import {
   readBrowserPreviewBenchmarkRequest,
   runBrowserPreviewBenchmarkWithExclusiveLock,
 } from "./browserPreviewBenchmarkRoute";
+import type { BrowserBackendSelection } from "../lib/runtime/backendBroker";
 
 describe("browser preview benchmark payload", () => {
   it("summarizes coherent response, runtime trace, predictive counts, backend coverage, MTP, and KV persistence events", () => {
@@ -164,6 +165,68 @@ describe("browser preview benchmark payload", () => {
     expect(payload.runs[0] as BrowserPreviewBenchmarkRun & { prefillChunkCount: number }).toMatchObject({
       prefillChunkCount: 2,
       prefillChunkSize: 1024,
+    });
+  });
+
+  it("summarizes compiled model identity and hosted deploy origin for production proof binding", () => {
+    const brokerSelection: BrowserBackendSelection = {
+      backendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      productionRole: "production_candidate",
+      deployReadyCandidate: true,
+      reason: "compiled_first_grounded_answer",
+      fallbackChain: ["unlocked-browser-transformer", "wasm-small-core"],
+      proofRequirements: ["memory_grounding", "backend_trace"],
+    };
+    const run = makeRun({
+      response: "Helena",
+      expectedSubstrings: ["Helena"],
+      expectedSubstringMatches: ["Helena"],
+      expectedExact: ["Helena"],
+      expectedExactMatches: [{ expected: "Helena", matched: true }],
+      runtimeTrace: {
+        backend: "compiled-browser-webllm",
+        brokerSelection,
+        tensorControl: false,
+        tspSteps: [],
+        kvPagingEvents: 0,
+        selectedBlockIds: [],
+      },
+      memoryGrounding: {
+        mode: "seeded_browser_vector_context_rebuild",
+        caseId: "montana_capital",
+        corpusCount: 16,
+        retrievedMemoryIds: ["bench_memory_montana_capital"],
+        includedMemoryIds: ["bench_memory_montana_capital"],
+        expectedMemoryIds: ["bench_memory_montana_capital"],
+        expectedMemoryHitPassed: true,
+        contextRebuildPassed: true,
+        answerOnlyExpected: true,
+        answerOnlyPassed: true,
+        contextEstimatedTokens: 42,
+        retrievalMs: 2,
+        contextRebuildMs: 1,
+        retrievalRank: 1,
+        retrievalTopScoreMargin: 0.4,
+      },
+      expectedAnswerOnlyPassed: true,
+    });
+
+    const payload = buildBrowserPreviewBenchmarkPayload({
+      createdAt: "2026-05-30T22:45:00.000Z",
+      profile: "full",
+      runs: [run],
+      strictWebGpuRequested: false,
+      sourceGitSha: "abc123",
+      benchmarkDeviceInfo: { gpuDescription: "Apple M3", webglRenderer: "ANGLE Metal Renderer: Apple M3" },
+      deployUrl: "https://agent.example.com",
+    } as Parameters<typeof buildBrowserPreviewBenchmarkPayload>[0] & { deployUrl: string });
+
+    expect(payload.summary).toMatchObject({
+      runtimeBackendId: "compiled-browser-webllm",
+      modelId: "Qwen3-0.6B-q4f16_1-MLC",
+      deployUrl: "https://agent.example.com",
+      productionDeployReadyPassed: true,
     });
   });
 

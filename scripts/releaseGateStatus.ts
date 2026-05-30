@@ -115,6 +115,7 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && Number(artifact.summary?.v12ProductionChildArtifactCount ?? 0) >= 6
     && artifact.summary?.v12ProductionHostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionHostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
+    && hasPublicHttpsUrl(artifact.summary?.v12ProductionHostedBenchmarkDeployUrl)
     && artifact.summary?.v12ProductionHostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionCompiledBackendReadyPassed === true
     && artifact.summary?.v12ProductionDeployReadyPassed === true
@@ -185,6 +186,7 @@ function hostedBenchmarkProofArtifactsPassed(artifacts: ReleaseGateLatestArtifac
     && artifact.summary?.hostedBenchmarkProofPassed === true
     && artifact.summary?.hostedBenchmarkRuntimeBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkModelId === COMPILED_PRODUCTION_MODEL_ID
+    && hasPublicHttpsUrl(artifact.summary?.hostedBenchmarkDeployUrl)
     && artifact.summary?.hostedBenchmarkDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.hostedBenchmarkCompiledBackendReadyPassed === true
     && artifact.summary?.hostedBenchmarkProductionDeployReadyPassed === true
@@ -242,6 +244,61 @@ function hasBrokerProofRequirements(
 
 function isSuccessfulHttpStatus(value: unknown): boolean {
   return typeof value === "number" && value >= 200 && value < 300;
+}
+
+function hasPublicHttpsUrl(value: unknown): boolean {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    const hostname = normalizeUrlHostname(url.hostname);
+    return !isLocalhost(hostname) && !isPrivateIpv4Host(hostname) && !isPrivateIpv6Host(hostname);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeUrlHostname(hostname: string): string {
+  let normalized = hostname.trim().toLowerCase();
+  if (normalized.startsWith("[") && normalized.endsWith("]")) {
+    normalized = normalized.slice(1, -1);
+  }
+  while (normalized.endsWith(".")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local");
+}
+
+function isPrivateIpv4Host(hostname: string): boolean {
+  const parts = hostname.split(".");
+  if (parts.length !== 4) return false;
+  const octets = parts.map((part) => {
+    if (!/^\d{1,3}$/.test(part)) return Number.NaN;
+    return Number(part);
+  });
+  if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  const [a = 0, b = 0] = octets;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168);
+}
+
+function isPrivateIpv6Host(hostname: string): boolean {
+  const host = hostname.split("%", 1)[0] ?? "";
+  if (!host.includes(":")) return false;
+  if (host === "::" || host === "::1" || host === "0:0:0:0:0:0:0:1") return true;
+  if (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:")) return true;
+  const ipv4Mapped = host.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  return Boolean(ipv4Mapped?.[1] && isPrivateIpv4Host(ipv4Mapped[1]));
 }
 
 function hasGpuLabelEvidence(

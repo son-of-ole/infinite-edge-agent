@@ -8,6 +8,7 @@ export interface HostedBenchmarkProof {
   sourceCommitEvidencePassed: boolean;
   runtimeBackendId: string | null;
   modelId: string | null;
+  deployUrl: string | null;
   deployBackendId: string | null;
   response: string | null;
   productionDeployReadyPassed: boolean;
@@ -144,6 +145,9 @@ export function evaluateHostedBenchmarkProof(input: {
   if (proof.modelId !== expectedModelId) {
     blockers.push(`Hosted benchmark proof requires modelId=${expectedModelId}.`);
   }
+  if (!isPublicHttpsUrlString(proof.deployUrl)) {
+    blockers.push("Hosted benchmark proof requires a public HTTPS deployUrl.");
+  }
   if (expectedSourceGitSha && proof.sourceGitSha !== expectedSourceGitSha) {
     blockers.push(`Hosted benchmark proof source commit ${proof.sourceGitSha ?? "unknown"} does not match expected commit ${expectedSourceGitSha}.`);
   }
@@ -276,6 +280,7 @@ export function buildHostedBenchmarkProofArtifact(
         : null,
       hostedBenchmarkRuntimeBackendId: report.proof.runtimeBackendId,
       hostedBenchmarkModelId: report.proof.modelId,
+      hostedBenchmarkDeployUrl: report.proof.deployUrl,
       hostedBenchmarkDeployBackendId: report.proof.deployBackendId,
       hostedBenchmarkCompiledBackendReadyPassed: report.proof.compiledBackendReadyPassed,
       hostedBenchmarkProductionDeployReadyPassed: report.proof.productionDeployReadyPassed,
@@ -391,6 +396,11 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     ?? readString(source.summary.deployModelId)
     ?? readString(runtimeTrace.modelId)
     ?? null;
+  const deployUrl = readString(source.summary.deployUrl)
+    ?? readString(source.summary.benchmarkDeployUrl)
+    ?? readString(firstRun.deployUrl)
+    ?? (isRecord(firstRun.device) ? readString(firstRun.device.deployUrl) : null)
+    ?? null;
   const v12ProductionProofSchemaVersion = readNumber(source.summary.v12ProductionProofSchemaVersion) ?? source.schemaVersion;
   const sourceGitSha = readString(source.summary.v12ProductionProofSourceGitSha)
     ?? readString(source.summary.gitSha)
@@ -432,6 +442,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     sourceCommitEvidencePassed,
     runtimeBackendId,
     modelId,
+    deployUrl,
     deployBackendId: readString(source.summary.deployBackendId) ?? runtimeBackendId,
     response: readString(firstRun.response),
     productionDeployReadyPassed: readBoolean(source.summary.productionDeployReadyPassed),
@@ -496,6 +507,7 @@ function buildEmptyProof(): HostedBenchmarkProof {
     sourceCommitEvidencePassed: false,
     runtimeBackendId: null,
     modelId: null,
+    deployUrl: null,
     deployBackendId: null,
     response: null,
     productionDeployReadyPassed: false,
@@ -570,6 +582,65 @@ function readNumber(value: unknown): number | null {
 
 function isSuccessfulHttpStatus(value: number | null): boolean {
   return typeof value === "number" && value >= 200 && value < 300;
+}
+
+function isPublicHttpsUrlString(value: string | null): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return isPublicHttpsUrl(url);
+  } catch {
+    return false;
+  }
+}
+
+function isPublicHttpsUrl(url: URL): boolean {
+  if (url.protocol !== "https:") return false;
+  const hostname = normalizeUrlHostname(url.hostname);
+  return !isLocalhost(hostname) && !isPrivateIpv4Host(hostname) && !isPrivateIpv6Host(hostname);
+}
+
+function normalizeUrlHostname(hostname: string): string {
+  let normalized = hostname.trim().toLowerCase();
+  if (normalized.startsWith("[") && normalized.endsWith("]")) {
+    normalized = normalized.slice(1, -1);
+  }
+  while (normalized.endsWith(".")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local");
+}
+
+function isPrivateIpv4Host(hostname: string): boolean {
+  const parts = hostname.split(".");
+  if (parts.length !== 4) return false;
+  const octets = parts.map((part) => {
+    if (!/^\d{1,3}$/.test(part)) return Number.NaN;
+    return Number(part);
+  });
+  if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  const [a = 0, b = 0] = octets;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168);
+}
+
+function isPrivateIpv6Host(hostname: string): boolean {
+  const host = hostname.split("%", 1)[0] ?? "";
+  if (!host.includes(":")) return false;
+  if (host === "::" || host === "::1" || host === "0:0:0:0:0:0:0:1") return true;
+  if (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:")) return true;
+  const ipv4Mapped = host.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  return Boolean(ipv4Mapped?.[1] && isPrivateIpv4Host(ipv4Mapped[1]));
 }
 
 function normalizeString(value: unknown): string | null {

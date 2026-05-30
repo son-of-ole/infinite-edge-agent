@@ -331,6 +331,7 @@ async function runBrowserPreviewBenchmark(
       minGeneratedTokens: request.minGeneratedTokens,
       sourceGitSha: request.benchmarkTelemetryConfig.gitSha ?? null,
       benchmarkDeviceInfo,
+      deployUrl: request.benchmarkTelemetryConfig.deployUrl ?? benchmarkDeviceInfo?.deployUrl ?? null,
       technicalProofOnly: (
         request.strictLongPromptProof
         || request.requireKvPredictivePrefetch

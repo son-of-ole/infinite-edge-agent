@@ -305,6 +305,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   technicalProofOnly?: boolean;
   sourceGitSha?: string | null;
   benchmarkDeviceInfo?: BrowserBenchmarkDeviceInfo | null;
+  deployUrl?: string | null;
 }): BrowserPreviewBenchmarkPayload {
   const coherentResponseCount = input.runs.filter((run) => run.coherent && hasVisibleResponseQuality(run)).length;
   const visibleResponseQualityPassed = input.runs.length > 0 && coherentResponseCount === input.runs.length;
@@ -433,6 +434,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
   const backendBrokerTraceCount = brokerSelections.length;
   const backendBrokerSelectedBackendId = summarizeStringField(brokerSelections.map((selection) => selection.backendId));
   const backendBrokerSelectedModelId = summarizeStringField(brokerSelections.map((selection) => selection.modelId));
+  const runtimeModelId = backendBrokerSelectedModelId;
   const backendBrokerProductionRole = summarizeStringField(brokerSelections.map((selection) => selection.productionRole));
   const backendBrokerDeployReadyCandidate = brokerSelections.length > 0
     ? brokerSelections.every((selection) => selection.deployReadyCandidate === true)
@@ -638,6 +640,8 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       compiledBackendReadyPassed,
       customKernelLabReadyPassed,
       runtimeBackendId,
+      modelId: runtimeModelId,
+      deployUrl: normalizeDeployUrl(input.deployUrl),
       runtimeBackendRole,
       backendBrokerTraceCount,
       backendBrokerSelectionPassed,
@@ -1067,6 +1071,10 @@ function hasBenchmarkGpuLabelEvidence(input: Required<BrowserBenchmarkDeviceInfo
 }
 
 function normalizeDeviceLabel(value: string | null | undefined): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeDeployUrl(value: string | null | undefined): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 

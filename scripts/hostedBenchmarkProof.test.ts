@@ -31,6 +31,7 @@ function makePassingBrowserPreviewArtifact() {
       runtimeBackendId: "compiled-browser-webllm",
       modelId: "Qwen3-0.6B-q4f16_1-MLC",
       runtimeModelId: "Qwen3-0.6B-q4f16_1-MLC",
+      deployUrl: "https://agent.example.com",
       runtimeBackendRole: "production_candidate",
       deployBackendId: "compiled-browser-webllm",
       productionDeployReadyPassed: true,
@@ -119,6 +120,7 @@ describe("hosted benchmark proof verifier", () => {
       proof: {
         sourceName: "browser-preview-benchmark",
         runtimeBackendId: "compiled-browser-webllm",
+        deployUrl: "https://agent.example.com",
         deployBackendId: "compiled-browser-webllm",
         response: "Helena",
         productionDeployReadyPassed: true,
@@ -244,6 +246,24 @@ describe("hosted benchmark proof verifier", () => {
     expect(report.blockers).toContain("Hosted benchmark proof requires successful benchmark telemetry submission.");
   });
 
+  it("fails production proof when the hosted artifact does not identify a public hosted deploy origin", () => {
+    const missingDeploy = makePassingBrowserPreviewArtifact();
+    delete (missingDeploy.summary as Record<string, unknown>).deployUrl;
+
+    const missingReport = evaluateHostedBenchmarkProof({ artifact: missingDeploy });
+
+    expect(missingReport.passed).toBe(false);
+    expect(missingReport.blockers).toContain("Hosted benchmark proof requires a public HTTPS deployUrl.");
+
+    const localDeploy = makePassingBrowserPreviewArtifact();
+    (localDeploy.summary as Record<string, unknown>).deployUrl = "http://localhost:5173";
+
+    const localReport = evaluateHostedBenchmarkProof({ artifact: localDeploy });
+
+    expect(localReport.passed).toBe(false);
+    expect(localReport.blockers).toContain("Hosted benchmark proof requires a public HTTPS deployUrl.");
+  });
+
   it("fails production proof when the hosted artifact does not match the expected source commit", () => {
     const report = evaluateHostedBenchmarkProof({
       artifact: makePassingBrowserPreviewArtifact(),
@@ -318,6 +338,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkArtifactPath: "/tmp/browser-runtime-bench-latest.json",
         hostedBenchmarkRuntimeBackendId: "compiled-browser-webllm",
         hostedBenchmarkModelId: "Qwen3-0.6B-q4f16_1-MLC",
+        hostedBenchmarkDeployUrl: "https://agent.example.com",
         hostedBenchmarkDeployBackendId: "compiled-browser-webllm",
         hostedBenchmarkCompiledBackendReadyPassed: true,
         hostedBenchmarkProductionDeployReadyPassed: true,

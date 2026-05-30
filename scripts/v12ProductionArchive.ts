@@ -111,6 +111,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionChildArtifactCount: suite.childArtifactCount,
       v12ProductionHostedBenchmarkRuntimeBackendId: hostedProof?.runtimeBackendId ?? null,
       v12ProductionHostedBenchmarkModelId: hostedProof?.modelId ?? null,
+      v12ProductionHostedBenchmarkDeployUrl: hostedProof?.deployUrl ?? null,
       v12ProductionHostedBenchmarkDeployBackendId: hostedProof?.deployBackendId ?? null,
       v12ProductionCompiledBackendReadyPassed: hostedProof?.compiledBackendReadyPassed ?? false,
       v12ProductionDeployReadyPassed: hostedProof?.productionDeployReadyPassed ?? false,
