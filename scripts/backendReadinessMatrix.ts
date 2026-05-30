@@ -5,6 +5,10 @@ import {
   type BrowserBackendProductionRole,
 } from "../apps/web/src/lib/runtime/backendBroker";
 import {
+  listLocalModelOptionsFromRegistry,
+  MODEL_REGISTRY,
+} from "../apps/web/src/config/modelRegistry";
+import {
   evaluateHostedDeploymentProfile,
   type HostedDeploymentProfileReport,
 } from "./hostedDeploymentProfile";
@@ -186,6 +190,7 @@ export function buildBackendReadinessMatrixArtifact(
   matrix: BackendReadinessMatrix,
   createdAt = new Date().toISOString(),
 ): BackendReadinessMatrixArtifact {
+  const modelRegistry = summarizeModelRegistryAlignment(matrix);
   const productionCandidateCount = matrix.backends.filter((entry) => entry.productionRole === "production_candidate").length;
   const deployReadyCount = matrix.backends.filter((entry) => entry.deployReady).length;
   const researchBackendIds = matrix.backends
@@ -221,6 +226,11 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessFallbackBackendId: fallbackBackendIds[0] ?? null,
       backendReadinessFallbackDeployReadyCount: fallbackDeployReadyCount,
       backendReadinessRoleBoundaryPassed: roleBoundaryPassed,
+      backendReadinessModelRegistryAligned: modelRegistry.aligned,
+      backendReadinessModelRegistryModelCount: modelRegistry.modelCount,
+      backendReadinessPublicModelOptionCount: modelRegistry.publicOptionCount,
+      backendReadinessPublicDeployOptionCount: modelRegistry.publicDeployOptionCount,
+      backendReadinessPublicKernelLabOptionCount: modelRegistry.publicKernelLabOptionCount,
       backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.hostedProfilePassed ?? false,
       backendReadinessCompiledDeployReady: hostedCompiledBackend?.deployReady ?? false,
       backendReadinessProofBoundToHostedBenchmark: isBackendReadinessProofBoundToHostedBenchmark(matrix),
@@ -229,6 +239,27 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessHostedBenchmarkProofSourceBound: hostedCompiledBackend?.hostedBenchmarkProofSourceBound ?? null,
     },
     matrix,
+  };
+}
+
+function summarizeModelRegistryAlignment(matrix: BackendReadinessMatrix) {
+  const options = listLocalModelOptionsFromRegistry();
+  const aligned = MODEL_REGISTRY.models.every((model) => {
+    const backend = matrix.backends.find((entry) => entry.backendId === model.backendId);
+    return Boolean(
+      backend
+      && backend.productionRole === model.productionRole
+    );
+  }) && matrix.backends.every((backend) =>
+    MODEL_REGISTRY.models.some((model) =>
+      model.backendId === backend.backendId
+      && model.productionRole === backend.productionRole));
+  return {
+    aligned,
+    modelCount: MODEL_REGISTRY.models.length,
+    publicOptionCount: options.length,
+    publicDeployOptionCount: options.filter((option) => option.deployReadyCandidate).length,
+    publicKernelLabOptionCount: options.filter((option) => option.productionRole === "research_kernel_lab").length,
   };
 }
 
