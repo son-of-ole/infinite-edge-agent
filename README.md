@@ -3,7 +3,7 @@
 > Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab.
 
 <p align="center">
-  <img src="docs/assets/infinite-edge-agent-hero.svg" alt="Infinite Edge Agent browser-native runtime diagram" width="100%" />
+  <img src="docs/assets/infinite-edge-agent-hero.jpg" alt="Infinite Edge Agent running as a browser-native AI runtime across edge devices" width="100%" />
 </p>
 
 <p align="center">
@@ -158,6 +158,10 @@ prompts                  System and memory-rebuild prompts
 
 ## Architecture
 
+<p align="center">
+  <img src="docs/assets/infinite-edge-agent-hero.svg" alt="Infinite Edge Agent runtime architecture diagram" width="100%" />
+</p>
+
 ```mermaid
 flowchart TD
   User["User"] --> Web["Browser App"]
@@ -261,6 +265,8 @@ This project is suitable for three public surfaces:
 
 A systems-style technical report or preprint should position this as a browser-native persistent memory/runtime architecture, not a new base model. See [CITATION.cff](CITATION.cff) for citation metadata.
 
+Suggested GitHub repository metadata is maintained in [Repository Metadata](docs/58_REPOSITORY_METADATA.md).
+
 ## Limitations
 
 - Performance depends heavily on browser, GPU, driver, and device memory.
@@ -276,6 +282,7 @@ A systems-style technical report or preprint should position this as a browser-n
 - [Current Codebase Architecture Trace](docs/55_CURRENT_CODEBASE_ARCHITECTURE_TRACE.md)
 - [Hosted Device Proof](docs/56_HOSTED_DEVICE_PROOF.md)
 - [Benchmark Telemetry Plan](docs/57_BENCHMARK_TELEMETRY.md)
+- [Repository Metadata](docs/58_REPOSITORY_METADATA.md)
 - [Open Source Release Checklist](docs/54_OPEN_SOURCE_RELEASE_CHECKLIST.md)
 - [Unlocked Browser Runtime](docs/53_UNLOCKED_BROWSER_RUNTIME.md)
 

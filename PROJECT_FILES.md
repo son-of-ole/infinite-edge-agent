@@ -1,13 +1,18 @@
-# Project Files — Infinite Edge Agent v4
+# Project Files — Infinite Edge Agent
 
-This manifest lists every file in the v4 handoff package.
+This manifest started as the v4 handoff package inventory. The authoritative file list is the Git tree; this file highlights the primary public files and runtime/source surfaces that matter for orientation.
 
 - `.env.example`
+- `.github/workflows/ci.yml`
 - `.gitignore`
 - `.nvmrc`
+- `CITATION.cff`
+- `CODE_OF_CONDUCT.md`
+- `CONTRIBUTING.md`
 - `LICENSE`
 - `PROJECT_FILES.md`
 - `README.md`
+- `SECURITY.md`
 - `apps/memory-server/package.json`
 - `apps/memory-server/src/index.ts`
 - `apps/memory-server/src/localRoutes.test.ts`
@@ -100,6 +105,11 @@ This manifest lists every file in the v4 handoff package.
 - `docs/51_REMOTE_MEMORY_API_CONTRACT.md`
 - `docs/52_BROWSER_SDK_AND_DEPLOYMENT.md`
 - `docs/53_UNLOCKED_BROWSER_RUNTIME.md`
+- `docs/54_OPEN_SOURCE_RELEASE_CHECKLIST.md`
+- `docs/55_CURRENT_CODEBASE_ARCHITECTURE_TRACE.md`
+- `docs/56_HOSTED_DEVICE_PROOF.md`
+- `docs/57_BENCHMARK_TELEMETRY.md`
+- `docs/58_REPOSITORY_METADATA.md`
 - `docs/ADR/0001-local-first-browser-runtime.md`
 - `docs/ADR/0002-memory-store-split.md`
 - `docs/ADR/0003-first-class-advanced-runtime.md`
@@ -115,6 +125,8 @@ This manifest lists every file in the v4 handoff package.
 - `docs/ADR/0013-ssa-gac-routing-signal.md`
 - `docs/ADR/0014-kvswap-gac-priority-policy.md`
 - `docs/REFERENCES.md`
+- `docs/assets/infinite-edge-agent-hero.jpg`
+- `docs/assets/infinite-edge-agent-hero.svg`
 - `package.json`
 - `packages/core/package.json`
 - `packages/core/src/chunking.test.ts`

@@ -114,6 +114,8 @@ This writes `.artifacts/evals/v12-readiness-bundle-latest.json`. Use `RELEASE_RE
 
 ## 8. Final manual checks
 
+- Confirm `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CITATION.cff`, and `LICENSE` are present and consistent with the public release posture.
+- Confirm GitHub About settings match `docs/58_REPOSITORY_METADATA.md`, including description, topics, and social preview image.
 - Browser-smoke the target deployment in Chrome or Edge: initialize one configured backend, send a prompt, retrieve memory, export memory, clear memory, confirm runtime traces persist, and confirm the browser-preview benchmark route returns `passed: true` for non-degenerate visible output.
 - Confirm missing model assets fail with actionable errors rather than app-shell HTML fallbacks.
 - Confirm hosted memory auth blocks unauthenticated writes and reads.
