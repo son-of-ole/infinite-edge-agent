@@ -74,6 +74,7 @@ async function makeMinimalRepositoryFixture(input: { productionWorkflow: string 
   }, null, 2));
   await writeFile(join(rootDir, "README.md"), [
     "# Infinite Edge Agent",
+    "docs/assets/infinite-edge-agent-readme-photo.png",
     "docs/assets/infinite-edge-agent-social.png",
     "compiled-browser-webllm",
     "unlocked-browser-transformer",
@@ -86,6 +87,7 @@ async function makeMinimalRepositoryFixture(input: { productionWorkflow: string 
   await writeFile(join(rootDir, "CODE_OF_CONDUCT.md"), "# Code of Conduct\n");
   await writeFile(join(rootDir, "CITATION.cff"), "cff-version: 1.2.0\n");
   await writeFile(join(rootDir, "docs", "58_REPOSITORY_METADATA.md"), "# Repository Metadata\n");
+  await writeFile(join(rootDir, "docs", "assets", "infinite-edge-agent-readme-photo.png"), "fixture\n");
   await writeFile(join(rootDir, "docs", "assets", "infinite-edge-agent-social.png"), "fixture\n");
   await writeFile(join(rootDir, ".github", "workflows", "ci.yml"), [
     "name: CI",

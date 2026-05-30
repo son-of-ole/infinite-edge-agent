@@ -3,7 +3,7 @@
 > Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab.
 
 <p align="center">
-  <img src="docs/assets/infinite-edge-agent-social.png" alt="Infinite Edge Agent running as a browser-native AI runtime across edge devices" width="100%" />
+  <img src="docs/assets/infinite-edge-agent-readme-photo.png" alt="Infinite Edge Agent browser-native runtime workstation preview" width="100%" />
 </p>
 
 <p align="center">
@@ -36,6 +36,8 @@ Use these values for the GitHub repository settings:
 | Name | `infinite-edge-agent` |
 | Display title | Infinite Edge Agent |
 | Description | Browser-native persistent AI agent runtime with local memory, context reconstruction, compiled WebGPU inference, and a custom WebGPU Kernel Lab. |
+| Repository URL | `https://github.com/son-of-ole/infinite-edge-agent` |
+| README hero photo | `docs/assets/infinite-edge-agent-readme-photo.png` |
 | Social preview | `docs/assets/infinite-edge-agent-social.png` |
 | Topics | `ai-agent`, `browser-ai`, `webgpu`, `webllm`, `local-first`, `persistent-memory`, `rag`, `edge-inference`, `typescript`, `react`, `indexeddb`, `benchmarking` |
 

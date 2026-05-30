@@ -51,6 +51,7 @@ const REQUIRED_PUBLIC_FILES = [
   "CODE_OF_CONDUCT.md",
   "CITATION.cff",
   "docs/58_REPOSITORY_METADATA.md",
+  "docs/assets/infinite-edge-agent-readme-photo.png",
   "docs/assets/infinite-edge-agent-social.png",
 ];
 
@@ -140,7 +141,7 @@ function checkPublicReleaseFiles(rootDir: string): RepositoryReadinessCheck {
 
   return makeCheck({
     id: "public_release_files",
-    label: "Public release files and social preview asset are present.",
+    label: "Public release files, README hero photo, and social preview asset are present.",
     evidence: REQUIRED_PUBLIC_FILES,
     blockers,
   });
@@ -149,6 +150,7 @@ function checkPublicReleaseFiles(rootDir: string): RepositoryReadinessCheck {
 async function checkReadmeV12Story(rootDir: string): Promise<RepositoryReadinessCheck> {
   const readme = await readTextFile(join(rootDir, "README.md"));
   const required = [
+    "docs/assets/infinite-edge-agent-readme-photo.png",
     "docs/assets/infinite-edge-agent-social.png",
     "compiled-browser-webllm",
     "unlocked-browser-transformer",
