@@ -81,11 +81,62 @@ async function fetchArtifactJson(
   if (url.protocol !== "https:") {
     throw new Error("HOSTED_BENCHMARK_ARTIFACT_URL must be an absolute https URL.");
   }
+  assertPublicArtifactHost(url);
   const response = await fetchImpl(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch hosted benchmark artifact: HTTP ${response.status}.`);
   }
   return response.text();
+}
+
+function assertPublicArtifactHost(url: URL): void {
+  const hostname = normalizeUrlHostname(url.hostname);
+  if (isLocalhost(hostname) || isPrivateIpv4Host(hostname) || isPrivateIpv6Host(hostname)) {
+    throw new Error("HOSTED_BENCHMARK_ARTIFACT_URL must not target localhost or private network hosts.");
+  }
+}
+
+function normalizeUrlHostname(hostname: string): string {
+  let normalized = hostname.trim().toLowerCase();
+  if (normalized.startsWith("[") && normalized.endsWith("]")) {
+    normalized = normalized.slice(1, -1);
+  }
+  while (normalized.endsWith(".")) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === "localhost" || hostname.endsWith(".localhost");
+}
+
+function isPrivateIpv4Host(hostname: string): boolean {
+  const parts = hostname.split(".");
+  if (parts.length !== 4) return false;
+  const octets = parts.map((part) => {
+    if (!/^\d{1,3}$/.test(part)) return Number.NaN;
+    return Number(part);
+  });
+  if (octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+  const [a = 0, b = 0] = octets;
+  return a === 0
+    || a === 10
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168);
+}
+
+function isPrivateIpv6Host(hostname: string): boolean {
+  const host = hostname.split("%", 1)[0] ?? "";
+  if (!host.includes(":")) return false;
+  if (host === "::" || host === "::1" || host === "0:0:0:0:0:0:0:1") return true;
+  if (host.startsWith("fc") || host.startsWith("fd") || host.startsWith("fe80:")) return true;
+  const ipv4Mapped = host.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+  return Boolean(ipv4Mapped?.[1] && isPrivateIpv4Host(ipv4Mapped[1]));
 }
 
 function decodeBase64Json(base64Json: string | undefined): string {

@@ -285,6 +285,8 @@ HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true \
 pnpm verify:hosted-benchmark-proof
 ```
 
+For the GitHub production-proof workflow, saved artifact URLs must be public HTTPS URLs. Localhost, loopback, link-local, and private-network artifact URLs are rejected; use pasted JSON or base64 for local/private proof files.
+
 The proof verifier rejects artifacts that are not proof schema version `2`, are not `compiled-browser-webllm`, are technical-only, lack grounded memory, lack Backend Broker selection evidence, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback. Set `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` to make `release:gate` require that saved browser artifact.
 
 For production releases, the browser artifact must also be source-bound: the hosted app should emit `v12ProductionProofSourceGitSha` from `VITE_GIT_SHA`, and the verifier should run with `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` plus `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true`. `release:gate` rejects standalone `hosted-benchmark-proof` artifacts that were not generated with source binding required, and rejects v12 production archives unless `v12ProductionProofSourceBoundRequired` and `v12ProductionProofSourceBound` are both true.

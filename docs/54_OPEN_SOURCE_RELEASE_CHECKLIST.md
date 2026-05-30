@@ -146,8 +146,10 @@ For production release proof, set `VITE_GIT_SHA=<deployment-commit-sha>` on the 
 For remote release verification, use the manual GitHub Actions workflow **V12 Production Proof**. Provide:
 
 - the public hosted deployment URL,
-- exactly one saved benchmark artifact source: HTTPS URL, pasted JSON, or base64-encoded JSON,
+- exactly one saved benchmark artifact source: public HTTPS URL, pasted JSON, or base64-encoded JSON,
 - repository secrets `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN`.
+
+The URL source is intentionally public-hosted only. Localhost, loopback, link-local, and private-network artifact URLs are rejected; use pasted JSON or base64 for local/private saved artifacts.
 
 The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`.
 

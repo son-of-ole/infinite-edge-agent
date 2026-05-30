@@ -82,6 +82,26 @@ describe("hosted benchmark artifact materializer", () => {
     })).rejects.toThrow("HOSTED_BENCHMARK_ARTIFACT_URL must be an absolute https URL.");
   });
 
+  it.each([
+    "https://localhost/browser-runtime-bench-latest.json",
+    "https://127.0.0.1/browser-runtime-bench-latest.json",
+    "https://169.254.169.254/latest/meta-data/browser-runtime-bench-latest.json",
+    "https://192.168.1.5/browser-runtime-bench-latest.json",
+  ])("rejects private or loopback hosted benchmark artifact URL %s", async (url) => {
+    let fetched = false;
+
+    await expect(materializeHostedBenchmarkArtifact({
+      url,
+      outputPath: join(await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-")), "artifact.json"),
+      fetchImpl: async () => {
+        fetched = true;
+        return new Response(JSON.stringify(makeArtifact()), { status: 200 });
+      },
+    })).rejects.toThrow("HOSTED_BENCHMARK_ARTIFACT_URL must not target localhost or private network hosts.");
+
+    expect(fetched).toBe(false);
+  });
+
   it("rejects ambiguous hosted benchmark artifact sources", async () => {
     const dir = await mkdtemp(join(tmpdir(), "hosted-benchmark-materialize-"));
     const outputPath = join(dir, "browser-runtime-bench-latest.json");

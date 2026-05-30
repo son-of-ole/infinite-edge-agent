@@ -163,9 +163,11 @@ Inputs:
 - `deploy_url`: public hosted app URL,
 - `hosted_production_benchmark_url`: optional explicit benchmark URL,
 - exactly one of these saved-artifact inputs:
-  - `hosted_benchmark_artifact_url`: HTTPS URL to the saved benchmark JSON,
+  - `hosted_benchmark_artifact_url`: public HTTPS URL to the saved benchmark JSON,
   - `hosted_benchmark_artifact_json`: pasted saved benchmark JSON,
   - `hosted_benchmark_artifact_base64`: base64-encoded saved benchmark JSON.
+
+The artifact URL path is for public hosted artifacts only. The workflow rejects localhost, loopback, link-local, and private-network hosts; use pasted JSON or base64 for local/private proof files.
 
 Generate base64 from a saved local artifact with:
 
