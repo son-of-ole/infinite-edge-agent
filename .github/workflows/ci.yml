@@ -78,6 +78,30 @@ jobs:
           pnpm eval:production
           pnpm bench:browser-runtime
 
+      - name: V12 readiness invariants
+        env:
+          VITE_LLM_BACKEND: compiled-browser-webllm
+          VITE_DEFAULT_MODEL: Qwen3-0.6B-q4f16_1-MLC
+          VITE_COMPILED_WEBLLM_ENABLED: "true"
+          VITE_REQUIRE_UNLOCKED_RUNTIME: "false"
+          VITE_MTP_ENABLED: "false"
+          VITE_MEMORY_PROVIDER: browser-vector
+          VITE_QWEN_THINKING_MODE: disabled
+          VITE_BENCHMARK_TELEMETRY_ENABLED: "true"
+          VITE_BENCHMARK_TELEMETRY_URL: /api/benchmark-runs
+          BENCHMARK_TELEMETRY_ENABLED: "true"
+          BENCHMARK_TELEMETRY_STORAGE: postgres
+          BENCHMARK_TELEMETRY_DATABASE_URL: postgres://ci:ci@db.example.com:5432/infinite_edge_agent
+          BENCHMARK_TELEMETRY_ADMIN_TOKEN: ci-admin-token
+          BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60"
+          BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000"
+          HOSTED_PRODUCTION_BENCHMARK_URL: 'https://ci.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+        run: |
+          pnpm verify:hosted-profile
+          pnpm eval:backend-readiness
+          pnpm eval:shared-runtime
+          pnpm eval:v12-readiness
+
       - name: Headless real-browser WebGPU parity
         env:
           HEADLESS_WEBGPU_CI_BROWSER_CHANNEL: chrome
