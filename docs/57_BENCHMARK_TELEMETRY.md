@@ -204,6 +204,18 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm verify:hosted-benchmark-proof` validates the saved real Chrome/Edge benchmark artifact itself. Set `HOSTED_BENCHMARK_ARTIFACT_PATH` to the saved `browser-runtime-bench-latest.json` or pass the path after `--`. This is the runtime proof that should sit beside telemetry database exports.
 
+For GitHub-hosted release verification, the manual **V12 Production Proof** workflow accepts either `HOSTED_BENCHMARK_ARTIFACT_JSON` or `HOSTED_BENCHMARK_ARTIFACT_URL` through workflow inputs. Internally it runs:
+
+```bash
+pnpm materialize:hosted-benchmark
+pnpm verify:hosted-profile
+pnpm verify:hosted-benchmark-proof
+pnpm eval:v12-production
+RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate
+```
+
+This keeps the normal open-source CI fixture-safe while still giving release operators a remote, artifact-producing v12 production proof lane for real hosted browser benchmark results.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:

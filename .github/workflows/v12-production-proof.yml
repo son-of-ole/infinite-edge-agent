@@ -1,0 +1,107 @@
+name: V12 Production Proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_url:
+        description: Public hosted app URL. Used to derive the canonical benchmark URL.
+        required: true
+        type: string
+      hosted_production_benchmark_url:
+        description: Optional explicit /__bench/browser-runtime URL. Overrides deploy_url-derived URL.
+        required: false
+        type: string
+      hosted_benchmark_artifact_url:
+        description: Optional URL to a saved browser-runtime benchmark artifact JSON.
+        required: false
+        type: string
+      hosted_benchmark_artifact_json:
+        description: Optional pasted saved browser-runtime benchmark artifact JSON.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v12-production-proof-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  v12-production-proof:
+    name: Hosted compiled-backend production proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CI: "true"
+      EVAL_ARTIFACT_DIR: .artifacts/evals/v12-production-proof
+      HOSTED_BENCHMARK_ARTIFACT_OUTPUT_PATH: .artifacts/evals/hosted/browser-runtime-bench-latest.json
+      VITE_DEPLOY_URL: ${{ inputs.deploy_url }}
+      HOSTED_PRODUCTION_BENCHMARK_URL: ${{ inputs.hosted_production_benchmark_url }}
+      HOSTED_BENCHMARK_ARTIFACT_URL: ${{ inputs.hosted_benchmark_artifact_url }}
+      HOSTED_BENCHMARK_ARTIFACT_JSON: ${{ inputs.hosted_benchmark_artifact_json }}
+      VITE_LLM_BACKEND: compiled-browser-webllm
+      VITE_DEFAULT_MODEL: Qwen3-0.6B-q4f16_1-MLC
+      VITE_COMPILED_WEBLLM_ENABLED: "true"
+      VITE_REQUIRE_UNLOCKED_RUNTIME: "false"
+      VITE_MTP_ENABLED: "false"
+      VITE_MEMORY_PROVIDER: browser-vector
+      VITE_QWEN_THINKING_MODE: disabled
+      VITE_BENCHMARK_TELEMETRY_ENABLED: "true"
+      VITE_BENCHMARK_TELEMETRY_URL: /api/benchmark-runs
+      BENCHMARK_TELEMETRY_ENABLED: "true"
+      BENCHMARK_TELEMETRY_STORAGE: postgres
+      BENCHMARK_TELEMETRY_DATABASE_URL: ${{ secrets.BENCHMARK_TELEMETRY_DATABASE_URL }}
+      BENCHMARK_TELEMETRY_ADMIN_TOKEN: ${{ secrets.BENCHMARK_TELEMETRY_ADMIN_TOKEN }}
+      BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60"
+      BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000"
+      RELEASE_REQUIRE_V12_PRODUCTION: "true"
+      RELEASE_REQUIRE_UNLOCKED_MODEL: "false"
+      PRODUCTION_EVAL_SIDECAR_MODE: skip
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Materialize hosted benchmark artifact
+        id: hosted-artifact
+        run: pnpm materialize:hosted-benchmark
+
+      - name: Verify hosted deployment profile
+        run: pnpm verify:hosted-profile
+
+      - name: Verify hosted benchmark proof
+        env:
+          HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}
+        run: pnpm verify:hosted-benchmark-proof
+
+      - name: Build v12 production archive
+        env:
+          HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}
+        run: pnpm eval:v12-production
+
+      - name: Run v12 production release gate
+        env:
+          HOSTED_BENCHMARK_ARTIFACT_PATH: ${{ steps.hosted-artifact.outputs.artifact_path }}
+        run: pnpm release:gate
+
+      - name: Upload v12 production proof artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v12-production-proof-artifacts
+          path: .artifacts/evals/v12-production-proof
+          if-no-files-found: error

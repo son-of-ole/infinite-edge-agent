@@ -143,6 +143,28 @@ HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-lat
 
 It writes `.artifacts/evals/hosted-benchmark-proof-latest.json` and fails if the artifact is not the compiled production backend, does not prove grounded memory, does not pass exact output, falls below the speed floor, uses direct model factual output as proof, or shows CPU fallback.
 
+## GitHub Production Proof Workflow
+
+After a hosted benchmark is saved, run the manual GitHub Actions workflow:
+
+```text
+V12 Production Proof
+```
+
+Inputs:
+
+- `deploy_url`: public hosted app URL,
+- `hosted_production_benchmark_url`: optional explicit benchmark URL,
+- `hosted_benchmark_artifact_url`: URL to the saved benchmark JSON, or
+- `hosted_benchmark_artifact_json`: pasted saved benchmark JSON.
+
+Required repository secrets:
+
+- `BENCHMARK_TELEMETRY_DATABASE_URL`
+- `BENCHMARK_TELEMETRY_ADMIN_TOKEN`
+
+The workflow materializes the saved browser artifact, verifies the hosted deploy profile, verifies the benchmark proof, writes the v12 production archive, runs the v12 production release gate, and uploads the proof artifact directory.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

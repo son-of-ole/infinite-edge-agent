@@ -140,6 +140,7 @@ pnpm eval:shared-runtime    # Write shared memory/context runtime readiness arti
 pnpm eval:v12-readiness     # Write combined v12 final-state readiness artifact
 pnpm eval:v12-production    # Write strict production archive requiring hosted benchmark proof
 pnpm eval:v12-suite         # Write the full hosted/backend/shared/v12 artifact set
+pnpm materialize:hosted-benchmark # Save pasted or URL-hosted browser proof JSON for CI/release gates
 pnpm bench:browser-runtime  # Run browser-runtime benchmark harness
 pnpm verify:hosted-profile  # Check compiled-backend hosted deploy env + benchmark URL
 pnpm verify:hosted-benchmark-proof # Validate a saved real browser benchmark artifact
@@ -267,6 +268,8 @@ HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-lat
 ```
 
 The proof verifier rejects artifacts that are not `compiled-browser-webllm`, are technical-only, lack grounded memory, fail exact output, use direct model factual output as retrieval proof, miss the speed floor, or show CPU fallback. Set `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` to make `release:gate` require that saved browser artifact.
+
+GitHub Actions includes a manual **V12 Production Proof** workflow. Trigger it after a real Chrome or Edge hosted benchmark has been saved, pass the hosted deploy URL plus either the artifact JSON or an artifact URL, and configure `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN` as repository secrets. The workflow materializes the browser artifact, verifies the hosted profile, verifies the benchmark proof, builds the v12 production archive, runs `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, and uploads the proof artifacts.
 
 For WebGPU and WASM performance, use a secure context and cross-origin isolation headers where your hosting platform supports them.
 

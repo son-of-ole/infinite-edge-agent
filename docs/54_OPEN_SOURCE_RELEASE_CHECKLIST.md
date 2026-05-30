@@ -43,6 +43,8 @@ The GitHub Actions workflow uses fixture/browser-only settings and must not requ
 | Build | `pnpm build` | Workspace build outputs |
 | Dist size | `pnpm check:web-dist` | Passes without bundled local weights |
 
+The default CI lane is intentionally fixture/open-source safe. It does not claim hosted production readiness because real v12 production proof requires an operator-saved browser benchmark artifact from the deployed site.
+
 ## 5. Strict release gates for model-backed builds
 
 Run these only when the operator has installed licensed local model artifacts and intends to ship a model-backed release candidate:
@@ -135,6 +137,14 @@ HOSTED_BENCHMARK_ARTIFACT_PATH=.artifacts/evals/hosted/browser-runtime-bench-lat
 ```
 
 This writes `.artifacts/evals/hosted-benchmark-proof-latest.json`. Use `RELEASE_REQUIRE_HOSTED_BENCHMARK_PROOF=true` when `pnpm release:gate` should fail unless the saved browser artifact proves the compiled backend, grounded memory, exact output, speed floor, and no CPU fallback.
+
+For remote release verification, use the manual GitHub Actions workflow **V12 Production Proof**. Provide:
+
+- the public hosted deployment URL,
+- either a saved benchmark artifact URL or pasted benchmark artifact JSON,
+- repository secrets `BENCHMARK_TELEMETRY_DATABASE_URL` and `BENCHMARK_TELEMETRY_ADMIN_TOKEN`.
+
+The workflow runs `pnpm materialize:hosted-benchmark`, `pnpm verify:hosted-profile`, `pnpm verify:hosted-benchmark-proof`, `pnpm eval:v12-production`, and `RELEASE_REQUIRE_V12_PRODUCTION=true pnpm release:gate`, then uploads `.artifacts/evals/v12-production-proof`.
 
 ## 8. Final manual checks
 
