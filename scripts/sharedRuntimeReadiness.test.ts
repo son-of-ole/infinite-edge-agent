@@ -71,6 +71,13 @@ describe("evaluateSharedRuntimeReadiness", () => {
       usesRetrievedMemoryBeforeBackendSelection: true,
       passesBackendProfileIntoRuntimePlan: true,
     });
+    expect(report.modelRegistryAlignment).toMatchObject({
+      aligned: true,
+      modelCount: 3,
+      publicOptionCount: 2,
+      publicDeployOptionCount: 1,
+      publicKernelLabOptionCount: 1,
+    });
   });
 
   it("fails when backend-specific deploy readiness is not proven", () => {
@@ -102,6 +109,11 @@ describe("evaluateSharedRuntimeReadiness", () => {
         sharedRuntimeFallbackBackendId: "wasm-small-core",
         sharedRuntimeBackendRoleBoundaryPassed: true,
         sharedRuntimeMemoryProviderCount: 3,
+        sharedRuntimeModelRegistryAligned: true,
+        sharedRuntimeModelRegistryModelCount: 3,
+        sharedRuntimePublicModelOptionCount: 2,
+        sharedRuntimePublicDeployOptionCount: 1,
+        sharedRuntimePublicKernelLabOptionCount: 1,
         sharedRuntimeContextTraceRequired: true,
         sharedRuntimeContextTraceBeforeGeneration: true,
         sharedRuntimeTracePersistedAfterGeneration: true,

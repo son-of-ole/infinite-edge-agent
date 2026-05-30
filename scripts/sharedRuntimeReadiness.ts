@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { getMemoryProviderCapabilities, type MemoryProviderCapabilities, type MemoryProviderMode } from "../packages/core/src";
 import {
   evaluateBackendReadinessMatrix,
+  summarizeBackendModelRegistryAlignment,
   type BackendReadinessMatrix,
 } from "./backendReadinessMatrix";
 
@@ -26,6 +27,7 @@ export interface SharedRuntimeReadinessReport {
   memoryProviders: MemoryProviderCapabilities[];
   contextRuntime: SharedRuntimeContextContract;
   backendRoleBoundaryPassed: boolean;
+  modelRegistryAlignment: ReturnType<typeof summarizeBackendModelRegistryAlignment>;
 }
 
 export interface SharedRuntimeReadinessArtifact {
@@ -67,6 +69,7 @@ export function evaluateSharedRuntimeReadiness(input: {
   );
   const coveredBackendIds = [deployBackendId, kernelLabBackendId, fallbackBackendId].filter((id): id is string => Boolean(id));
   const memoryProviders = REQUIRED_MEMORY_MODES.map(getMemoryProviderCapabilities);
+  const modelRegistryAlignment = summarizeBackendModelRegistryAlignment(backendMatrix);
   const contextRuntime: SharedRuntimeContextContract = {
     sharedAcrossBackends: Boolean(deployBackendId && kernelLabBackendId && fallbackBackendId),
     requiresContextPackTraceStore: true,
@@ -90,6 +93,12 @@ export function evaluateSharedRuntimeReadiness(input: {
   if (!backendRoleBoundaryPassed) {
     blockers.push("Shared runtime readiness requires explicit deploy, Kernel Lab, and fallback backend role boundaries.");
   }
+  if (!modelRegistryAlignment.aligned) {
+    blockers.push("Shared runtime readiness requires model registry roles to align with Backend Broker roles.");
+  }
+  if (modelRegistryAlignment.publicDeployOptionCount !== 1 || modelRegistryAlignment.publicKernelLabOptionCount !== 1) {
+    blockers.push("Shared runtime readiness requires exactly one public deploy model option and one public Kernel Lab model option.");
+  }
   for (const provider of memoryProviders) {
     if (!provider.vectorSearch || !provider.deterministicSearch || !provider.contextPackTracePersistence || !provider.persistent) {
       blockers.push(`Memory provider ${provider.mode} does not satisfy shared retrieval/context trace requirements.`);
@@ -109,6 +118,7 @@ export function evaluateSharedRuntimeReadiness(input: {
     memoryProviders,
     contextRuntime,
     backendRoleBoundaryPassed,
+    modelRegistryAlignment,
   };
 }
 
@@ -129,6 +139,11 @@ export function buildSharedRuntimeReadinessArtifact(
       sharedRuntimeFallbackBackendId: report.fallbackBackendId,
       sharedRuntimeBackendRoleBoundaryPassed: report.backendRoleBoundaryPassed,
       sharedRuntimeMemoryProviderCount: report.memoryProviders.length,
+      sharedRuntimeModelRegistryAligned: report.modelRegistryAlignment.aligned,
+      sharedRuntimeModelRegistryModelCount: report.modelRegistryAlignment.modelCount,
+      sharedRuntimePublicModelOptionCount: report.modelRegistryAlignment.publicOptionCount,
+      sharedRuntimePublicDeployOptionCount: report.modelRegistryAlignment.publicDeployOptionCount,
+      sharedRuntimePublicKernelLabOptionCount: report.modelRegistryAlignment.publicKernelLabOptionCount,
       sharedRuntimeContextTraceRequired: report.contextRuntime.requiresContextPackTraceStore,
       sharedRuntimeContextTraceBeforeGeneration: report.contextRuntime.writesContextPackTraceBeforeGeneration,
       sharedRuntimeTracePersistedAfterGeneration: report.contextRuntime.persistsRuntimeTraceAfterGeneration,
