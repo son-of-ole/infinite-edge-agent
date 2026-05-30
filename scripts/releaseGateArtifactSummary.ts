@@ -132,6 +132,20 @@ export function summarizeReleaseGateArtifact(parsed: ReleaseGateArtifactInput): 
     }
   }
   if (parsed.summary) {
+    const backendReadinessFields = [
+      "backendReadinessMatrixPassed",
+      "backendReadinessBlockerCount",
+      "backendReadinessBackendCount",
+      "backendReadinessDeployBackendId",
+      "backendReadinessProductionCandidateCount",
+      "backendReadinessDeployReadyCount",
+      "backendReadinessResearchBackendCount",
+      "backendReadinessKernelLabBackendId",
+      "backendReadinessCompiledHostedProfilePassed",
+    ] as const;
+    for (const key of backendReadinessFields) {
+      if (key in parsed.summary) summary[key] = parsed.summary[key];
+    }
     const hostedProfileFields = [
       "hostedProfilePassed",
       "hostedProfileBlockerCount",

@@ -128,6 +128,14 @@ The verifier fails if the hosted profile points at the Kernel Lab, uses local JS
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` plus a timestamped artifact under `.artifacts/evals/hosted-deployment-profile/`. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` to make `pnpm release:gate` run this verifier and include the hosted profile artifact in the release summary.
 
+Backend-specific readiness is captured separately:
+
+```bash
+pnpm eval:backend-readiness
+```
+
+That writes `.artifacts/evals/backend-readiness-matrix-latest.json`, marking `compiled-browser-webllm` as the deploy candidate only when hosted profile proof passes and keeping `unlocked-browser-transformer` recorded as the research Kernel Lab. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this matrix automatically; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it without the full hosted profile flag.
+
 Before shipping a hosted embed, verify app and model URLs behave like assets instead of falling back to HTML:
 
 ```bash

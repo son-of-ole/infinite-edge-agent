@@ -95,6 +95,14 @@ The verifier does not replace the real Chrome benchmark. It prevents a hosted en
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json` so the deploy profile can be archived alongside the real browser benchmark artifact. Set `RELEASE_REQUIRE_HOSTED_PROFILE=true` when the full release gate should include this proof.
 
+The backend-specific matrix is written by:
+
+```bash
+pnpm eval:backend-readiness
+```
+
+It records `compiled-browser-webllm` as the deploy backend only when the hosted profile passes, and records `unlocked-browser-transformer` as `research_only`. This is the artifact that prevents Kernel Lab proof from being mixed into the compiled backend deploy claim.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

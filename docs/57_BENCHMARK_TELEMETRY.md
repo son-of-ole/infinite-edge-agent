@@ -192,6 +192,8 @@ If `HOSTED_PRODUCTION_BENCHMARK_URL` is omitted, the verifier can generate the c
 
 The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, and `RELEASE_REQUIRE_HOSTED_PROFILE=true pnpm release:gate` includes that artifact in the release summary. This is the deploy-profile proof; the benchmark route plus telemetry database remain the runtime proof.
 
+`pnpm eval:backend-readiness` writes `.artifacts/evals/backend-readiness-matrix-latest.json`. The matrix links the hosted profile proof to the compiled backend and keeps the custom WebGPU runtime recorded as Kernel Lab instead of production answer proof.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:

@@ -2,6 +2,28 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps backend readiness matrix fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        backendReadinessMatrixPassed: true,
+        backendReadinessDeployBackendId: "compiled-browser-webllm",
+        backendReadinessProductionCandidateCount: 1,
+        backendReadinessDeployReadyCount: 1,
+        backendReadinessResearchBackendCount: 1,
+        backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
+        backendReadinessCompiledHostedProfilePassed: true,
+      },
+    })).toMatchObject({
+      backendReadinessMatrixPassed: true,
+      backendReadinessDeployBackendId: "compiled-browser-webllm",
+      backendReadinessProductionCandidateCount: 1,
+      backendReadinessDeployReadyCount: 1,
+      backendReadinessResearchBackendCount: 1,
+      backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
+      backendReadinessCompiledHostedProfilePassed: true,
+    });
+  });
+
   it("keeps hosted compiled deployment profile fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {

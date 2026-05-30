@@ -1,0 +1,119 @@
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import {
+  buildBackendReadinessMatrixArtifact,
+  evaluateBackendReadinessMatrix,
+  writeBackendReadinessMatrixArtifact,
+} from "./backendReadinessMatrix";
+import { evaluateHostedDeploymentProfile } from "./hostedDeploymentProfile";
+
+const completeHostedEnv = {
+  VITE_LLM_BACKEND: "compiled-browser-webllm",
+  VITE_DEFAULT_MODEL: "Qwen3-0.6B-q4f16_1-MLC",
+  VITE_COMPILED_WEBLLM_ENABLED: "true",
+  VITE_REQUIRE_UNLOCKED_RUNTIME: "false",
+  VITE_MTP_ENABLED: "false",
+  VITE_BENCHMARK_TELEMETRY_ENABLED: "true",
+  VITE_BENCHMARK_TELEMETRY_URL: "/api/benchmark-runs",
+  BENCHMARK_TELEMETRY_ENABLED: "true",
+  BENCHMARK_TELEMETRY_STORAGE: "postgres",
+  BENCHMARK_TELEMETRY_DATABASE_URL: "postgres://example.test/infinite_edge_agent",
+  BENCHMARK_TELEMETRY_ADMIN_TOKEN: "admin-token",
+  BENCHMARK_TELEMETRY_RATE_LIMIT_MAX: "60",
+  BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000",
+  HOSTED_PRODUCTION_BENCHMARK_URL:
+    "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+};
+
+describe("evaluateBackendReadinessMatrix", () => {
+  it("marks the compiled backend as deploy-ready only when hosted profile proof passes", () => {
+    const hostedProfile = evaluateHostedDeploymentProfile(completeHostedEnv);
+    const matrix = evaluateBackendReadinessMatrix({ hostedProfile });
+
+    expect(matrix.passed).toBe(true);
+    expect(matrix.deployBackendId).toBe("compiled-browser-webllm");
+    expect(matrix.researchBackendIds).toEqual(["unlocked-browser-transformer"]);
+    expect(matrix.backends).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        backendId: "compiled-browser-webllm",
+        productionRole: "production_candidate",
+        readinessStatus: "deploy_ready",
+        deployReady: true,
+        proofSource: "hosted_deployment_profile",
+      }),
+      expect.objectContaining({
+        backendId: "unlocked-browser-transformer",
+        productionRole: "research_kernel_lab",
+        readinessStatus: "research_only",
+        deployReady: false,
+        proofSource: "kernel_lab_research_gates",
+      }),
+      expect.objectContaining({
+        backendId: "wasm-small-core",
+        productionRole: "fallback",
+        readinessStatus: "fallback_only",
+        deployReady: false,
+      }),
+    ]));
+  });
+
+  it("fails the matrix when the hosted profile does not prove the compiled production backend", () => {
+    const hostedProfile = evaluateHostedDeploymentProfile({
+      ...completeHostedEnv,
+      VITE_LLM_BACKEND: "unlocked-browser-transformer",
+    });
+    const matrix = evaluateBackendReadinessMatrix({ hostedProfile });
+
+    expect(matrix.passed).toBe(false);
+    expect(matrix.deployBackendId).toBeNull();
+    expect(matrix.blockers).toContain("Compiled production backend is not deploy-ready because hosted deployment profile failed.");
+    expect(matrix.backends.find((backend) => backend.backendId === "compiled-browser-webllm")).toMatchObject({
+      readinessStatus: "blocked",
+      deployReady: false,
+    });
+  });
+
+  it("builds a release-gate friendly artifact with backend role and readiness summary fields", () => {
+    const matrix = evaluateBackendReadinessMatrix({
+      hostedProfile: evaluateHostedDeploymentProfile(completeHostedEnv),
+    });
+    const artifact = buildBackendReadinessMatrixArtifact(matrix, "2026-05-30T17:00:00.000Z");
+
+    expect(artifact).toMatchObject({
+      name: "backend-readiness-matrix",
+      createdAt: "2026-05-30T17:00:00.000Z",
+      passed: true,
+      summary: {
+        backendReadinessMatrixPassed: true,
+        backendReadinessDeployBackendId: "compiled-browser-webllm",
+        backendReadinessProductionCandidateCount: 1,
+        backendReadinessDeployReadyCount: 1,
+        backendReadinessResearchBackendCount: 1,
+        backendReadinessKernelLabBackendId: "unlocked-browser-transformer",
+        backendReadinessCompiledHostedProfilePassed: true,
+      },
+    });
+  });
+
+  it("writes latest and timestamped backend readiness artifacts", async () => {
+    const artifactDir = await mkdtemp(join(tmpdir(), "backend-readiness-artifacts-"));
+    const matrix = evaluateBackendReadinessMatrix({
+      hostedProfile: evaluateHostedDeploymentProfile(completeHostedEnv),
+    });
+
+    const written = await writeBackendReadinessMatrixArtifact(matrix, {
+      artifactDir,
+      createdAt: "2026-05-30T17:00:00.000Z",
+    });
+
+    expect(written.latestPath).toBe(join(artifactDir, "backend-readiness-matrix-latest.json"));
+    expect(written.resultPath).toBe(join(artifactDir, "backend-readiness-matrix", "2026-05-30T17-00-00-000Z.json"));
+
+    const latest = JSON.parse(await readFile(written.latestPath, "utf8")) as ReturnType<typeof buildBackendReadinessMatrixArtifact>;
+
+    expect(latest.passed).toBe(true);
+    expect(latest.summary.backendReadinessDeployBackendId).toBe("compiled-browser-webllm");
+  });
+});
