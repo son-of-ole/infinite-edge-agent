@@ -5,6 +5,7 @@ export interface HostedBenchmarkProof {
   sourceName: string;
   v12ProductionProofSchemaVersion: number | null;
   sourceGitSha: string | null;
+  sourceCommitEvidencePassed: boolean;
   runtimeBackendId: string | null;
   deployBackendId: string | null;
   response: string | null;
@@ -243,6 +244,7 @@ export function buildHostedBenchmarkProofArtifact(
       hostedBenchmarkArtifactPath: report.artifactPath,
       hostedBenchmarkV12ProductionProofSchemaVersion: report.proof.v12ProductionProofSchemaVersion,
       hostedBenchmarkProofSourceGitSha: report.proof.sourceGitSha,
+      hostedBenchmarkProofSourceCommitEvidencePassed: report.proof.sourceCommitEvidencePassed,
       hostedBenchmarkExpectedSourceGitSha: report.expectedSourceGitSha,
       hostedBenchmarkProofSourceBoundRequired: report.sourceBoundRequired,
       hostedBenchmarkProofSourceBound: report.expectedSourceGitSha
@@ -356,6 +358,8 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
   const sourceGitSha = readString(source.summary.v12ProductionProofSourceGitSha)
     ?? readString(source.summary.gitSha)
     ?? null;
+  const sourceCommitEvidencePassed = readBoolean(source.summary.v12ProductionProofSourceCommitEvidencePassed)
+    || Boolean(sourceGitSha);
   const brokerSelection = readBrokerSelection(runtimeTrace.brokerSelection);
   const brokerSelectedBackendId = readString(source.summary.backendBrokerSelectedBackendId) ?? brokerSelection?.backendId ?? null;
   const brokerSelectedModelId = readString(source.summary.backendBrokerSelectedModelId) ?? brokerSelection?.modelId ?? null;
@@ -388,6 +392,7 @@ function buildProofFromSource(source: BenchmarkSource): HostedBenchmarkProof {
     sourceName: source.sourceName,
     v12ProductionProofSchemaVersion,
     sourceGitSha,
+    sourceCommitEvidencePassed,
     runtimeBackendId,
     deployBackendId: readString(source.summary.deployBackendId) ?? runtimeBackendId,
     response: readString(firstRun.response),
@@ -446,6 +451,7 @@ function buildEmptyProof(): HostedBenchmarkProof {
     sourceName: "unknown",
     v12ProductionProofSchemaVersion: null,
     sourceGitSha: null,
+    sourceCommitEvidencePassed: false,
     runtimeBackendId: null,
     deployBackendId: null,
     response: null,

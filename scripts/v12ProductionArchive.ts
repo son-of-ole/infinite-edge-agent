@@ -102,6 +102,7 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionPublicKernelLabOptionCount: modelRegistry.publicKernelLabOptionCount,
       v12ProductionProofSchemaVersion: hostedProof?.v12ProductionProofSchemaVersion ?? null,
       v12ProductionProofSourceGitSha: proofSourceGitSha,
+      v12ProductionProofSourceCommitEvidencePassed: hostedProof?.sourceCommitEvidencePassed ?? false,
       v12ProductionExpectedSourceGitSha: expectedSourceGitSha,
       v12ProductionProofSourceBoundRequired: proofSourceBoundRequired,
       v12ProductionProofSourceBound: proofSourceBound,

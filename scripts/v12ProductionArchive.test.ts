@@ -201,6 +201,7 @@ describe("v12 production archive", () => {
         v12ProductionStrictWebGpuPassed: true,
         v12ProductionProofSchemaVersion: 2,
         v12ProductionProofSourceGitSha: "abc123",
+        v12ProductionProofSourceCommitEvidencePassed: true,
         v12ProductionExpectedSourceGitSha: "abc123",
         v12ProductionProofSourceBoundRequired: true,
         v12ProductionProofSourceBound: true,

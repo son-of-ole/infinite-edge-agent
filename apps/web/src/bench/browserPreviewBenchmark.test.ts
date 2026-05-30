@@ -1954,6 +1954,7 @@ describe("browser preview benchmark payload", () => {
       runtimeBackendId: "compiled-browser-webllm",
       v12ProductionProofSchemaVersion: 2,
       v12ProductionProofSourceGitSha: "abc123",
+      v12ProductionProofSourceCommitEvidencePassed: true,
       benchmarkGpuLabelEvidencePassed: true,
       benchmarkGpuVendor: "apple",
       benchmarkGpuArchitecture: "apple7",
@@ -2180,6 +2181,7 @@ describe("browser preview benchmark payload", () => {
     expect(payload.passed).toBe(true);
     expect(payload.summary).toMatchObject({
       benchmarkGpuLabelEvidencePassed: true,
+      v12ProductionProofSourceCommitEvidencePassed: false,
       compiledBackendReadyPassed: false,
       groundedProductionReadyPassed: false,
       deployBackendId: null,

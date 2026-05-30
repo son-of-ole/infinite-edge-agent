@@ -544,6 +544,7 @@ export function buildBrowserPreviewBenchmarkPayload(input: {
       profile: input.profile,
       v12ProductionProofSchemaVersion: BROWSER_PREVIEW_BENCHMARK_SCHEMA_VERSION,
       ...(input.sourceGitSha?.trim() ? { v12ProductionProofSourceGitSha: input.sourceGitSha.trim() } : {}),
+      v12ProductionProofSourceCommitEvidencePassed: sourceCommitEvidencePassed,
       benchmarkGpuLabelEvidencePassed,
       benchmarkGpuVendor: benchmarkDeviceInfo.gpuVendor,
       benchmarkGpuArchitecture: benchmarkDeviceInfo.gpuArchitecture,

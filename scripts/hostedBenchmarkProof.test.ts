@@ -308,6 +308,7 @@ describe("hosted benchmark proof verifier", () => {
         hostedBenchmarkStrictWebGpuPassed: true,
         hostedBenchmarkV12ProductionProofSchemaVersion: 2,
         hostedBenchmarkProofSourceGitSha: "abc123",
+        hostedBenchmarkProofSourceCommitEvidencePassed: true,
         hostedBenchmarkProofSourceBoundRequired: false,
         hostedBenchmarkBackendBrokerSelectionPassed: true,
         hostedBenchmarkBrokerSelectedBackendId: "compiled-browser-webllm",
