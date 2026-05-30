@@ -991,6 +991,23 @@ describe("release gate status", () => {
     })).toBe(false);
   });
 
+  it("fails v12-production-required releases when backend role boundary proof is missing", () => {
+    expect(computeReleaseGatePassed({
+      steps: [{ status: "passed" }],
+      requireV12ProductionArchive: true,
+      latestArtifacts: [
+        {
+          name: "v12-production-archive",
+          passed: true,
+          summary: makeV12ProductionArchiveSummary({
+            v12ProductionBackendRoleBoundaryPassed: false,
+            v12ProductionFallbackBackendId: null,
+          }),
+        },
+      ],
+    })).toBe(false);
+  });
+
   it("fails MTP-acceleration-required releases when the paired benchmark did not pass", () => {
     expect(computeReleaseGatePassed({
       steps: [{ status: "passed" }],
@@ -1118,6 +1135,8 @@ function makeV12ProductionArchiveSummary(
     v12ProductionSuitePassed: true,
     v12ProductionDeployBackendId: "compiled-browser-webllm",
     v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+    v12ProductionFallbackBackendId: "wasm-small-core",
+    v12ProductionBackendRoleBoundaryPassed: true,
     v12ProductionHostedBenchmarkProofRequired: true,
     v12ProductionHostedBenchmarkProofPassed: true,
     v12ProductionArtifactCount: 7,

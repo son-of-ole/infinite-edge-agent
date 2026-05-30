@@ -89,6 +89,8 @@ function v12ProductionArchiveProofPassed(artifact: ReleaseGateLatestArtifactStat
     && artifact.summary?.v12ProductionSuitePassed === true
     && artifact.summary?.v12ProductionDeployBackendId === "compiled-browser-webllm"
     && artifact.summary?.v12ProductionKernelLabBackendId === "unlocked-browser-transformer"
+    && artifact.summary?.v12ProductionFallbackBackendId === "wasm-small-core"
+    && artifact.summary?.v12ProductionBackendRoleBoundaryPassed === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofRequired === true
     && artifact.summary?.v12ProductionHostedBenchmarkProofPassed === true
     && Number(artifact.summary?.v12ProductionArtifactCount ?? 0) >= 7

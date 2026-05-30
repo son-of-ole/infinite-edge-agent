@@ -42,7 +42,7 @@ describe("evaluateSharedRuntimeReadiness", () => {
 
     expect(report.passed).toBe(true);
     expect(report.blockers).toEqual([]);
-    expect(report.coveredBackendIds).toEqual(["compiled-browser-webllm", "unlocked-browser-transformer"]);
+    expect(report.coveredBackendIds).toEqual(["compiled-browser-webllm", "unlocked-browser-transformer", "wasm-small-core"]);
     expect(report.memoryProviders).toEqual(expect.arrayContaining([
       expect.objectContaining({
         mode: "browser-vector",
@@ -96,9 +96,11 @@ describe("evaluateSharedRuntimeReadiness", () => {
       passed: true,
       summary: {
         sharedRuntimeReadinessPassed: true,
-        sharedRuntimeCoveredBackendCount: 2,
+        sharedRuntimeCoveredBackendCount: 3,
         sharedRuntimeDeployBackendId: "compiled-browser-webllm",
         sharedRuntimeKernelLabBackendId: "unlocked-browser-transformer",
+        sharedRuntimeFallbackBackendId: "wasm-small-core",
+        sharedRuntimeBackendRoleBoundaryPassed: true,
         sharedRuntimeMemoryProviderCount: 3,
         sharedRuntimeContextTraceRequired: true,
         sharedRuntimeContextTraceBeforeGeneration: true,
@@ -123,6 +125,6 @@ describe("evaluateSharedRuntimeReadiness", () => {
     const latest = JSON.parse(await readFile(written.latestPath, "utf8")) as ReturnType<typeof buildSharedRuntimeReadinessArtifact>;
 
     expect(latest.passed).toBe(true);
-    expect(latest.summary.sharedRuntimeCoveredBackendCount).toBe(2);
+    expect(latest.summary.sharedRuntimeCoveredBackendCount).toBe(3);
   });
 });

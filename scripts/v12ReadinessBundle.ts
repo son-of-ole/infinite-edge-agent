@@ -26,6 +26,8 @@ export interface V12ReadinessBundle {
   blockers: string[];
   deployBackendId: string | null;
   kernelLabBackendId: string | null;
+  fallbackBackendId: string | null;
+  backendRoleBoundaryPassed: boolean;
   requirements: V12ReadinessRequirement[];
   hostedProfile: HostedDeploymentProfileReport;
   backendMatrix: BackendReadinessMatrix;
@@ -56,15 +58,24 @@ export function evaluateV12ReadinessBundle(input: {
   const sharedRuntime = input.sharedRuntime ?? evaluateSharedRuntimeReadiness({ backendMatrix });
   const deployBackendId = backendMatrix.deployBackendId;
   const kernelLabBackendId = backendMatrix.researchBackendIds[0] ?? sharedRuntime.kernelLabBackendId;
+  const fallbackBackendId = sharedRuntime.fallbackBackendId
+    ?? backendMatrix.backends.find((backend) => backend.productionRole === "fallback")?.backendId
+    ?? null;
+  const backendRoleBoundaryPassed = sharedRuntime.backendRoleBoundaryPassed
+    && deployBackendId === "compiled-browser-webllm"
+    && kernelLabBackendId === "unlocked-browser-transformer"
+    && fallbackBackendId === "wasm-small-core";
   const requirements: V12ReadinessRequirement[] = [
     {
       id: "backend_broker",
       label: "Backend Broker separates deploy, research, and fallback backend roles.",
       passed: backendMatrix.backends.length >= 3
         && backendMatrix.backends.some((backend) => backend.productionRole === "production_candidate")
-        && backendMatrix.backends.some((backend) => backend.productionRole === "research_kernel_lab"),
+        && backendMatrix.backends.some((backend) => backend.productionRole === "research_kernel_lab")
+        && backendMatrix.backends.some((backend) => backend.productionRole === "fallback")
+        && backendRoleBoundaryPassed,
       evidence: "backend-readiness-matrix",
-      blockers: [],
+      blockers: backendRoleBoundaryPassed ? [] : ["Backend Broker role boundary did not prove deploy, Kernel Lab, and fallback separation."],
     },
     {
       id: "compiled_production_backend",
@@ -92,7 +103,9 @@ export function evaluateV12ReadinessBundle(input: {
       label: "Memory retrieval and context rebuild are shared above backend execution.",
       passed: sharedRuntime.passed
         && sharedRuntime.deployBackendId === "compiled-browser-webllm"
-        && sharedRuntime.kernelLabBackendId === "unlocked-browser-transformer",
+        && sharedRuntime.kernelLabBackendId === "unlocked-browser-transformer"
+        && sharedRuntime.fallbackBackendId === "wasm-small-core"
+        && sharedRuntime.backendRoleBoundaryPassed === true,
       evidence: "shared-runtime-readiness",
       blockers: sharedRuntime.passed ? [] : ["Shared runtime readiness did not pass."],
     },
@@ -123,6 +136,8 @@ export function evaluateV12ReadinessBundle(input: {
     blockers,
     deployBackendId,
     kernelLabBackendId,
+    fallbackBackendId,
+    backendRoleBoundaryPassed,
     requirements,
     hostedProfile,
     backendMatrix,
@@ -143,6 +158,8 @@ export function buildV12ReadinessBundleArtifact(
       v12BlockerCount: bundle.blockers.length,
       v12DeployBackendId: bundle.deployBackendId,
       v12KernelLabBackendId: bundle.kernelLabBackendId,
+      v12FallbackBackendId: bundle.fallbackBackendId,
+      v12BackendRoleBoundaryPassed: bundle.backendRoleBoundaryPassed,
       v12RequirementCount: bundle.requirements.length,
       v12PassedRequirementCount: bundle.requirements.filter((requirement) => requirement.passed).length,
       v12HostedProfilePassed: bundle.hostedProfile.passed,

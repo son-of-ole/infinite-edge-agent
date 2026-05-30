@@ -85,6 +85,8 @@ export function buildV12ProductionArchiveArtifact(input: {
       v12ProductionSuitePassed: suite.passed,
       v12ProductionDeployBackendId: suite.deployBackendId,
       v12ProductionKernelLabBackendId: suite.kernelLabBackendId,
+      v12ProductionFallbackBackendId: suite.v12Bundle.fallbackBackendId,
+      v12ProductionBackendRoleBoundaryPassed: suite.v12Bundle.backendRoleBoundaryPassed,
       v12ProductionHostedBenchmarkProofRequired: suite.hostedBenchmarkProofRequired,
       v12ProductionHostedBenchmarkProofPassed: suite.hostedBenchmarkProofPassed,
       v12ProductionBackendReadinessProofBound: isBackendReadinessProofBoundToHostedBenchmark(suite.backendMatrix),

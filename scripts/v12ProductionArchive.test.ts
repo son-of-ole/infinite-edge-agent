@@ -150,6 +150,8 @@ describe("v12 production archive", () => {
         v12ProductionSuitePassed: true,
         v12ProductionDeployBackendId: "compiled-browser-webllm",
         v12ProductionKernelLabBackendId: "unlocked-browser-transformer",
+        v12ProductionFallbackBackendId: "wasm-small-core",
+        v12ProductionBackendRoleBoundaryPassed: true,
         v12ProductionHostedBenchmarkProofRequired: true,
         v12ProductionHostedBenchmarkProofPassed: true,
         v12ProductionBackendReadinessProofBound: true,

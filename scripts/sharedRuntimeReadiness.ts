@@ -21,9 +21,11 @@ export interface SharedRuntimeReadinessReport {
   blockers: string[];
   deployBackendId: string | null;
   kernelLabBackendId: string | null;
+  fallbackBackendId: string | null;
   coveredBackendIds: string[];
   memoryProviders: MemoryProviderCapabilities[];
   contextRuntime: SharedRuntimeContextContract;
+  backendRoleBoundaryPassed: boolean;
 }
 
 export interface SharedRuntimeReadinessArtifact {
@@ -52,10 +54,21 @@ export function evaluateSharedRuntimeReadiness(input: {
   const backendMatrix = input.backendMatrix ?? evaluateBackendReadinessMatrix();
   const deployBackendId = backendMatrix.deployBackendId;
   const kernelLabBackendId = backendMatrix.researchBackendIds[0] ?? null;
-  const coveredBackendIds = [deployBackendId, kernelLabBackendId].filter((id): id is string => Boolean(id));
+  const fallbackBackendId = backendMatrix.backends.find((backend) =>
+    backend.productionRole === "fallback"
+    && backend.readinessStatus === "fallback_only"
+    && backend.deployReady === false)?.backendId ?? null;
+  const backendRoleBoundaryPassed = Boolean(
+    deployBackendId
+    && kernelLabBackendId
+    && fallbackBackendId
+    && backendMatrix.backends.every((backend) =>
+      backend.productionRole === "production_candidate" || backend.deployReady === false),
+  );
+  const coveredBackendIds = [deployBackendId, kernelLabBackendId, fallbackBackendId].filter((id): id is string => Boolean(id));
   const memoryProviders = REQUIRED_MEMORY_MODES.map(getMemoryProviderCapabilities);
   const contextRuntime: SharedRuntimeContextContract = {
-    sharedAcrossBackends: Boolean(deployBackendId && kernelLabBackendId),
+    sharedAcrossBackends: Boolean(deployBackendId && kernelLabBackendId && fallbackBackendId),
     requiresContextPackTraceStore: true,
     writesContextPackTraceBeforeGeneration: true,
     persistsRuntimeTraceAfterGeneration: true,
@@ -71,6 +84,12 @@ export function evaluateSharedRuntimeReadiness(input: {
   if (!kernelLabBackendId) {
     blockers.push("Shared runtime readiness requires a registered Kernel Lab backend in the backend readiness matrix.");
   }
+  if (!fallbackBackendId) {
+    blockers.push("Shared runtime readiness requires a bounded fallback backend in the backend readiness matrix.");
+  }
+  if (!backendRoleBoundaryPassed) {
+    blockers.push("Shared runtime readiness requires explicit deploy, Kernel Lab, and fallback backend role boundaries.");
+  }
   for (const provider of memoryProviders) {
     if (!provider.vectorSearch || !provider.deterministicSearch || !provider.contextPackTracePersistence || !provider.persistent) {
       blockers.push(`Memory provider ${provider.mode} does not satisfy shared retrieval/context trace requirements.`);
@@ -85,9 +104,11 @@ export function evaluateSharedRuntimeReadiness(input: {
     blockers,
     deployBackendId,
     kernelLabBackendId,
+    fallbackBackendId,
     coveredBackendIds,
     memoryProviders,
     contextRuntime,
+    backendRoleBoundaryPassed,
   };
 }
 
@@ -105,6 +126,8 @@ export function buildSharedRuntimeReadinessArtifact(
       sharedRuntimeCoveredBackendCount: report.coveredBackendIds.length,
       sharedRuntimeDeployBackendId: report.deployBackendId,
       sharedRuntimeKernelLabBackendId: report.kernelLabBackendId,
+      sharedRuntimeFallbackBackendId: report.fallbackBackendId,
+      sharedRuntimeBackendRoleBoundaryPassed: report.backendRoleBoundaryPassed,
       sharedRuntimeMemoryProviderCount: report.memoryProviders.length,
       sharedRuntimeContextTraceRequired: report.contextRuntime.requiresContextPackTraceStore,
       sharedRuntimeContextTraceBeforeGeneration: report.contextRuntime.writesContextPackTraceBeforeGeneration,

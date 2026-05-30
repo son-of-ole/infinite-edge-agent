@@ -174,6 +174,8 @@ export function buildV12ReadinessSuiteArtifact(
       v12SuiteChildArtifactCount: suite.childArtifactCount,
       v12SuiteDeployBackendId: suite.deployBackendId,
       v12SuiteKernelLabBackendId: suite.kernelLabBackendId,
+      v12SuiteFallbackBackendId: suite.v12Bundle.fallbackBackendId,
+      v12SuiteBackendRoleBoundaryPassed: suite.v12Bundle.backendRoleBoundaryPassed,
       v12SuiteRequirementCount: suite.v12Bundle.requirements.length,
       v12SuitePassedRequirementCount: suite.v12Bundle.requirements.filter((requirement) => requirement.passed).length,
       v12SuiteHostedProfilePassed: suite.hostedProfilePassed,

@@ -17,12 +17,13 @@
 
 Infinite Edge Agent is a local-first AI agent runtime for the browser. It keeps memory, context rebuild, backend selection, model execution, and production readiness as separate subsystems instead of treating the LLM as the whole product.
 
-The v12 architecture has two answer lanes:
+The v12 architecture has three broker roles:
 
 | Lane | Role | Current status |
 |---|---|---|
 | `compiled-browser-webllm` | Production candidate using WebLLM/MLC compiled browser inference | Passing grounded hosted/browser proof |
 | `unlocked-browser-transformer` | Custom WebGPU Kernel Lab for SSA, KVSwap, TSP, top-k, residency, and fusion research | Useful for research gates, not the default deploy claim |
+| `wasm-small-core` | Bounded fallback/control lane | Registered as fallback-only; cannot satisfy deploy readiness |
 
 The practical goal is simple: give a browser-hosted agent persistent memory and grounded answers while keeping the execution path honest about which backend is actually production-ready.
 
@@ -223,6 +224,8 @@ The compiled backend can pass deploy readiness when:
 
 The custom WebGPU Kernel Lab can pass research gates, but it does not automatically count as the deployed production answer backend. This keeps speed/kernel research from blurring product readiness.
 
+The bounded fallback lane is intentionally not deploy-ready. v12 readiness requires the broker to prove this role boundary so fallback capability cannot be mistaken for the hosted answer path.
+
 ## Memory
 
 The default memory provider is browser-local IndexedDB. Nothing is sent to a hosted memory service unless you configure a remote endpoint.
@@ -268,15 +271,15 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`. Se
 
 Hosted production benchmark URLs must use a public HTTPS origin. Localhost, loopback, link-local, private-network, and non-HTTPS benchmark URLs are rejected for production proof.
 
-`pnpm eval:backend-readiness` writes `.artifacts/evals/backend-readiness-matrix-latest.json`, separating the deploy-ready compiled backend from the research-only Kernel Lab backend. When hosted benchmark proof is required, the matrix only marks `compiled-browser-webllm` deploy-ready if the saved real-browser proof passes and is source-bound to the expected deployment commit. Its summary keeps `backendReadinessCompiledHostedProfilePassed` separate from `backendReadinessCompiledDeployReady`, so profile configuration and final proof are not conflated. `RELEASE_REQUIRE_HOSTED_PROFILE=true` automatically includes this matrix in the release gate; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it independently.
+`pnpm eval:backend-readiness` writes `.artifacts/evals/backend-readiness-matrix-latest.json`, separating the deploy-ready compiled backend from the research-only Kernel Lab backend and the bounded `wasm-small-core` fallback. When hosted benchmark proof is required, the matrix only marks `compiled-browser-webllm` deploy-ready if the saved real-browser proof passes and is source-bound to the expected deployment commit. Its summary keeps `backendReadinessCompiledHostedProfilePassed` separate from `backendReadinessCompiledDeployReady`, and reports `backendReadinessRoleBoundaryPassed` so profile configuration, fallback status, and final proof are not conflated. `RELEASE_REQUIRE_HOSTED_PROFILE=true` automatically includes this matrix in the release gate; `RELEASE_REQUIRE_BACKEND_READINESS_MATRIX=true` can require it independently.
 
-`pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`, proving that memory search, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing sit above the model backend boundary. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this artifact automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
+`pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`, proving that memory search, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing sit above the model backend boundary for the compiled deploy backend, Kernel Lab, and bounded fallback. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this artifact automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
 
 `pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile, backend matrix, and shared-runtime proof into one final-state artifact. Use `RELEASE_REQUIRE_V12_READINESS=true` to require that bundle independently.
 
 `pnpm eval:v12-suite` writes the complete final-state artifact set with one timestamp: hosted profile, backend readiness matrix, shared runtime readiness, v12 readiness bundle, and `.artifacts/evals/v12-readiness-suite-latest.json`. If `HOSTED_BENCHMARK_ARTIFACT_PATH` is set, the suite also validates and writes `hosted-benchmark-proof-latest.json`. Set `HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true` when that suite should require the saved browser proof to be tied to `HOSTED_BENCHMARK_EXPECTED_GIT_SHA` or `GITHUB_SHA`; the suite summary exposes this as `v12SuiteHostedBenchmarkProofSourceBoundRequired`. Use `RELEASE_REQUIRE_V12_SUITE=true` to require the suite independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
 
-`pnpm eval:v12-production` is the strict production archive command. It forces hosted benchmark proof on, writes the v12 suite and `.artifacts/evals/v12-production-archive-latest.json`, and fails if `HOSTED_BENCHMARK_ARTIFACT_PATH` is missing or invalid. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `release:gate` should require the final production archive; the release gate validates the archive's backend-specific proof fields, including proof schema version `2`, `compiled-browser-webllm` as deploy backend, `unlocked-browser-transformer` as Kernel Lab, required hosted benchmark proof, source-bound-required proof mode, Backend Broker selection evidence, concrete hosted runtime proof fields, and zero blockers. In this mode, the backend readiness matrix itself is proof-bound and cannot mark the compiled backend deploy-ready from environment configuration alone; the production archive summary reports this as `v12ProductionBackendReadinessProofBound: true`.
+`pnpm eval:v12-production` is the strict production archive command. It forces hosted benchmark proof on, writes the v12 suite and `.artifacts/evals/v12-production-archive-latest.json`, and fails if `HOSTED_BENCHMARK_ARTIFACT_PATH` is missing or invalid. Use `RELEASE_REQUIRE_V12_PRODUCTION=true` when `release:gate` should require the final production archive; the release gate validates the archive's backend-specific proof fields, including proof schema version `2`, `compiled-browser-webllm` as deploy backend, `unlocked-browser-transformer` as Kernel Lab, `wasm-small-core` as fallback-only, role-boundary proof, required hosted benchmark proof, source-bound-required proof mode, Backend Broker selection evidence, concrete hosted runtime proof fields, and zero blockers. In this mode, the backend readiness matrix itself is proof-bound and cannot mark the compiled backend deploy-ready from environment configuration alone; the production archive summary reports this as `v12ProductionBackendReadinessProofBound: true`.
 
 After running the real hosted benchmark in Chrome or Edge, validate the saved browser artifact before making a backend-specific production claim:
 

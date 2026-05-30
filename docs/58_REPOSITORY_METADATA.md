@@ -47,7 +47,7 @@ Create a polished text-free hero image for an open source project called Infinit
 
 ## Short Project Summary
 
-Infinite Edge Agent is a browser-native persistent AI runtime. It separates the agent from the model by making memory, context reconstruction, backend selection, model execution, and readiness proof independent layers. The compiled WebLLM lane is the production candidate; the custom WebGPU runtime remains a Kernel Lab for SSA, KVSwap, TSP, fusion, and backend research.
+Infinite Edge Agent is a browser-native persistent AI runtime. It separates the agent from the model by making memory, context reconstruction, backend selection, model execution, and readiness proof independent layers. The compiled WebLLM lane is the production candidate, the custom WebGPU runtime remains a Kernel Lab for SSA, KVSwap, TSP, fusion, and backend research, and the small WASM lane is bounded fallback only.
 
 ## Longer Public Abstract
 
@@ -59,6 +59,7 @@ The repository is not claiming a new base model. The contribution is the runtime
 
 - Production lane: `compiled-browser-webllm`
 - Research lane: `unlocked-browser-transformer`
+- Fallback lane: `wasm-small-core`
 - Memory default: browser-local IndexedDB/vector memory
 - Hosted proof: real Chrome/Edge browser benchmark artifacts
 - Public benchmark direction: opt-in, sanitized, device/GPU-aware telemetry

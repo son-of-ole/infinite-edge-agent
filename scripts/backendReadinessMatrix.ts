@@ -191,7 +191,18 @@ export function buildBackendReadinessMatrixArtifact(
   const researchBackendIds = matrix.backends
     .filter((entry) => entry.productionRole === "research_kernel_lab")
     .map((entry) => entry.backendId);
+  const fallbackBackendIds = matrix.backends
+    .filter((entry) => entry.productionRole === "fallback")
+    .map((entry) => entry.backendId);
+  const fallbackDeployReadyCount = matrix.backends
+    .filter((entry) => entry.productionRole === "fallback" && entry.deployReady)
+    .length;
   const hostedCompiledBackend = matrix.backends.find((entry) => entry.backendId === "compiled-browser-webllm");
+  const roleBoundaryPassed = deployReadyCount === 1
+    && matrix.deployBackendId === "compiled-browser-webllm"
+    && fallbackDeployReadyCount === 0
+    && matrix.backends.every((entry) =>
+      entry.productionRole === "production_candidate" || entry.deployReady === false);
 
   return {
     name: "backend-readiness-matrix",
@@ -206,6 +217,10 @@ export function buildBackendReadinessMatrixArtifact(
       backendReadinessDeployReadyCount: deployReadyCount,
       backendReadinessResearchBackendCount: researchBackendIds.length,
       backendReadinessKernelLabBackendId: researchBackendIds[0] ?? null,
+      backendReadinessFallbackBackendCount: fallbackBackendIds.length,
+      backendReadinessFallbackBackendId: fallbackBackendIds[0] ?? null,
+      backendReadinessFallbackDeployReadyCount: fallbackDeployReadyCount,
+      backendReadinessRoleBoundaryPassed: roleBoundaryPassed,
       backendReadinessCompiledHostedProfilePassed: hostedCompiledBackend?.hostedProfilePassed ?? false,
       backendReadinessCompiledDeployReady: hostedCompiledBackend?.deployReady ?? false,
       backendReadinessProofBoundToHostedBenchmark: isBackendReadinessProofBoundToHostedBenchmark(matrix),

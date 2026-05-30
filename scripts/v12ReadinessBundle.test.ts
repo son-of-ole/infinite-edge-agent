@@ -44,6 +44,8 @@ describe("evaluateV12ReadinessBundle", () => {
     expect(bundle.blockers).toEqual([]);
     expect(bundle.deployBackendId).toBe("compiled-browser-webllm");
     expect(bundle.kernelLabBackendId).toBe("unlocked-browser-transformer");
+    expect(bundle.fallbackBackendId).toBe("wasm-small-core");
+    expect(bundle.backendRoleBoundaryPassed).toBe(true);
     expect(bundle.requirements).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: "backend_broker", passed: true }),
       expect.objectContaining({ id: "compiled_production_backend", passed: true }),
@@ -84,6 +86,8 @@ describe("evaluateV12ReadinessBundle", () => {
         v12ReadinessPassed: true,
         v12DeployBackendId: "compiled-browser-webllm",
         v12KernelLabBackendId: "unlocked-browser-transformer",
+        v12FallbackBackendId: "wasm-small-core",
+        v12BackendRoleBoundaryPassed: true,
         v12RequirementCount: 5,
         v12PassedRequirementCount: 5,
         v12HostedProfilePassed: true,
@@ -111,5 +115,6 @@ describe("evaluateV12ReadinessBundle", () => {
 
     expect(latest.passed).toBe(true);
     expect(latest.summary.v12DeployBackendId).toBe("compiled-browser-webllm");
+    expect(latest.summary.v12FallbackBackendId).toBe("wasm-small-core");
   });
 });
