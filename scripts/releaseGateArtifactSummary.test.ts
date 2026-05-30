@@ -2,6 +2,30 @@ import { describe, expect, it } from "vitest";
 import { summarizeReleaseGateArtifact } from "./releaseGateArtifactSummary";
 
 describe("release gate artifact summary", () => {
+  it("keeps v12 readiness bundle fields visible in release summaries", () => {
+    expect(summarizeReleaseGateArtifact({
+      summary: {
+        v12ReadinessPassed: true,
+        v12DeployBackendId: "compiled-browser-webllm",
+        v12KernelLabBackendId: "unlocked-browser-transformer",
+        v12RequirementCount: 5,
+        v12PassedRequirementCount: 5,
+        v12HostedProfilePassed: true,
+        v12BackendReadinessPassed: true,
+        v12SharedRuntimePassed: true,
+      },
+    })).toMatchObject({
+      v12ReadinessPassed: true,
+      v12DeployBackendId: "compiled-browser-webllm",
+      v12KernelLabBackendId: "unlocked-browser-transformer",
+      v12RequirementCount: 5,
+      v12PassedRequirementCount: 5,
+      v12HostedProfilePassed: true,
+      v12BackendReadinessPassed: true,
+      v12SharedRuntimePassed: true,
+    });
+  });
+
   it("keeps shared runtime readiness fields visible in release summaries", () => {
     expect(summarizeReleaseGateArtifact({
       summary: {

@@ -111,6 +111,14 @@ pnpm eval:shared-runtime
 
 It records that memory providers, retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the backend boundary. This is the artifact that prevents the compiled backend and Kernel Lab from becoming separate product runtimes.
 
+The combined v12 readiness bundle is written by:
+
+```bash
+pnpm eval:v12-readiness
+```
+
+It writes `.artifacts/evals/v12-readiness-bundle-latest.json`, combining hosted profile proof, backend-specific role proof, and shared runtime proof into one final-state deploy readiness artifact.
+
 ## What Still Needs Automation
 
 Manual device testing has been encouraging. The next release-hardening step is to connect the hosted deployment to durable Postgres telemetry and save benchmark results from each target device class automatically.

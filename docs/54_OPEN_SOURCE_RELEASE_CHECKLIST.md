@@ -104,6 +104,14 @@ The hosted profile flag also runs `pnpm eval:backend-readiness` and includes `.a
 
 It also runs `pnpm eval:shared-runtime` and includes `.artifacts/evals/shared-runtime-readiness-latest.json`, which records that memory retrieval, context rebuild, context-pack trace persistence, runtime trace persistence, and backend profile routing are shared above the model backend. Use `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` to require that proof independently.
 
+For a single final-state artifact, run:
+
+```bash
+pnpm eval:v12-readiness
+```
+
+This writes `.artifacts/evals/v12-readiness-bundle-latest.json`. Use `RELEASE_REQUIRE_V12_READINESS=true` to require the bundle independently; `RELEASE_REQUIRE_HOSTED_PROFILE=true` also includes it.
+
 ## 8. Final manual checks
 
 - Browser-smoke the target deployment in Chrome or Edge: initialize one configured backend, send a prompt, retrieve memory, export memory, clear memory, confirm runtime traces persist, and confirm the browser-preview benchmark route returns `passed: true` for non-degenerate visible output.

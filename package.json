@@ -34,6 +34,7 @@
     "eval:production": "tsx scripts/eval-production.ts",
     "eval:backend-readiness": "node --import tsx scripts/backendReadinessMatrix.ts",
     "eval:shared-runtime": "node --import tsx scripts/sharedRuntimeReadiness.ts",
+    "eval:v12-readiness": "node --import tsx scripts/v12ReadinessBundle.ts",
     "verify:hosted-profile": "node --import tsx scripts/hostedDeploymentProfile.ts",
     "release:gate": "tsx scripts/release-gate.ts"
   },

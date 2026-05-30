@@ -144,6 +144,14 @@ pnpm eval:shared-runtime
 
 That writes `.artifacts/evals/shared-runtime-readiness-latest.json`, recording that retrieval, context rebuild, context-pack traces, runtime traces, and backend profile routing are above the backend boundary. `RELEASE_REQUIRE_HOSTED_PROFILE=true` includes this proof automatically; `RELEASE_REQUIRE_SHARED_RUNTIME_READINESS=true` can require it independently.
 
+The combined v12 final-state bundle is:
+
+```bash
+pnpm eval:v12-readiness
+```
+
+That writes `.artifacts/evals/v12-readiness-bundle-latest.json`, requiring hosted compiled profile proof, backend-specific deploy/research roles, and the shared memory/context runtime proof to pass together.
+
 Before shipping a hosted embed, verify app and model URLs behave like assets instead of falling back to HTML:
 
 ```bash

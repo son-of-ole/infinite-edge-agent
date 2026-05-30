@@ -42,6 +42,7 @@ const releaseGateEnv = { ...process.env, ...releaseGateDefaultEnv };
 const requireHostedProfile = releaseGateEnv.RELEASE_REQUIRE_HOSTED_PROFILE === "true";
 const requireBackendReadinessMatrix = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_BACKEND_READINESS_MATRIX === "true";
 const requireSharedRuntimeReadiness = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_SHARED_RUNTIME_READINESS === "true";
+const requireV12ReadinessBundle = requireHostedProfile || releaseGateEnv.RELEASE_REQUIRE_V12_READINESS === "true";
 
 const steps: GateStep[] = [];
 
@@ -72,6 +73,9 @@ if (requireBackendReadinessMatrix) {
 }
 if (requireSharedRuntimeReadiness) {
   await runGate("shared runtime readiness", ["run", "eval:shared-runtime"]);
+}
+if (requireV12ReadinessBundle) {
+  await runGate("v12 readiness bundle", ["run", "eval:v12-readiness"]);
 }
 await runGate("build", ["run", "build"]);
 await runGate("web dist size", ["run", "check:web-dist"]);
@@ -178,6 +182,9 @@ async function readLatestArtifacts(): Promise<LatestArtifact[]> {
       : []),
     ...(requireSharedRuntimeReadiness
       ? [["shared-runtime-readiness", join(childArtifactRoot, "shared-runtime-readiness-latest.json")] as const]
+      : []),
+    ...(requireV12ReadinessBundle
+      ? [["v12-readiness-bundle", join(childArtifactRoot, "v12-readiness-bundle-latest.json")] as const]
       : []),
   ] as const;
   const artifacts: LatestArtifact[] = [];

@@ -196,6 +196,8 @@ The verifier writes `.artifacts/evals/hosted-deployment-profile-latest.json`, an
 
 `pnpm eval:shared-runtime` writes `.artifacts/evals/shared-runtime-readiness-latest.json`. That proof keeps benchmark telemetry tied to the shared memory/context runtime instead of treating each backend as a separate product lane.
 
+`pnpm eval:v12-readiness` writes `.artifacts/evals/v12-readiness-bundle-latest.json`, which is the combined artifact to archive next to hosted Chrome benchmark and telemetry database evidence.
+
 ## Privacy Rules
 
 Benchmark telemetry can become browser fingerprinting if it is collected silently. Use these rules:
