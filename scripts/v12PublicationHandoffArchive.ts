@@ -51,7 +51,7 @@ export async function createV12PublicationHandoffArchive(options: {
   await writeRepositoryPublicationHandoffArtifact(report, { artifactDir, createdAt });
 
   const shortSha = headSha.slice(0, 7);
-  const timestamp = timestampToPathSegment(createdAt).slice(0, 15);
+  const timestamp = timestampToPathSegment(createdAt);
   const archiveName = `infinite-edge-agent-publication-handoff-${shortSha}-${timestamp}`;
   const directoryPath = join(outputRoot, archiveName);
   const archivePath = `${directoryPath}.tar.gz`;

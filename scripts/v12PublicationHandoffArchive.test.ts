@@ -97,6 +97,7 @@ describe("v12 publication handoff archive", () => {
 
     expect(result.headSha).toBe("1234567890abcdef1234567890abcdef12345678");
     expect(result.archivePath.endsWith(".tar.gz")).toBe(true);
+    expect(result.archivePath).toContain("2026-05-31T22-00-00-000Z");
     expect(existsSync(result.archivePath)).toBe(true);
     expect(result.copiedFiles.map((file) => file.relativePath)).toEqual(expect.arrayContaining([
       "bundles/infinite-edge-agent-main-ahead86.bundle",
