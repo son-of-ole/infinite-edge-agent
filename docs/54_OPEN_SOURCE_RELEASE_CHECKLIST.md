@@ -132,6 +132,14 @@ pnpm eval:repository-publication
 
 This writes `.artifacts/evals/repository-publication-status-latest.json`, `.artifacts/evals/repository-publication-handoff-latest.json`, and `.artifacts/evals/repository-publication-handoff-latest.md`. It passes when the local `main` is either published to `origin/main` or, if local commits are still ahead because network publishing is unavailable, a verified exact-history Git bundle contains the current head. The Markdown handoff gives operator-ready commands for direct push, full-bundle restore, existing-clone fast-forward publication, and the source-bound GitHub v12 production proof workflow. This is a handoff/status artifact only; a bundle-ready state is not the same as the GitHub repository being published.
 
+To package that handoff for another machine or network, run:
+
+```bash
+pnpm handoff:v12-publication
+```
+
+This creates a portable `.tar.gz` archive under `/private/tmp` by default containing the verified Git bundles plus release-gate, publication, and final-state evidence.
+
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should require and summarize that source publication status artifact.
 
 For final ship/no-ship status, run:
