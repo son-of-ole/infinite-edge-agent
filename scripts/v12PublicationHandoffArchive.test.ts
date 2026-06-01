@@ -100,6 +100,8 @@ describe("v12 publication handoff archive", () => {
     expect(result.archivePath).toContain("2026-05-31T22-00-00-000Z");
     expect(existsSync(result.archivePath)).toBe(true);
     expect(result.copiedFiles.map((file) => file.relativePath)).toEqual(expect.arrayContaining([
+      "README.md",
+      "handoff-manifest.json",
       "bundles/infinite-edge-agent-main-ahead86.bundle",
       "bundles/infinite-edge-agent-main-full.bundle",
       "artifacts/repository-publication-handoff-latest.md",
@@ -107,7 +109,24 @@ describe("v12 publication handoff archive", () => {
     ]));
 
     const { stdout } = await execFileAsync("tar", ["-tzf", result.archivePath]);
+    expect(stdout).toContain("README.md");
+    expect(stdout).toContain("handoff-manifest.json");
     expect(stdout).toContain("bundles/infinite-edge-agent-main-ahead86.bundle");
     expect(stdout).toContain("artifacts/release-gate-summary.md");
+
+    const readme = await readFile(join(result.directoryPath, "README.md"), "utf8");
+    expect(readme).toContain("Exact-History V12 Publication Handoff");
+    expect(readme).toContain("1234567890abcdef1234567890abcdef12345678");
+    expect(readme).toContain("git push origin main");
+    expect(readme).toContain("EVAL_ARTIFACT_DIR=.artifacts/evals/v12-production-proof pnpm eval:v12-final-state");
+
+    const manifest = JSON.parse(await readFile(join(result.directoryPath, "handoff-manifest.json"), "utf8")) as {
+      headSha?: string;
+      aheadCount?: number;
+      files?: Array<{ relativePath: string }>;
+    };
+    expect(manifest.headSha).toBe("1234567890abcdef1234567890abcdef12345678");
+    expect(manifest.aheadCount).toBe(86);
+    expect(manifest.files?.map((file) => file.relativePath)).toContain("bundles/infinite-edge-agent-main-full.bundle");
   });
 });

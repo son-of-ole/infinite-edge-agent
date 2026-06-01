@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, readFile, stat } from "node:fs/promises";
+import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -67,6 +67,12 @@ export async function createV12PublicationHandoffArchive(options: {
   for (const artifact of await resolveArtifactSources(artifactDir)) {
     copiedFiles.push(await copyIntoArchive(artifact.sourcePath, join("artifacts", artifact.outputName), directoryPath));
   }
+  copiedFiles.push(...await writeTopLevelHandoffFiles({
+    directoryPath,
+    report,
+    archiveName,
+    copiedFiles,
+  }));
 
   await execFileAsync("tar", ["-czf", archivePath, "-C", outputRoot, archiveName], {
     maxBuffer: 1024 * 1024 * 4,
@@ -77,6 +83,78 @@ export async function createV12PublicationHandoffArchive(options: {
     directoryPath,
     headSha,
     copiedFiles,
+  };
+}
+
+async function writeTopLevelHandoffFiles(input: {
+  directoryPath: string;
+  report: RepositoryPublicationStatusReport;
+  archiveName: string;
+  copiedFiles: V12PublicationHandoffCopiedFile[];
+}): Promise<V12PublicationHandoffCopiedFile[]> {
+  const headSha = input.report.snapshot.headSha ?? "unknown";
+  const aheadCount = input.report.snapshot.aheadCount ?? null;
+  const readmePath = join(input.directoryPath, "README.md");
+  const manifestPath = join(input.directoryPath, "handoff-manifest.json");
+  const files = input.copiedFiles.map((file) => ({
+    relativePath: file.relativePath,
+    bytes: file.bytes,
+  }));
+  const readme = [
+    "# Exact-History V12 Publication Handoff",
+    "",
+    `Archive: \`${input.archiveName}\``,
+    `Head SHA: \`${headSha}\``,
+    `Ahead count: \`${aheadCount ?? "unknown"}\``,
+    "",
+    "This archive carries the verified Git bundles and release evidence needed to publish the exact local history from a machine that can reach GitHub.",
+    "",
+    "## Publish",
+    "",
+    "```bash",
+    "git clone bundles/infinite-edge-agent-main-full.bundle infinite-edge-agent",
+    "cd infinite-edge-agent",
+    "git remote set-url origin https://github.com/son-of-ole/infinite-edge-agent.git",
+    "git push origin main",
+    "```",
+    "",
+    "## Source-Bound Production Proof",
+    "",
+    "After pushing, deploy this same commit and run the GitHub production proof workflow. The detailed commands are in `artifacts/repository-publication-handoff-latest.md`.",
+    "",
+    "```bash",
+    "gh workflow run v12-production-proof.yml --repo son-of-ole/infinite-edge-agent --ref main -f deploy_url=\"$DEPLOY_URL\"",
+    "gh run watch --repo son-of-ole/infinite-edge-agent --workflow v12-production-proof.yml --exit-status",
+    "gh run download --repo son-of-ole/infinite-edge-agent --name v12-production-proof-artifacts --dir .artifacts/evals/v12-production-proof",
+    "EVAL_ARTIFACT_DIR=.artifacts/evals/v12-production-proof pnpm eval:v12-final-state",
+    "```",
+    "",
+  ].join("\n");
+  const manifest = {
+    name: "v12-publication-handoff",
+    archiveName: input.archiveName,
+    headSha,
+    aheadCount,
+    published: input.report.published,
+    bundleHandoffReady: input.report.bundleHandoffReady,
+    files,
+  };
+
+  await writeFile(readmePath, readme);
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  return [
+    await describeWrittenFile(readmePath, "README.md"),
+    await describeWrittenFile(manifestPath, "handoff-manifest.json"),
+  ];
+}
+
+async function describeWrittenFile(sourcePath: string, relativePath: string): Promise<V12PublicationHandoffCopiedFile> {
+  const copied = await stat(sourcePath);
+  return {
+    sourcePath,
+    relativePath,
+    bytes: copied.size,
   };
 }
 

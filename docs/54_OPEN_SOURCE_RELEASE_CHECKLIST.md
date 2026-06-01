@@ -138,7 +138,7 @@ To package that handoff for another machine or network, run:
 pnpm handoff:v12-publication
 ```
 
-This creates a portable `.tar.gz` archive under `/private/tmp` by default containing the verified Git bundles plus release-gate, publication, and final-state evidence.
+This creates a portable `.tar.gz` archive under `/private/tmp` by default containing the verified Git bundles plus release-gate, publication, and final-state evidence. The archive includes a root `README.md` for the publishing operator and `handoff-manifest.json` for machine-readable handoff metadata.
 
 Set `RELEASE_REQUIRE_REPOSITORY_PUBLICATION=true` when `pnpm release:gate` should require and summarize that source publication status artifact.
 
