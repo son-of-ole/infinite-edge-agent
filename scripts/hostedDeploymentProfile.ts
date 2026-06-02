@@ -27,6 +27,7 @@ export interface HostedDeploymentProfileReport {
     benchmarkMemoryGroundingProfile: string | null;
     benchmarkExpectedExact: string | null;
     benchmarkRequiresSubmitTelemetry: boolean;
+    benchmarkWarmResidentSpeedProof: boolean;
   };
 }
 
@@ -136,6 +137,9 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
     if (parsedBenchmark.searchParams.get("expectedExact") !== HOSTED_EXACT_ANSWER) {
       blockers.push("Hosted production benchmark URL must set expectedExact=Helena.");
     }
+    if (!benchmarkRequestsWarmResidentSpeedProof(parsedBenchmark.searchParams)) {
+      blockers.push("Hosted production benchmark URL must request speedProof=warm_resident or warmResidentSpeedProof=true.");
+    }
     if (!benchmarkSubmitsTelemetry(parsedBenchmark.searchParams)) {
       blockers.push("Hosted production benchmark URL must opt in with submitTelemetry=true or benchmarkTelemetry=true.");
     }
@@ -165,6 +169,7 @@ export function evaluateHostedDeploymentProfile(env: HostedDeploymentProfileEnv)
       benchmarkMemoryGroundingProfile: parsedBenchmark?.searchParams.get("memoryGroundingProfile") ?? null,
       benchmarkExpectedExact: parsedBenchmark?.searchParams.get("expectedExact") ?? null,
       benchmarkRequiresSubmitTelemetry: parsedBenchmark ? benchmarkSubmitsTelemetry(parsedBenchmark.searchParams) : false,
+      benchmarkWarmResidentSpeedProof: parsedBenchmark ? benchmarkRequestsWarmResidentSpeedProof(parsedBenchmark.searchParams) : false,
     },
   };
 }
@@ -198,6 +203,7 @@ export function buildHostedDeploymentProfileArtifact(
       hostedProfileBenchmarkMemoryGroundingProfile: report.profile.benchmarkMemoryGroundingProfile,
       hostedProfileBenchmarkExpectedExact: report.profile.benchmarkExpectedExact,
       hostedProfileBenchmarkRequiresSubmitTelemetry: report.profile.benchmarkRequiresSubmitTelemetry,
+      hostedProfileBenchmarkWarmResidentSpeedProof: report.profile.benchmarkWarmResidentSpeedProof,
     },
     report,
   };
@@ -241,6 +247,7 @@ function resolveBenchmarkUrl(env: HostedDeploymentProfileEnv): string | null {
     url.searchParams.set("expectedExact", HOSTED_EXACT_ANSWER);
     url.searchParams.set("submitTelemetry", "true");
     url.searchParams.set("qwenThinkingMode", "disabled");
+    url.searchParams.set("speedProof", "warm_resident");
     return url.toString();
   } catch {
     return null;
@@ -321,6 +328,12 @@ function benchmarkProvesGrounding(params: URLSearchParams): boolean {
 
 function benchmarkSubmitsTelemetry(params: URLSearchParams): boolean {
   return params.get("submitTelemetry") === "true" || params.get("benchmarkTelemetry") === "true";
+}
+
+function benchmarkRequestsWarmResidentSpeedProof(params: URLSearchParams): boolean {
+  return params.get("speedProof") === "warm_resident"
+    || params.get("warmResidentSpeedProof") === "true"
+    || params.get("requireWarmResidentSpeedProof") === "true";
 }
 
 function readString(value: string | undefined): string | null {

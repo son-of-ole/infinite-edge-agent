@@ -191,7 +191,7 @@ BENCHMARK_TELEMETRY_ENABLED=true
 BENCHMARK_TELEMETRY_STORAGE=postgres
 BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
-HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident'
 HOSTED_BENCHMARK_EXPECTED_GIT_SHA=<deployment-sha>
 HOSTED_BENCHMARK_REQUIRE_SOURCE_BOUND=true
 ```

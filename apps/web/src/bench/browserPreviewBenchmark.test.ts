@@ -932,6 +932,7 @@ describe("browser preview benchmark payload", () => {
       + "&maxRuntimePromptTokens=4096"
       + "&maxRuntimeLayers=28"
       + "&requireKvReuse=true"
+      + "&warmResidentSpeedProof=true"
       + "&kvNamespace=test-bench-namespace"
       + "&minGeneratedTokens=16"
       + "&expected=Earth"
@@ -943,6 +944,7 @@ describe("browser preview benchmark payload", () => {
       strictWebGpuRequested: true,
       webGpuGates: ["mlp", "logits", "attention", "projection"],
       requireKvReuse: true,
+      requireWarmResidentSpeedProof: true,
       kvNamespace: "test-bench-namespace",
       qwenThinkingMode: "enabled",
       minGeneratedTokens: 16,
@@ -956,6 +958,28 @@ describe("browser preview benchmark payload", () => {
           maxGenerationTokens: 24,
         },
       },
+    });
+  });
+
+  it("lets compiled browser production proof request warm-resident speed without KV reuse proof", () => {
+    const request = readBrowserPreviewBenchmarkRequest(new URL(
+      "http://localhost:5173/__bench/browser-runtime"
+      + "?backend=compiled-browser-webllm"
+      + "&memoryGrounding=montana_capital"
+      + "&expectedExact=Helena"
+      + "&speedProof=warm_resident",
+    ));
+
+    expect(request).toMatchObject({
+      backendId: "compiled-browser-webllm",
+      requireKvReuse: false,
+      requireWarmResidentSpeedProof: true,
+      memoryGroundingCase: "montana_capital",
+      prompts: [{
+        id: "prompt-1",
+        expectedSubstrings: ["Helena"],
+        expectedExact: ["Helena"],
+      }],
     });
   });
 

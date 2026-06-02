@@ -24,7 +24,7 @@ const completeHostedEnv = {
   BENCHMARK_TELEMETRY_RATE_LIMIT_WINDOW_MS: "600000",
   VITE_DEPLOY_URL: "https://agent.example.com",
   HOSTED_PRODUCTION_BENCHMARK_URL:
-    "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+    "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident",
 };
 
 describe("evaluateHostedDeploymentProfile", () => {
@@ -166,7 +166,7 @@ describe("evaluateHostedDeploymentProfile", () => {
       ...completeHostedEnv,
       VITE_DEPLOY_URL: "https://agent.example.com",
       HOSTED_PRODUCTION_BENCHMARK_URL:
-        "https://other-agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+        "https://other-agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident",
     });
 
     expect(report.passed).toBe(false);
@@ -201,7 +201,7 @@ describe("evaluateHostedDeploymentProfile", () => {
 
     expect(report.passed).toBe(true);
     expect(report.expectedBenchmarkUrl).toBe(
-      "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled",
+      "https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident",
     );
   });
 

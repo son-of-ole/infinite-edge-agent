@@ -86,6 +86,7 @@ export interface BrowserPreviewBenchmarkRequest {
   strictWebGpuRequested: boolean;
   webGpuGates: WebGpuGate[];
   requireKvReuse: boolean;
+  requireWarmResidentSpeedProof: boolean;
   requireKvPredictivePrefetch: boolean;
   kvNamespace: string;
   qwenThinkingMode: "disabled" | "enabled";
@@ -307,6 +308,22 @@ async function runBrowserPreviewBenchmark(
       await flushKvPersistenceForProof(client, signal);
       runs.push(await runPrompt(client, {
         id: `${request.prompts[0].id}-kv-reuse`,
+        text: request.prompts[0].text,
+        expectedSubstrings: request.prompts[0].expectedSubstrings,
+        ...(request.prompts[0].expectedExact?.length ? { expectedExact: request.prompts[0].expectedExact } : {}),
+      }, request, 0, {
+        warmupMs: 0,
+        warmupMode: null,
+        warmupBlockingMs: 0,
+        warmupUploadedEntries: null,
+        warmupCacheHits: null,
+        residentReadbackCount: null,
+      }, memoryGrounding, signal));
+    }
+    if (request.requireWarmResidentSpeedProof && !request.requireKvReuse && request.prompts[0]) {
+      assertBenchmarkNotAborted(signal);
+      runs.push(await runPrompt(client, {
+        id: `${request.prompts[0].id}-warm-resident-speed`,
         text: request.prompts[0].text,
         expectedSubstrings: request.prompts[0].expectedSubstrings,
         ...(request.prompts[0].expectedExact?.length ? { expectedExact: request.prompts[0].expectedExact } : {}),
@@ -822,6 +839,11 @@ export function readBrowserPreviewBenchmarkRequest(url: URL): BrowserPreviewBenc
     ? withStrictExpectedSubstringLayerCaps(logitProofProfile)
     : logitProofProfile;
   const requireKvReuse = url.searchParams.get("requireKvReuse") === "true";
+  const requireWarmResidentSpeedProof = parseBooleanSearchParam(url, [
+    "requireWarmResidentSpeedProof",
+    "warmResidentSpeedProof",
+    "warmSpeedProof",
+  ]) || url.searchParams.get("speedProof")?.trim().toLowerCase() === "warm_resident";
   const requireKvPredictivePrefetch = parseBooleanSearchParam(url, [
     "requireKvPredictivePrefetch",
     "kvPredictiveProof",
@@ -872,6 +894,7 @@ export function readBrowserPreviewBenchmarkRequest(url: URL): BrowserPreviewBenc
     strictWebGpuRequested,
     webGpuGates,
     requireKvReuse,
+    requireWarmResidentSpeedProof,
     requireKvPredictivePrefetch,
     kvNamespace,
     qwenThinkingMode,

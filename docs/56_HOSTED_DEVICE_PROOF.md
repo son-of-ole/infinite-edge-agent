@@ -96,7 +96,7 @@ The verifier checks the deploy profile, not the model output. It requires:
 - `BENCHMARK_TELEMETRY_STORAGE=postgres`,
 - admin protection for list, summary, dashboard, and CSV export routes,
 - rate limiting configured,
-- and a public HTTPS benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true`.
+- and a public HTTPS benchmark URL that runs `memoryGrounding=montana_capital`, `expectedExact=Helena`, and `submitTelemetry=true&speedProof=warm_resident`.
 
 The verifier also requires the benchmark URL origin to match `VITE_DEPLOY_URL`. This prevents an operator from proving one hosted site while configuring or releasing another.
 

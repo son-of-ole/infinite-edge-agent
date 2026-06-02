@@ -50,7 +50,7 @@ describe("repository readiness", () => {
         "steps:",
         "  - name: V12 readiness invariants",
         "    env:",
-        "      HOSTED_PRODUCTION_BENCHMARK_URL: 'https://ci.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'",
+        "      HOSTED_PRODUCTION_BENCHMARK_URL: 'https://ci.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident'",
         "    run: pnpm eval:v12-readiness",
       ].join("\n"),
     });

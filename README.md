@@ -130,7 +130,7 @@ The browser app exposes a proof route for real-device checks:
 Example compiled-backend proof URL:
 
 ```text
-/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&generationTokens=8&qwenThinkingMode=disabled
+/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&generationTokens=8&qwenThinkingMode=disabled&speedProof=warm_resident
 ```
 
 The benchmark records:
@@ -273,7 +273,7 @@ BENCHMARK_TELEMETRY_ENABLED=true
 BENCHMARK_TELEMETRY_STORAGE=postgres
 BENCHMARK_TELEMETRY_DATABASE_URL=<postgres-connection-string>
 BENCHMARK_TELEMETRY_ADMIN_TOKEN=<dashboard-export-token>
-HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled'
+HOSTED_PRODUCTION_BENCHMARK_URL='https://agent.example.com/__bench/browser-runtime?backend=compiled-browser-webllm&modelId=Qwen3-0.6B-q4f16_1-MLC&memoryGrounding=montana_capital&expectedExact=Helena&submitTelemetry=true&qwenThinkingMode=disabled&speedProof=warm_resident'
 pnpm verify:hosted-profile
 ```
 
