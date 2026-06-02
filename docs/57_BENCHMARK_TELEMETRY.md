@@ -26,6 +26,8 @@ The repo now includes an optional telemetry collector in `apps/memory-server`:
 - `GET /api/benchmark-runs/dashboard` renders a minimal sanitized dashboard with backend, OS/browser, GPU label, speed, and readiness fields.
 - `GET /api/benchmark-runs/export.csv` exports sanitized run metadata, including GPU adapter/WebGL renderer fields, for spreadsheet analysis.
 
+The Vercel deployment path also includes `api/benchmark-runs.ts`, a same-origin serverless submit/list endpoint backed by the same telemetry store contract. It is intended for hosted benchmark submission on static Vercel deployments; run `apps/memory-server` when you need the full dashboard, summary, CSV export, and sidecar memory API surface.
+
 Enable it with:
 
 ```bash

@@ -324,11 +324,11 @@ export function registerBenchmarkTelemetryRoutes(
       "BENCHMARK_TELEMETRY_SUBMIT_UNAUTHORIZED",
       "Benchmark telemetry submit token is required."
     );
-    if (!submitAuth.ok) return submitAuth.response;
+    if (submitAuth.ok === false) return submitAuth.response;
 
     if (submitRateLimiter) {
       const rateLimit = submitRateLimiter.consume(readClientIdentity(request));
-      if (!rateLimit.allowed) {
+      if (rateLimit.allowed === false) {
         return reply
           .status(429)
           .header("retry-after", String(Math.ceil(rateLimit.retryAfterMs / 1000)))
@@ -365,7 +365,7 @@ export function registerBenchmarkTelemetryRoutes(
       "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
       "Benchmark telemetry admin token is required."
     );
-    if (!adminAuth.ok) return adminAuth.response;
+    if (adminAuth.ok === false) return adminAuth.response;
     const limit = readQueryLimit(request);
     const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
     const summary = summarizeBenchmarkTelemetryRuns(runs);
@@ -382,7 +382,7 @@ export function registerBenchmarkTelemetryRoutes(
       "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
       "Benchmark telemetry admin token is required."
     );
-    if (!adminAuth.ok) return adminAuth.response;
+    if (adminAuth.ok === false) return adminAuth.response;
     const limit = readQueryLimit(request);
     const runs = await store.list({ ...(limit !== undefined ? { limit } : {}) });
     return reply
@@ -399,7 +399,7 @@ export function registerBenchmarkTelemetryRoutes(
       "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
       "Benchmark telemetry admin token is required."
     );
-    if (!adminAuth.ok) return adminAuth.response;
+    if (adminAuth.ok === false) return adminAuth.response;
     const limit = readQueryLimit(request);
     return { runs: await store.list({ ...(limit !== undefined ? { limit } : {}) }) };
   });
@@ -412,7 +412,7 @@ export function registerBenchmarkTelemetryRoutes(
       "BENCHMARK_TELEMETRY_ADMIN_UNAUTHORIZED",
       "Benchmark telemetry admin token is required."
     );
-    if (!adminAuth.ok) return adminAuth.response;
+    if (adminAuth.ok === false) return adminAuth.response;
     const limit = readQueryLimit(request);
     return await store.summary({ ...(limit !== undefined ? { limit } : {}) });
   });

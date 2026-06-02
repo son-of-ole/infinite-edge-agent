@@ -250,6 +250,8 @@ Memory features include deterministic search, import/export, context-pack traces
 
 The app can be hosted anywhere that serves a modern HTTPS web app with the right headers. Replit has already been used for hosted proof. Vercel configuration is included in [vercel.json](vercel.json).
 
+The Vercel deployment path includes a same-origin `POST /api/benchmark-runs` telemetry function so hosted browser benchmarks can submit sanitized proof rows without a separate proxy. Production telemetry still requires durable Postgres storage through `BENCHMARK_TELEMETRY_DATABASE_URL`; local JSONL is for development evidence only.
+
 Recommended production env:
 
 ```bash

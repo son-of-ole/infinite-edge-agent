@@ -25,3 +25,4 @@ apps/web/public/models/**/*.gguf
 apps/web/public/models/**/manifest.json
 apps/web/public/models/**/manifest.json.sha256
 apps/web/public/models/**/unlocked.env.example
+.vercel

@@ -1,0 +1,22 @@
+node_modules
+apps/*/node_modules
+apps/web/dist
+
+.artifacts
+.cache
+.data
+.vite
+coverage
+build
+dist
+
+# Local unlocked model shards are Kernel Lab assets. The hosted v12 production
+# proof uses the compiled WebLLM backend and must not upload multi-GB local
+# model payloads with each preview deploy.
+apps/web/public/models
+
+.env
+.env.local
+.env.*.local
+*.log
+pnpm-debug.log*
