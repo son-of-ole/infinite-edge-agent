@@ -1,8 +1,10 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
+const require = createRequire(import.meta.url);
 const MAX_RUNS_LIST_LIMIT = 500;
 const REDACTED = "[redacted]";
 const REDACTED_KEYS = new Set([
@@ -965,12 +967,14 @@ function createPostgresTelemetryClient(databaseUrl: string): SqlBenchmarkTelemet
 }
 
 async function loadPostgresPool(databaseUrl: string): Promise<{ query: SqlBenchmarkTelemetryClient["query"] }> {
-  const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<unknown>;
-  const pgModule = await dynamicImport("pg").catch((error) => {
+  let pgModule: unknown;
+  try {
+    pgModule = require("pg");
+  } catch (error) {
     throw new Error(
       `Postgres benchmark telemetry requires the optional "pg" package to be installed. ${error instanceof Error ? error.message : String(error)}`
     );
-  });
+  }
   const Pool = isRecord(pgModule)
     ? pgModule.Pool as (new (options: { connectionString: string }) => { query: SqlBenchmarkTelemetryClient["query"] }) | undefined
     : undefined;
