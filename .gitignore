@@ -12,6 +12,7 @@ coverage
 .vite
 *.log
 pnpm-debug.log*
+.neon
 
 # Licensed local model artifacts. Keep .gitkeep tracked, but do not publish weights.
 apps/web/public/models/*.litertlm
