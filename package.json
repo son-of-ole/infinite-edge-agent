@@ -58,7 +58,8 @@
     "release:gate": "node --import tsx scripts/release-gate.ts"
   },
   "dependencies": {
-    "@infinite-edge-agent/core": "workspace:*"
+    "@infinite-edge-agent/core": "workspace:*",
+    "pg": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.16",

@@ -11,6 +11,9 @@ importers:
       '@infinite-edge-agent/core':
         specifier: workspace:*
         version: link:packages/core
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
     devDependencies:
       '@types/node':
         specifier: ^20.17.16
