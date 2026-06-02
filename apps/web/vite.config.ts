@@ -5,8 +5,12 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
+  const vercelGitSha = env.VITE_GIT_SHA?.trim() || env.VERCEL_GIT_COMMIT_SHA?.trim();
   return {
     plugins: [react(), omitLocalModelArtifactsFromBuild(env)],
+    define: {
+      ...(vercelGitSha ? { "import.meta.env.VITE_GIT_SHA": JSON.stringify(vercelGitSha) } : {}),
+    },
     build: {
       chunkSizeWarningLimit: 6500,
       rollupOptions: {
