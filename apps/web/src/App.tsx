@@ -68,7 +68,7 @@ import { LOCAL_MODEL_OPTIONS } from "./config/models";
 import { readBrowserEmbedConfig, resolveEmbedMemoryProvider } from "./embedConfig";
 import { ChatMessageView } from "./components/ChatMessageView";
 import { StatusPanel } from "./components/StatusPanel";
-import { LocalAgent, type RetrievedMemoryDetail } from "./lib/agent/localAgent";
+import { LocalAgent, type AgentDocumentInput, type RetrievedMemoryDetail } from "./lib/agent/localAgent";
 import { getOrCreateSessionId, makeMessageId } from "./lib/agent/session";
 import { EmbeddingClient } from "./lib/embedding/embeddingClient";
 import { CompiledWebLlmClient } from "./lib/llm/compiledWebLlmClient";
@@ -99,6 +99,7 @@ export function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [isUploadingDocuments, setIsUploadingDocuments] = useState(false);
   const [modelId, setModelId] = useState(DEFAULT_MODEL);
   const [llmBackend, setLlmBackend] = useState(DEFAULT_LLM_BACKEND);
   const [memoryMode, setMemoryMode] = useState("");
@@ -149,6 +150,7 @@ export function App() {
   const memoryRef = useRef<MemoryStore | null>(null);
   const memoryModeRef = useRef<MemoryProviderMode | "">("");
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const documentInputRef = useRef<HTMLInputElement | null>(null);
   const tenantId = embedConfig.tenantId ?? MEMORY_TENANT_ID;
   const cellId = embedConfig.cellId ?? MEMORY_CELL_ID;
 
@@ -459,6 +461,40 @@ export function App() {
     }
   }
 
+  async function uploadDocumentFiles(files: FileList | null) {
+    const selectedFiles = Array.from(files ?? []);
+    if (selectedFiles.length === 0) return;
+    if (!agentRef.current) {
+      setStatus("Initialize the local agent before uploading documents.");
+      if (documentInputRef.current) documentInputRef.current.value = "";
+      return;
+    }
+
+    setIsUploadingDocuments(true);
+    try {
+      validateDocumentUploadSelection(selectedFiles);
+      setStatus(`Reading ${selectedFiles.length} document${selectedFiles.length === 1 ? "" : "s"}...`);
+      const documents: AgentDocumentInput[] = await Promise.all(selectedFiles.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        text: await file.text(),
+      })));
+      const result = await agentRef.current.ingestDocuments(documents, {
+        onStatus: setStatus,
+        onMetric: addMetric,
+      });
+      setStatus(`Uploaded ${result.documentCount} document${result.documentCount === 1 ? "" : "s"} into ${result.chunkCount} memory chunk${result.chunkCount === 1 ? "" : "s"}.`);
+      await refreshInspector();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsUploadingDocuments(false);
+      if (documentInputRef.current) documentInputRef.current.value = "";
+    }
+  }
+
   async function refreshInspector() {
     try {
       const { store } = await ensureMemoryStore();
@@ -574,6 +610,29 @@ export function App() {
                 onChange={(event) => void importMemoryFile(event.currentTarget.files?.[0])}
               />
             </div>
+            <div className="document-actions">
+              <button
+                className="secondary"
+                onClick={() => {
+                  if (!initialized) {
+                    setStatus("Initialize the local agent before uploading documents.");
+                    return;
+                  }
+                  documentInputRef.current?.click();
+                }}
+                disabled={isGenerating || isUploadingDocuments}
+              >
+                {isUploadingDocuments ? "Uploading docs..." : "Upload docs"}
+              </button>
+              <input
+                ref={documentInputRef}
+                className="hidden-file-input"
+                type="file"
+                multiple
+                accept={DOCUMENT_UPLOAD_ACCEPT}
+                onChange={(event) => void uploadDocumentFiles(event.currentTarget.files)}
+              />
+            </div>
             <div className="targeted-memory-actions">
               <label>
                 Session
@@ -678,6 +737,47 @@ export function App() {
       />
     </main>
   );
+}
+
+const DOCUMENT_UPLOAD_ACCEPT = [
+  ".md",
+  ".markdown",
+  ".txt",
+  ".text",
+  ".csv",
+  ".json",
+  "text/markdown",
+  "text/plain",
+  "text/csv",
+  "application/json",
+].join(",");
+const DOCUMENT_UPLOAD_MAX_FILES = 12;
+const DOCUMENT_UPLOAD_MAX_BYTES = 2 * 1024 * 1024;
+const DOCUMENT_UPLOAD_TOTAL_MAX_BYTES = 8 * 1024 * 1024;
+
+function validateDocumentUploadSelection(files: File[]): void {
+  if (files.length > DOCUMENT_UPLOAD_MAX_FILES) {
+    throw new Error(`Upload at most ${DOCUMENT_UPLOAD_MAX_FILES} documents at a time.`);
+  }
+  const totalBytes = files.reduce((total, file) => total + file.size, 0);
+  if (totalBytes > DOCUMENT_UPLOAD_TOTAL_MAX_BYTES) {
+    throw new Error("Document upload batch is too large. Keep each batch under 8 MB.");
+  }
+  const unsupported = files.find((file) => !isSupportedDocumentFile(file));
+  if (unsupported) {
+    throw new Error(`Unsupported document type for ${unsupported.name}. Upload Markdown, plain text, CSV, or JSON text files.`);
+  }
+  const oversized = files.find((file) => file.size > DOCUMENT_UPLOAD_MAX_BYTES);
+  if (oversized) {
+    throw new Error(`${oversized.name} is too large. Upload files up to 2 MB each.`);
+  }
+}
+
+function isSupportedDocumentFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return [".md", ".markdown", ".txt", ".text", ".csv", ".json"].some((extension) => name.endsWith(extension))
+    || ["text/markdown", "text/plain", "text/csv", "application/json"].includes(type);
 }
 
 function hasMemoryChunkList(store: MemoryStore): store is MemoryStore & {

@@ -147,6 +147,11 @@ button.secondary {
   gap: 0.5rem;
 }
 
+.document-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .hidden-file-input {
   display: none;
 }

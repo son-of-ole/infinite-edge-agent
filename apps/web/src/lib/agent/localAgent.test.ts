@@ -479,6 +479,82 @@ describe("LocalAgent scoped transcript deletion", () => {
     ]));
   });
 
+  it("ingests uploaded Markdown documents as scoped document memory with GAC lineage", async () => {
+    const upserted: MemoryChunk[][] = [];
+    const rawWrites: RawMemoryRecord[][] = [];
+    const lineageWrites: MemoryLineageRecord[][] = [];
+    const embeddings = {
+      init: vi.fn(),
+      embed: vi.fn(async () => [0.1, 0.2]),
+      embedBatch: vi.fn(async (texts: string[]) => texts.map(() => [0.1, 0.2])),
+    } as unknown as EmbeddingClient;
+    const memory = {
+      ...makeContextTraceMemoryStore(),
+      upsert: vi.fn(async (chunks: MemoryChunk[]) => {
+        upserted.push(chunks);
+      }),
+      writeRawMemory: vi.fn(async (records: RawMemoryRecord[]): Promise<GacWriteResult> => {
+        rawWrites.push(records);
+        return { ok: true, count: records.length, traceId: "raw_trace" };
+      }),
+      writeMemoryLineage: vi.fn(async (records: MemoryLineageRecord[]): Promise<GacWriteResult> => {
+        lineageWrites.push(records);
+        return { ok: true, count: records.length, traceId: "lineage_trace" };
+      }),
+    };
+    const agent = makeAgent("session_1", {
+      memory,
+      embeddings,
+      tenantId: "tenant_docs",
+      cellId: "cell_docs",
+    });
+
+    const result = await agent.ingestDocuments([{
+      name: "project-notes.md",
+      type: "text/markdown",
+      size: 96,
+      lastModified: Date.parse("2026-06-01T00:00:00.000Z"),
+      text: "# Project Notes\n\nThe retrieval codename is Blue Lantern.\n\nUse grounded memory answers.",
+    }]);
+
+    expect(result).toMatchObject({
+      documentCount: 1,
+      chunkCount: 1,
+      documents: [expect.objectContaining({ name: "project-notes.md", chunkCount: 1 })],
+    });
+    expect(embeddings.embedBatch).toHaveBeenCalledWith([
+      expect.stringContaining("The retrieval codename is Blue Lantern."),
+    ]);
+    expect(upserted.flat()).toEqual([
+      expect.objectContaining({
+        source: "document",
+        sessionId: "session_1",
+        tags: expect.arrayContaining(["document", "document:project-notes.md"]),
+        metadata: expect.objectContaining({
+          edgeTenantId: "tenant_docs",
+          edgeCellId: "cell_docs",
+          fileName: "project-notes.md",
+          fileType: "text/markdown",
+          fileSize: 96,
+          fileLastModified: "2026-06-01T00:00:00.000Z",
+          documentId: expect.stringMatching(/^doc_/),
+        }),
+      }),
+    ]);
+    expect(rawWrites.flat()).toEqual([
+      expect.objectContaining({
+        tenantId: "tenant_docs",
+        cellId: "cell_docs",
+        sessionId: "session_1",
+        sourceType: "file",
+        text: expect.stringContaining("Blue Lantern"),
+      }),
+    ]);
+    expect(lineageWrites.flat()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ rawMemoryId: upserted[0]?.[0]?.id }),
+    ]));
+  });
+
   it("schedules adaptive consolidation jobs from persisted GAC state after ingestion", async () => {
     const consolidationRuns: ConsolidationRunRecord[][] = [];
     const now = "2026-05-11T00:00:00.000Z";

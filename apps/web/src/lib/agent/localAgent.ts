@@ -51,6 +51,24 @@ export interface RunAgentCallbacks {
   onMetric?: (name: string, valueMs: number) => void;
 }
 
+export interface AgentDocumentInput {
+  name: string;
+  text: string;
+  type?: string;
+  size?: number;
+  lastModified?: number;
+}
+
+export interface AgentDocumentIngestionResult {
+  documentCount: number;
+  chunkCount: number;
+  documents: Array<{
+    name: string;
+    chunkCount: number;
+    tokenCount: number;
+  }>;
+}
+
 export class LocalAgent {
   private messages: ChatMessage[] = [];
   private readonly memoryQueue = new MemoryIngestionQueue();
@@ -157,6 +175,88 @@ export class LocalAgent {
     this.messages = [];
     await this.deps.memory.clear();
     await clearKvPersistenceIfAvailable(this.deps.llm);
+  }
+
+  async ingestDocuments(
+    documents: AgentDocumentInput[],
+    callbacks: Pick<RunAgentCallbacks, "onMetric" | "onStatus"> = {},
+  ): Promise<AgentDocumentIngestionResult> {
+    const metricSink: BrowserMetricSink = {
+      addMetric: (name, valueMs) => callbacks.onMetric?.(name, valueMs),
+    };
+    const results: AgentDocumentIngestionResult["documents"] = [];
+    let chunkCount = 0;
+
+    for (const document of documents) {
+      const cleanName = normalizeDocumentName(document.name);
+      const redacted = redactSensitiveMemoryText(document.text);
+      const textChunks = chunkText(redacted.text, DOCUMENT_CHUNK_OPTIONS);
+      if (textChunks.length === 0) {
+        results.push({ name: cleanName, chunkCount: 0, tokenCount: 0 });
+        continue;
+      }
+
+      callbacks.onStatus?.(`Embedding ${cleanName} (${textChunks.length} chunk${textChunks.length === 1 ? "" : "s"})...`);
+      const embeddings = await timed("document_embedding_ms", metricSink, () =>
+        this.deps.embeddings.embedBatch(textChunks.map((chunk) => chunk.text))
+      );
+      const documentId = makeDocumentId(cleanName, document.text);
+      const memoryChunks = makeMemoryChunks({
+        text: redacted.text,
+        embeddings,
+        sessionId: this.deps.sessionId,
+        source: "document",
+        tags: [
+          "document",
+          `document:${safeTag(cleanName)}`,
+          ...(redacted.findings.length > 0 ? ["sensitive_redacted"] : []),
+        ],
+        metadata: {
+          edgeTenantId: this.deps.tenantId,
+          edgeCellId: this.deps.cellId,
+          documentId,
+          fileName: cleanName,
+          ...(document.type ? { fileType: document.type } : {}),
+          ...(document.size !== undefined ? { fileSize: document.size } : {}),
+          ...(document.lastModified !== undefined ? { fileLastModified: new Date(document.lastModified).toISOString() } : {}),
+          ...(redacted.findings.length > 0
+            ? {
+                sensitiveFindings: redacted.findings.map((finding) => finding.kind),
+                redactedBeforeEmbedding: true,
+              }
+            : {}),
+        },
+        chunkOptions: DOCUMENT_CHUNK_OPTIONS,
+      });
+      const ingestionPlan = buildImmediateGacIngestionPlan({
+        tenantId: this.deps.tenantId,
+        cellId: this.deps.cellId,
+        sessionId: this.deps.sessionId,
+        sourceType: "file",
+        sourceUri: `file://${encodeURIComponent(cleanName)}`,
+        chunks: memoryChunks,
+        sourceTrust: "trusted",
+        now: new Date(),
+      });
+
+      callbacks.onStatus?.(`Writing ${cleanName} to memory...`);
+      await timed("document_memory_upsert_ms", metricSink, async () => {
+        await this.deps.memory.upsert(ingestionPlan.chunks);
+        await writeImmediateGacIngestionPlan(this.deps.memory as Partial<GacMemoryStore>, ingestionPlan);
+      });
+      await this.scheduleAdaptiveConsolidationJob();
+
+      const tokenCount = ingestionPlan.chunks.reduce((total, chunk) => total + chunk.tokenCount, 0);
+      chunkCount += ingestionPlan.chunks.length;
+      results.push({ name: cleanName, chunkCount: ingestionPlan.chunks.length, tokenCount });
+    }
+
+    callbacks.onStatus?.(`Uploaded ${results.length} document${results.length === 1 ? "" : "s"} as ${chunkCount} memory chunk${chunkCount === 1 ? "" : "s"}.`);
+    return {
+      documentCount: results.length,
+      chunkCount,
+      documents: results,
+    };
   }
 
   flushMemoryIngestion(options: MemoryIngestionFlushOptions = {}): Promise<MemoryIngestionQueueStats> {
@@ -276,6 +376,34 @@ export class LocalAgent {
       await store.writeConsolidationRuns([plan.consolidationRun]);
     }
   }
+}
+
+const DOCUMENT_CHUNK_OPTIONS = {
+  chunkTokens: 420,
+  overlapTokens: 70,
+  minChunkTokens: 4,
+} as const;
+
+function makeDocumentId(name: string, text: string): string {
+  return `doc_${stableStringHash(`${name}:${text.length}:${text.slice(0, 2048)}`)}`;
+}
+
+function normalizeDocumentName(name: string): string {
+  const trimmed = name.trim();
+  return trimmed || "untitled-document.txt";
+}
+
+function safeTag(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "document";
+}
+
+function stableStringHash(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
 function makeGenerationStreamOptions(config: AgentRuntimeConfig): ChatStreamOptions {
